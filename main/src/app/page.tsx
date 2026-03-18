@@ -55,7 +55,7 @@ export default function Home() {
             className="w-full no-underline"
           >
             <div
-              className="flex justify-center items-center py-5 px-8 bg-[#E1FFB7] hover:bg-[#d4f2a3] text-black rounded-full transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-xl hover:shadow-[#E1FFB7]/30"
+              className="flex justify-center items-center py-3 px-8 bg-[#E1FFB7] hover:bg-[#d4f2a3] text-black rounded-full transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-xl hover:shadow-[#E1FFB7]/30"
             >
               <span className="text-[1.25rem] font-bold uppercase tracking-widest">
                 Join Us
