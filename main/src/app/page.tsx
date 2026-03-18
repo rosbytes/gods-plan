@@ -4,8 +4,7 @@ import Link from "next/link";
 export default function Home() {
   return (
     <div
-      className="viewportHeight flex flex-col justify-between min-h-screen p-7.5 bg-black text-white"
-      style={{ minHeight: "100vh" }}
+      className="min-h-dvh flex flex-col justify-between p-7.5 bg-black text-white"
     >
       {/* Logo Section */}
       <div className="flex justify-center">
