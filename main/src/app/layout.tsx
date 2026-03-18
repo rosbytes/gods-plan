@@ -35,6 +35,11 @@ const apercuPro = localFont({
 export const metadata: Metadata = {
   title: "ROS - Coming Soon",
   description: "Republic of Sabjiwala - Coming Soon",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/icons/ROS_maskable_icon_x192.png",
+  },
 };
 
 export default function RootLayout({
