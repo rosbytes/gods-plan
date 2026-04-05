@@ -28,3 +28,5 @@ app.listen(env.SERVER_PORT, async () => {
     logger.info(`Server is runnig on port: ${env.SERVER_PORT}, `)
     // await connectCache()
 })
+
+export default app
