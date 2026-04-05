@@ -1,4 +1,4 @@
-import express from "express"
+import express, { Request, Response } from "express"
 import { createExpressMiddleware } from "@trpc/server/adapters/express"
 import { appRouter, createContext } from "./trpc"
 import cors from "cors"
@@ -14,7 +14,7 @@ app.set("trust proxy", false)
 app.use(cors({ origin: [env.FRONTEND_URL, "http://localhost:5173"], credentials: true }))
 app.use(express.json())
 
-app.get("/", (req, res) => {
+app.get("/", (req: Request, res: Response) => {
     res.send("Server is working")
 })
 
