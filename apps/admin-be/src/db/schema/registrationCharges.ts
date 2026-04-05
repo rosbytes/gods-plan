@@ -3,16 +3,20 @@ import { pgTable, uuid, integer, varchar, pgEnum, timestamp } from "drizzle-orm/
 import { timestamps } from "../columnHelpers"
 import { vendors } from "./vendors"
 import { admin } from "./admin"
+import { stores } from "./stores"
 
-const paymentStatus = pgEnum("payment_status", ["pending", "success", "failed"])
-const paymentMethod = pgEnum("payment_method", ["upi", "card", "net_banking", "cash"])
+export const paymentStatus = pgEnum("payment_status", ["pending", "success", "failed"])
+export const paymentMethod = pgEnum("payment_method", ["upi", "card", "net_banking", "cash"])
 
 export const registrationCharges = pgTable("registration_charges", {
-    id: uuid().primaryKey().defaultRandom(),
+    id: uuid("id").primaryKey().defaultRandom(),
 
     vendorId: uuid("vendor_id")
         .notNull()
         .references(() => vendors.id),
+    storeId: uuid("store_id")
+        .notNull()
+        .references(() => stores.id),
 
     amount: integer("amount").notNull(),
     transactionId: varchar("transaction_id", { length: 255 }),
@@ -34,5 +38,9 @@ export const registrationChargesRelations = relations(registrationCharges, ({ on
     cashCollectedBy: one(admin, {
         fields: [registrationCharges.cashCollectedBy],
         references: [admin.id],
+    }),
+    stores: one(stores, {
+        fields: [registrationCharges.storeId],
+        references: [stores.id],
     }),
 }))
