@@ -7,9 +7,9 @@ export default defineConfig({
     format: ["cjs"],
     splitting: false,
     sourcemap: true,
-    clean: true,
+    clean: false,
     bundle: true,
     noExternal: [/.*/],
-    outDir: "api",
+    outDir: ".",
     outExtension: () => ({ js: ".cjs" }),
 })
