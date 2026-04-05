@@ -1,5 +1,5 @@
 import { addColors, createLogger, format, transports } from "winston"
-import { env } from "./env"
+// import { env } from "./env"
 //colors
 const colors = {
     info: "blue",
@@ -16,16 +16,16 @@ const baseFormat = format.combine(
     format.splat(),
     format.metadata({ fillExcept: ["timestamp", "level", "message", "stack"] }),
 )
-const consoleFormat = format.printf(({ timestamp, level, message, metadata }) => {
-    const timeOnly = timestamp as string
-    const metaString =
-        metadata && Object.keys(metadata).length ? `${JSON.stringify(metadata)}` : " "
-    return `${timeOnly} [${level}] ${message} ${metaString}`
-})
-const uppercaseFormat = format((info) => {
-    info.level = info.level.toUpperCase()
-    return info
-})
+// const consoleFormat = format.printf(({ timestamp, level, message, metadata }) => {
+//     const timeOnly = timestamp as string
+//     const metaString =
+//         metadata && Object.keys(metadata).length ? `${JSON.stringify(metadata)}` : " "
+//     return `${timeOnly} [${level}] ${message} ${metaString}`
+// })
+// const uppercaseFormat = format((info) => {
+//     info.level = info.level.toUpperCase()
+//     return info
+// })
 
 const loggerTransports: (transports.FileTransportInstance | transports.ConsoleTransportInstance)[] =
     [

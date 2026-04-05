@@ -20,6 +20,11 @@ const envSchema = z.object({
     ADMIN_JWT_REFRESH_TOKEN_SECRET: z.string().nonempty(),
     ADMIN_JWT_REFRESH_TOKEN_EXPIRY: z.string().nonempty(),
 
+    // Cloudinary Credentials
+    CLOUDINARY_CLOUD_NAME: z.string().nonempty(),
+    CLOUDINARY_API_KEY: z.string().nonempty(),
+    CLOUDINARY_API_SECRET: z.string().nonempty(),
+
     //  User Token Credentials
     // USER_JWT_ACCESS_TOKEN_SECRET: z.string().nonempty(),
     // USER_JWT_ACCESS_TOKEN_EXPIRY: z.string().nonempty(),
