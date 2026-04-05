@@ -17,10 +17,10 @@ const baseFormat = format.combine(
     format.metadata({ fillExcept: ["timestamp", "level", "message", "stack"] }),
 )
 
-const isVercel = env.VERCEL === "1"
+const isProduction = env.NODE_ENV === "production" || !!process.env.VERCEL
 
 const loggerTransports: (transports.FileTransportInstance | transports.ConsoleTransportInstance)[] =
-    isVercel
+    isProduction
         ? [new transports.Console()]
         : [
               new transports.File({
@@ -34,10 +34,10 @@ export const logger = createLogger({
     level: "info",
     format: baseFormat,
     transports: loggerTransports,
-    exceptionHandlers: isVercel
+    exceptionHandlers: isProduction
         ? [new transports.Console()]
         : [new transports.File({ filename: "log/exceptions.log" })],
-    rejectionHandlers: isVercel
+    rejectionHandlers: isProduction
         ? [new transports.Console()]
         : [new transports.File({ filename: "log/rejections.log" })],
     exitOnError: false,
