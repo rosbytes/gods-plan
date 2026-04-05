@@ -11,5 +11,5 @@ export default defineConfig({
     bundle: true,
     noExternal: [/.*/],
     outDir: "api",
-    outExtension: () => ({ js: ".js" }),
+    outExtension: () => ({ js: ".cjs" }),
 })

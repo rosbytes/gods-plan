@@ -1,11 +1,12 @@
 {
     "name": "@ros/admin-be",
     "module": "index.ts",
+    "type": "module",
     "private": true,
     "scripts": {
         "dev": "tsx watch src/server.ts",
         "build": "tsup",
-        "start": "node api/index.js",
+        "start": "node api/index.cjs",
         "generate": "drizzle-kit generate",
         "migrate": "drizzle-kit migrate",
         "dbpush": "drizzle-kit push",
