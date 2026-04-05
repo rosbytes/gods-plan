@@ -10,6 +10,6 @@ export default defineConfig({
     clean: false,
     bundle: true,
     noExternal: [/.*/],
-    outDir: "api",
+    outDir: ".",
     outExtension: () => ({ js: ".cjs" }),
 })

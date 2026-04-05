@@ -6,7 +6,7 @@
     "scripts": {
         "dev": "tsx watch src/app.ts",
         "build": "tsup && (if [ \"$VERCEL\" = \"1\" ]; then rm -rf src; fi)",
-        "start": "node api/index.js",
+        "start": "node index.js",
         "generate": "drizzle-kit generate",
         "migrate": "drizzle-kit migrate",
         "dbpush": "drizzle-kit push",
