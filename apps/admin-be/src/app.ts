@@ -24,9 +24,11 @@ app.use("/api/media", mediaRouter)
 // tRPC endpoint
 app.use("/trpc", createExpressMiddleware({ router: appRouter, createContext }))
 
-app.listen(env.SERVER_PORT, async () => {
-    logger.info(`Server is runnig on port: ${env.SERVER_PORT}, `)
-    // await connectCache()
-})
+if (!process.env.VERCEL) {
+    app.listen(env.SERVER_PORT, async () => {
+        logger.info(`Server is running on port: ${env.SERVER_PORT}`)
+        // await connectCache()
+    })
+}
 
 export default app
