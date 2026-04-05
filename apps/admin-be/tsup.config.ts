@@ -2,7 +2,7 @@ import { defineConfig } from "tsup"
 
 export default defineConfig({
     entry: {
-        index: "src/app.ts",
+        bundle: "src/app.ts",
     },
     format: ["cjs"],
     splitting: false,
@@ -10,6 +10,6 @@ export default defineConfig({
     clean: false,
     bundle: true,
     noExternal: [/.*/],
-    outDir: ".",
+    outDir: "api",
     outExtension: () => ({ js: ".cjs" }),
 })

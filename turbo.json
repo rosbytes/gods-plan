@@ -3,7 +3,7 @@
     "tasks": {
         "build": {
             "dependsOn": ["^build"],
-            "outputs": [".next/**", "!.next/cache/**", "dist/**", "index.cjs*"]
+            "outputs": [".next/**", "!.next/cache/**", "dist/**", "api/**"]
         },
         "lint": {
             "dependsOn": ["^lint"]
