@@ -1,5 +1,8 @@
 import { publicProcedure, router } from "./globals"
 import { z } from "zod"
+import { authRouter } from "../module/auth/auth.route"
+import { storeRouter } from "../module/store/store.route"
+import { vendorRouter } from "../module/vendor/vendor.route"
 
 // Define a simple router
 export const appRouter = router({
@@ -7,6 +10,9 @@ export const appRouter = router({
     greeting: publicProcedure.input(z.object({ name: z.string() })).query(({ input }) => {
         return `Hello, ${input.name}! Welcome to tRPC`
     }),
+    auth: authRouter,
+    store: storeRouter,
+    vendor: vendorRouter,
 })
 
 // Export type definition of API
