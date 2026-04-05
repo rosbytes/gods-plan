@@ -5,6 +5,8 @@ import { cache, env } from "../configs"
  * Fixed Window Rate Limiter
  */
 export const rateLimit = async (key: string, limit: number, windowSeconds: number) => {
+    if (!cache.isOpen) return // Bypassing if redis is not connected
+
     // In development, increase limit by 100x to avoid blocking developers
     const effectiveLimit = env.NODE_ENV === "development" ? limit * 100 : limit
 
@@ -34,6 +36,8 @@ export const tokenBucket = async (
     refillRate: number,
     refillSeconds: number,
 ) => {
+    if (!cache.isOpen) return // Bypassing if redis is not connected
+
     // In development, increase capacity and refill rate by 100x
     const effectiveLimit = env.NODE_ENV === "development" ? limit * 100 : limit
     const effectiveRefillRate = env.NODE_ENV === "development" ? refillRate * 100 : refillRate
