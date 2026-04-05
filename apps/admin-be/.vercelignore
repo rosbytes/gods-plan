@@ -1,9 +1,8 @@
-node_modules/
-dist/
-drizzle/
-log/
-images/
-.env
-.env.local
-.env.*.local
-vendor/
+/node_modules/
+/dist/
+/drizzle/
+/log/
+/images/
+/.env
+/.env.local
+/.env.*.local
