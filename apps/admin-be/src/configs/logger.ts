@@ -1,3 +1,4 @@
+import { env } from "./env"
 import { addColors, createLogger, format, transports } from "winston"
 
 // colors
@@ -16,7 +17,7 @@ const baseFormat = format.combine(
     format.metadata({ fillExcept: ["timestamp", "level", "message", "stack"] }),
 )
 
-const isVercel = process.env.VERCEL === "1"
+const isVercel = env.VERCEL === "1"
 
 const loggerTransports: (transports.FileTransportInstance | transports.ConsoleTransportInstance)[] =
     isVercel

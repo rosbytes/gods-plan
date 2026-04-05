@@ -25,6 +25,8 @@ const envSchema = z.object({
     CLOUDINARY_API_KEY: z.string().nonempty(),
     CLOUDINARY_API_SECRET: z.string().nonempty(),
 
+    VERCEL: z.string().optional(),
+
     //  User Token Credentials
     // USER_JWT_ACCESS_TOKEN_SECRET: z.string().nonempty(),
     // USER_JWT_ACCESS_TOKEN_EXPIRY: z.string().nonempty(),
