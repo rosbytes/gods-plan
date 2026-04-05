@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server"
-import { Context } from "../../trpc"
+import { type Context } from "../../trpc"
 import { rateLimit } from "../../utils"
-import { TLoginSchema } from "./auth.schema"
+import { type TLoginSchema } from "./auth.schema"
 import { findAdminByPhone } from "./auth.service"
 import { generateAdminAccessToken } from "../../utils/tokens"
 import { logger } from "../../configs"
@@ -38,6 +38,9 @@ export async function login({ input, ctx }: { input: TLoginSchema; ctx: Context 
     } catch (error) {
         logger.error(error)
         if (error instanceof TRPCError) throw error
-        throw new TRPCError({ message: "Something Went Wrong", code: "INTERNAL_SERVER_ERROR" })
+        throw new TRPCError({
+            message: error instanceof Error ? error.message : "Something Went Wrong",
+            code: "INTERNAL_SERVER_ERROR",
+        })
     }
 }
