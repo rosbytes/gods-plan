@@ -42,7 +42,7 @@ export default function KycDocuments() {
         formData.append("file", file)
 
         try {
-            const response = await fetch("http://localhost:4000/api/media/upload", {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/media/upload`, {
                 method: "POST",
                 body: formData,
             })
