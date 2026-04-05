@@ -12,5 +12,19 @@
             "cache": false,
             "persistent": true
         }
-    }
+    },
+    "globalEnv": [
+        "NODE_ENV",
+        "SERVER_PORT",
+        "FRONTEND_URL",
+        "DATABASE_URL",
+        "REDIS_URL",
+        "ADMIN_JWT_ACCESS_TOKEN_SECRET",
+        "ADMIN_JWT_REFRESH_TOKEN_SECRET",
+        "ADMIN_JWT_ACCESS_TOKEN_EXPIRY",
+        "ADMIN_JWT_REFRESH_TOKEN_EXPIRY",
+        "CLOUDINARY_CLOUD_NAME",
+        "CLOUDINARY_API_KEY",
+        "CLOUDINARY_API_SECRET"
+    ]
 }
