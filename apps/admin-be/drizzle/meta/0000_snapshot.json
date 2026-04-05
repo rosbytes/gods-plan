@@ -1,0 +1,455 @@
+{
+    "id": "d0725ce4-df96-41dd-be7a-6231698960e7",
+    "prevId": "00000000-0000-0000-0000-000000000000",
+    "version": "7",
+    "dialect": "postgresql",
+    "tables": {
+        "public.admin": {
+            "name": "admin",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "name": {
+                    "name": "name",
+                    "type": "varchar(255)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "phone": {
+                    "name": "phone",
+                    "type": "varchar(20)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "pin": {
+                    "name": "pin",
+                    "type": "varchar(6)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "admin_phone_unique": {
+                    "name": "admin_phone_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["phone"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.kyc_docs": {
+            "name": "kyc_docs",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "vendor_id": {
+                    "name": "vendor_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "store_id": {
+                    "name": "store_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "type": {
+                    "name": "type",
+                    "type": "kyc_doc_type",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "doc_id": {
+                    "name": "doc_id",
+                    "type": "varchar(255)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "front_url": {
+                    "name": "front_url",
+                    "type": "varchar(500)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "back_url": {
+                    "name": "back_url",
+                    "type": "varchar(500)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "storefront_url": {
+                    "name": "storefront_url",
+                    "type": "varchar(500)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "signed_kyc_doc_url": {
+                    "name": "signed_kyc_doc_url",
+                    "type": "varchar(500)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "kyc_docs_vendor_id_vendors_id_fk": {
+                    "name": "kyc_docs_vendor_id_vendors_id_fk",
+                    "tableFrom": "kyc_docs",
+                    "tableTo": "vendors",
+                    "columnsFrom": ["vendor_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "kyc_docs_store_id_stores_id_fk": {
+                    "name": "kyc_docs_store_id_stores_id_fk",
+                    "tableFrom": "kyc_docs",
+                    "tableTo": "stores",
+                    "columnsFrom": ["store_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.registration_charges": {
+            "name": "registration_charges",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "vendor_id": {
+                    "name": "vendor_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "amount": {
+                    "name": "amount",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "transaction_id": {
+                    "name": "transaction_id",
+                    "type": "varchar(255)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "payment_date": {
+                    "name": "payment_date",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "payment_status": {
+                    "name": "payment_status",
+                    "type": "payment_status",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "payment_method": {
+                    "name": "payment_method",
+                    "type": "payment_method",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "cash_collected_by": {
+                    "name": "cash_collected_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "registration_charges_vendor_id_vendors_id_fk": {
+                    "name": "registration_charges_vendor_id_vendors_id_fk",
+                    "tableFrom": "registration_charges",
+                    "tableTo": "vendors",
+                    "columnsFrom": ["vendor_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "registration_charges_cash_collected_by_admin_id_fk": {
+                    "name": "registration_charges_cash_collected_by_admin_id_fk",
+                    "tableFrom": "registration_charges",
+                    "tableTo": "admin",
+                    "columnsFrom": ["cash_collected_by"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.stores": {
+            "name": "stores",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "vendor_id": {
+                    "name": "vendor_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "lat": {
+                    "name": "lat",
+                    "type": "double precision",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "lng": {
+                    "name": "lng",
+                    "type": "double precision",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "radius_km": {
+                    "name": "radius_km",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": 4
+                },
+                "full_address": {
+                    "name": "full_address",
+                    "type": "varchar(500)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "store_name": {
+                    "name": "store_name",
+                    "type": "varchar(255)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "store_image": {
+                    "name": "store_image",
+                    "type": "varchar(500)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "stores_vendor_id_vendors_id_fk": {
+                    "name": "stores_vendor_id_vendors_id_fk",
+                    "tableFrom": "stores",
+                    "tableTo": "vendors",
+                    "columnsFrom": ["vendor_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.vendors": {
+            "name": "vendors",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "full_name": {
+                    "name": "full_name",
+                    "type": "varchar(255)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "primary_phone": {
+                    "name": "primary_phone",
+                    "type": "varchar(20)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "alternate_phone": {
+                    "name": "alternate_phone",
+                    "type": "varchar(20)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "type": {
+                    "name": "type",
+                    "type": "vendor_type",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_by": {
+                    "name": "created_by",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "vendors_primaryPhone_unique": {
+                    "name": "vendors_primaryPhone_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["primary_phone"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        }
+    },
+    "enums": {
+        "public.kyc_doc_type": {
+            "name": "kyc_doc_type",
+            "schema": "public",
+            "values": ["aadhar", "pan"]
+        },
+        "public.payment_method": {
+            "name": "payment_method",
+            "schema": "public",
+            "values": ["upi", "card", "net_banking", "cash"]
+        },
+        "public.payment_status": {
+            "name": "payment_status",
+            "schema": "public",
+            "values": ["pending", "success", "failed"]
+        },
+        "public.vendor_type": {
+            "name": "vendor_type",
+            "schema": "public",
+            "values": ["market_vendor", "mandi_vendor"]
+        }
+    },
+    "schemas": {},
+    "sequences": {},
+    "roles": {},
+    "policies": {},
+    "views": {},
+    "_meta": {
+        "columns": {},
+        "schemas": {},
+        "tables": {}
+    }
+}

@@ -4,17 +4,22 @@ import { appRouter, createContext } from "./trpc"
 import cors from "cors"
 import { env, logger } from "./configs"
 
+import mediaRouter from "./module/media/media.router"
+
 const app = express()
 
 // TODO: enable trust proxy when using behind a proxy
 app.set("trust proxy", false)
 
-app.use(cors({ origin: env.FRONTEND_URL, credentials: true }))
+app.use(cors({ origin: [env.FRONTEND_URL, "http://localhost:5173"], credentials: true }))
 app.use(express.json())
 
 app.get("/", (req, res) => {
     res.send("Server is working")
 })
+
+// media upload endpoint
+app.use("/api/media", mediaRouter)
 
 // tRPC endpoint
 app.use("/trpc", createExpressMiddleware({ router: appRouter, createContext }))
