@@ -5,7 +5,7 @@
         "build": "turbo build",
         "dev": "turbo dev",
         "lint": "turbo lint",
-        "prepare": "husky",
+        "prepare": "husky || true",
         "format": "prettier --write .",
         "format:check": "prettier --check ."
     },
