@@ -1,7 +1,6 @@
 {
     "name": "@ros/admin-be",
     "module": "index.ts",
-    "type": "module",
     "private": true,
     "scripts": {
         "dev": "tsx watch src/server.ts",

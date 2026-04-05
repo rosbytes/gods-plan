@@ -6,5 +6,7 @@ export default defineConfig({
     splitting: false,
     sourcemap: true,
     clean: true,
-    //   noExternal: ["@ros/admin-constants", "@ros/admin-validations", "@ros/dbv2"],
+    bundle: true,
+    noExternal: [/.*/],
+    outExtension: () => ({ js: ".js" }),
 })
