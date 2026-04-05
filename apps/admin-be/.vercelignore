@@ -1,13 +1,9 @@
-src/
 node_modules/
 dist/
 drizzle/
 log/
 images/
 .env
-.env.example
-*.ts
-tsconfig.json
-tsup.config.ts
-README.md
+.env.local
+.env.*.local
 vendor/

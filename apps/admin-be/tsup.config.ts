@@ -2,7 +2,7 @@ import { defineConfig } from "tsup"
 
 export default defineConfig({
     entry: {
-        index: "src/server.ts",
+        index: "src/app.ts",
     },
     format: ["cjs"],
     splitting: false,
