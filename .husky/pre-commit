@@ -1,0 +1,5 @@
+# lint-staged runs prettier and eslint on staged files
+echo "Running lint-staged..."
+pnpm lint-staged
+
+echo "All checks passed ✅"

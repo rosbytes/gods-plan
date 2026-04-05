@@ -1,0 +1,33 @@
+{
+    "name": "@ros/admin-be",
+    "module": "index.ts",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "dev": "tsx watch src/server.ts",
+        "build": "tsc -b --clean && tsc -b",
+        "start": "node dist/src/server.js"
+    },
+    "dependencies": {
+        "@trpc/server": "^11.14.1",
+        "cors": "^2.8.6",
+        "dotenv": "^17.3.1",
+        "drizzle-orm": "^0.45.1",
+        "express": "^5.2.1",
+        "jsonwebtoken": "^9.0.3",
+        "libphonenumber-js": "^1.12.40",
+        "postgres": "^3.4.8",
+        "redis": "^5.11.0",
+        "winston": "^3.19.0",
+        "zod": "^4.3.6"
+    },
+    "devDependencies": {
+        "@types/cors": "^2.8.19",
+        "@types/express": "^5.0.6",
+        "@types/jsonwebtoken": "^9.0.10",
+        "@types/node": "^25.5.0",
+        "drizzle-kit": "^0.31.10",
+        "tsx": "^4.21.0",
+        "typescript": "^5.9.3"
+    }
+}
