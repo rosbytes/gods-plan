@@ -113,7 +113,7 @@ export default function CreateStore() {
                     className="flex w-full items-center gap-4 rounded-[18px] bg-white px-5 py-4 text-left shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-60"
                 >
                     <div
-                        className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${location ? "bg-[#135B47]" : "bg-[#E8F3F0]"}`}
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${location ? "bg-[#135B47]" : "bg-[#E8F3F0]"}`}
                     >
                         <svg
                             width="20"
@@ -158,7 +158,7 @@ export default function CreateStore() {
 
             {/* Continue Button — only appears when form is valid */}
             {isFormValid && (
-                <div className="fixed bottom-0 left-0 z-30 w-full bg-gradient-to-t from-[#F5F6F8] via-[#F5F6F8] to-transparent px-5 py-6">
+                <div className="fixed bottom-0 left-0 z-30 w-full bg-linear-to-t from-[#F5F6F8] via-[#F5F6F8] to-transparent px-5 py-6">
                     <button
                         onClick={handleContinue}
                         disabled={saveMutation.isPending}

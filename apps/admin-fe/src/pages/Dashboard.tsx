@@ -62,15 +62,40 @@ export default function Dashboard() {
                             vendors?.items?.map((vendor: any) => (
                                 <div
                                     key={vendor.id}
-                                    className="flex flex-col rounded-xl border border-gray-50 bg-white p-4 shadow-sm"
+                                    onClick={() => navigate(`/vendor/${vendor.id}`)}
+                                    className="flex cursor-pointer items-center gap-4 rounded-[16px] border border-gray-50 bg-white p-[18px] shadow-sm transition-colors active:bg-gray-50"
                                 >
-                                    <span className="text-[15px] font-bold">{vendor.fullName}</span>
-                                    <span className="mt-1 text-sm text-gray-500">
-                                        {vendor.primaryPhone}
-                                    </span>
-                                    <span className="mt-2 text-xs font-semibold tracking-wider text-gray-400 uppercase">
-                                        {vendor.type.replace("_", " ")}
-                                    </span>
+                                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-gray-200 shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]">
+                                        {vendor.kycDocs?.[0]?.storefrontUrl ? (
+                                            <img
+                                                src={vendor.kycDocs[0].storefrontUrl}
+                                                alt="Storefront avatar"
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="flex h-full w-full items-center justify-center bg-gray-100">
+                                                <svg
+                                                    width="20"
+                                                    height="20"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="#9ca3af"
+                                                    strokeWidth="2"
+                                                >
+                                                    <circle cx="12" cy="12" r="10"></circle>
+                                                    <path d="M12 8v4l3 3"></path>
+                                                </svg>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-[16px] font-bold tracking-tight text-gray-800">
+                                            {vendor.stores?.[0]?.storeName || vendor.fullName}
+                                        </span>
+                                        <span className="mt-0.5 text-[14px] font-medium text-gray-400 capitalize">
+                                            {vendor.type.replace("_", " ")}
+                                        </span>
+                                    </div>
                                 </div>
                             ))
                         )}
@@ -79,7 +104,7 @@ export default function Dashboard() {
             </div>
 
             {/* Floating Action Button */}
-            <div className="fixed bottom-0 left-0 z-30 w-full bg-gradient-to-t from-[#F5F6F8] via-[#F5F6F8] to-transparent px-5 py-6">
+            <div className="fixed bottom-0 left-0 z-30 w-full bg-linear-to-t from-[#F5F6F8] via-[#F5F6F8] to-transparent px-5 py-6">
                 <button
                     onClick={() => navigate("/create-vendor")}
                     className="flex w-full items-center justify-center gap-3 rounded-[18px] bg-[#135B47] py-[18px] text-[16px] font-semibold text-white shadow-md transition-colors hover:bg-[#0f4d3c]"

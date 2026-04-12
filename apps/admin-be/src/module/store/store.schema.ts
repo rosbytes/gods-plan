@@ -21,3 +21,10 @@ export const ZSaveKycSchema = z.object({
 })
 
 export type TSaveKycSchema = z.infer<typeof ZSaveKycSchema>
+
+export const ZGetKycSchema = z.object({
+    vendorId: z.string().uuid(),
+    storeId: z.string().uuid(),
+})
+
+export type TGetKycSchema = z.infer<typeof ZGetKycSchema>

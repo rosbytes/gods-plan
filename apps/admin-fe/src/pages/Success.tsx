@@ -1,7 +1,8 @@
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 
 export default function Success() {
     const navigate = useNavigate()
+    const { vendorId, storeId } = useParams<{ vendorId: string; storeId: string }>()
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-[#F5F6F8] px-6">
@@ -36,7 +37,7 @@ export default function Success() {
             {/* Bottom Button */}
             <div className="fixed bottom-0 left-0 w-full px-5 py-6">
                 <button
-                    onClick={() => navigate("/dashboard")}
+                    onClick={() => navigate(`/payment/${vendorId}/${storeId}`)}
                     className="w-full rounded-[18px] bg-[#135B47] py-[18px] text-[16px] font-semibold text-white shadow-md transition-colors hover:bg-[#0f4d3c]"
                 >
                     Proceed to payment

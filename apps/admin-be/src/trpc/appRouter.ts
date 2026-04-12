@@ -3,6 +3,7 @@ import { z } from "zod"
 import { authRouter } from "../module/auth/auth.route"
 import { storeRouter } from "../module/store/store.route"
 import { vendorRouter } from "../module/vendor/vendor.route"
+import { paymentRouter } from "../module/payment/payment.route"
 
 // Define a simple router
 export const appRouter = router({
@@ -13,6 +14,7 @@ export const appRouter = router({
     auth: authRouter,
     store: storeRouter,
     vendor: vendorRouter,
+    payment: paymentRouter,
 })
 
 // Export type definition of API

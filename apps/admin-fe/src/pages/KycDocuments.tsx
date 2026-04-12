@@ -18,7 +18,7 @@ export default function KycDocuments() {
     const [uploading, setUploading] = useState<{ [key: string]: boolean }>({})
 
     const saveKyc = trpc.store.saveKyc.useMutation({
-        onSuccess: () => navigate("/success"),
+        onSuccess: () => navigate(`/success/${vendorId}/${storeId}`),
         onError: (e) => alert(e.message),
     })
 

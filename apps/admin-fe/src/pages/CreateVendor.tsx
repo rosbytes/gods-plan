@@ -151,7 +151,7 @@ export default function CreateVendor() {
 
             {/* Continue Button — only shows when form is valid */}
             {isFormValid && (
-                <div className="fixed bottom-0 left-0 z-30 w-full bg-gradient-to-t from-[#F5F6F8] via-[#F5F6F8] to-transparent px-5 py-6">
+                <div className="fixed bottom-0 left-0 z-30 w-full bg-linear-to-t from-[#F5F6F8] via-[#F5F6F8] to-transparent px-5 py-6">
                     <button
                         onClick={handleContinue}
                         disabled={createMutation.isPending}

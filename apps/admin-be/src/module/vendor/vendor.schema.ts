@@ -12,3 +12,8 @@ export const ZCreateVendorSchema = z.object({
     type: z.enum(["market_vendor", "mandi_vendor"]),
 })
 export type TCreateVendorSchema = z.infer<typeof ZCreateVendorSchema>
+
+export const ZGetVendorSchema = z.object({
+    vendorId: z.string().uuid("Invalid vendor ID"),
+})
+export type TGetVendorSchema = z.infer<typeof ZGetVendorSchema>

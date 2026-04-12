@@ -1,8 +1,8 @@
 import { TRPCError } from "@trpc/server"
 import { type Context } from "../../trpc"
-import type { TSaveStoreSchema, TSaveKycSchema } from "./store.schema"
+import type { TSaveStoreSchema, TSaveKycSchema, TGetKycSchema } from "./store.schema"
 import { db, admin, vendors, stores, kycDocs } from "../../db"
-import { eq, sql } from "drizzle-orm"
+import { eq, sql, and } from "drizzle-orm"
 
 export async function saveStore({ input }: { input: TSaveStoreSchema; ctx: Context }) {
     try {
@@ -44,6 +44,24 @@ export async function saveKyc({ input }: { input: TSaveKycSchema; ctx: Context }
             .returning()
 
         return { success: true, kyc: kycRecord }
+    } catch (error) {
+        throw new TRPCError({
+            message: error instanceof Error ? error.message : "Database Error",
+            code: "INTERNAL_SERVER_ERROR",
+        })
+    }
+}
+
+export async function getKyc({ input }: { input: TGetKycSchema; ctx: Context }) {
+    try {
+        const result = await db
+            .select()
+            .from(kycDocs)
+            .where(and(eq(kycDocs.vendorId, input.vendorId), eq(kycDocs.storeId, input.storeId)))
+            .limit(1)
+
+        if (!result.length) throw new TRPCError({ message: "KYC not found", code: "NOT_FOUND" })
+        return { kyc: result[0] }
     } catch (error) {
         throw new TRPCError({
             message: error instanceof Error ? error.message : "Database Error",

@@ -25,7 +25,11 @@ const envSchema = z.object({
     CLOUDINARY_API_KEY: z.string().nonempty(),
     CLOUDINARY_API_SECRET: z.string().nonempty(),
 
-    VERCEL: z.string().optional(),
+    // Razorpay Credentials
+    RAZORPAY_KEY_ID: z.string().nonempty(),
+    RAZORPAY_KEY_SECRET: z.string().nonempty(),
+
+    VERCEL: z.coerce.boolean(),
 
     //  User Token Credentials
     // USER_JWT_ACCESS_TOKEN_SECRET: z.string().nonempty(),
