@@ -1,0 +1,30 @@
+@font-face {
+  font-family: "Roquen";
+  src: url("/fonts/Roquen_DEMO.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@import "tailwindcss";
+
+@theme {
+  --font-roquen: "Roquen", sans-serif;
+}
+
+.circle {
+  clip-path: circle(25%);
+}
+
+.custom-apercu {
+  font-family: var(--font-apercu), sans-serif;
+}
+.custom-capcut {
+  font-family: var(--font-capcut), sans-serif;
+}
+.custom-montagu {
+  font-family: var(--font-montagu), serif;
+}
+.custom-roquen {
+  font-family: var(--font-roquen), sans-serif;
+}
