@@ -1,0 +1,47 @@
+{
+    "name": "@ros/db",
+    "version": "0.0.0",
+    "type": "module",
+    "private": true,
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.mts",
+            "import": "./dist/index.mjs",
+            "default": "./dist/index.mjs"
+        }
+    },
+    "scripts": {
+        "dev": "echo 'Add dev script here'",
+        "build": "pnpm typecheck && tsdown",
+        "test": "echo 'Add test script here'",
+        "lint": "echo 'Add lint script here'",
+        "typecheck": "tsc --noEmit",
+        "db:up": "drizzle-kit up --config drizzle-dev.config.ts",
+        "db:push": "drizzle-kit push --config drizzle-dev.config.ts",
+        "db:pull": "drizzle-kit pull --config drizzle-dev.config.ts",
+        "db:export": "drizzle-kit export --config=drizzle-dev.config.ts",
+        "db:studio": "drizzle-kit studio --verbose --config drizzle-dev.config.ts",
+        "db:migrate": "drizzle-kit migrate --config drizzle-dev.config.ts",
+        "db:generate": "drizzle-kit generate --config drizzle-dev.config.ts",
+        "db:prod:up": "drizzle-kit up --config drizzle-prod.config.ts",
+        "db:prod:migrate": "drizzle-kit migrate --config drizzle-prod.config.ts",
+        "db:prod:generate": "drizzle-kit generate --config drizzle-prod.config.ts",
+        "db:drop": "drizzle-kit drop --config drizzle-dev.config.ts",
+        "db:build": "node --env-file=.env -r esbuild-register ./build_data.ts",
+        "db:prod:drop": "drizzle-kit drop --config drizzle-prod.config.ts",
+        "db:prod:build": "node --env-file=.env.prod -r esbuild-register ./build_data.ts"
+    },
+    "dependencies": {
+        "dotenv": "^17.4.2",
+        "drizzle-orm": "^0.45.2",
+        "postgres": "^3.4.9",
+        "zod": "^4.4.3"
+    },
+    "devDependencies": {
+        "@types/node": "^26.0.1",
+        "drizzle-kit": "^0.31.10",
+        "tsdown": "^0.22.3",
+        "tsx": "^4.22.4",
+        "typescript": "^6.0.3"
+    }
+}
