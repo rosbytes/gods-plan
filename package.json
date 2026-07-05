@@ -1,5 +1,5 @@
 {
-    "name": "ros",
+    "name": "@ros",
     "private": true,
     "scripts": {
         "build": "turbo build",
