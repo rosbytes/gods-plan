@@ -1,29 +1,40 @@
 import { pgTable, uuid, varchar } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 import { timestamps } from "../common-utils/columnHelpers"
+import { mandiStore } from "./mandiStore"
+import { mandiPrice } from "./mandiPrice"
+import { admin } from "./admin"
 
 export const veg = pgTable("veg", {
     id: uuid("id").primaryKey().defaultRandom(),
 
-    name: varchar({ length: 500 }).notNull(),
+    name: varchar({ length: 500 }).notNull().unique(),
     nameInHindi: varchar({ length: 255 }),
 
     // image that represent the veg
     vegPrimaryImage: varchar({ length: 500 }),
     // TODO: apply max length of array
-    vegImageGalley: varchar({ length: 500 }).array(),
+    vegImageGallery: varchar({ length: 500 }).array(),
+
+    createdBy: uuid("created_by").references(() => admin.id, { onDelete: "set null" }),
+
     ...timestamps,
 })
 
 export const vegRelations = relations(veg, ({ one, many }) => ({
-    // city: one(city, {
-    //     fields: [veg.city],
-    //     references: [city.id],
-    // }),
-    // stores: many(stores),
-    // kycDocs: many(kycDocs),
-    // createdBy: one(admin, {
-    // fields: [vendors.createdBy],
-    // references: [admin.id],
-    // }),
+    // stores selling this veg
+    mandiStores: many(mandiStore),
+
+    // price records for this veg
+    mandiPrices: many(mandiPrice),
+
+    // admin who created this veg entry
+    admin: one(admin, {
+        fields: [veg.createdBy],
+        references: [admin.id],
+    }),
 }))
+
+// Inferred types
+export type VegInsert = typeof veg.$inferInsert
+export type VegSelect = typeof veg.$inferSelect

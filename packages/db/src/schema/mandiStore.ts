@@ -1,17 +1,24 @@
 import { relations } from "drizzle-orm"
-import { pgTable, uuid, doublePrecision, varchar, integer } from "drizzle-orm/pg-core"
+import { pgTable, uuid, doublePrecision, varchar } from "drizzle-orm/pg-core"
 import { timestamps } from "../common-utils/columnHelpers"
 import { mandiVendor } from "./mandiVendor"
+import { mandi } from "./mandi"
 import { veg } from "./veg"
+import { mandiPrice } from "./mandiPrice"
 
 export const mandiStore = pgTable("mandi_store", {
     id: uuid("id").primaryKey().defaultRandom(),
+
+    mandiId: uuid("mandi_id")
+        .references(() => mandi.id, { onDelete: "restrict" })
+        .notNull(),
+
     mandiVendorId: uuid("mandi_vendor_id")
-        .references(() => mandiVendor.id)
+        .references(() => mandiVendor.id, { onDelete: "cascade" })
         .notNull(),
 
     vegId: uuid("veg_id")
-        .references(() => veg.id)
+        .references(() => veg.id, { onDelete: "restrict" })
         .notNull(),
 
     // mandi store's latitude and longitude
@@ -25,16 +32,29 @@ export const mandiStore = pgTable("mandi_store", {
     ...timestamps,
 })
 
-export const mandiStoresRelations = relations(mandiStore, ({ one }) => ({
+export const mandiStoresRelations = relations(mandiStore, ({ one, many }) => ({
+    // mandi this store belongs to
+    mandi: one(mandi, {
+        fields: [mandiStore.mandiId],
+        references: [mandi.id],
+    }),
+
     // vendor/owner of this store
     mandiVendor: one(mandiVendor, {
         fields: [mandiStore.mandiVendorId],
         references: [mandiVendor.id],
     }),
 
-    // veg this store sales
+    // veg this store sells
     veg: one(veg, {
         fields: [mandiStore.vegId],
         references: [veg.id],
     }),
+
+    // price history for this store
+    mandiPrices: many(mandiPrice),
 }))
+
+// Inferred types
+export type MandiStoreInsert = typeof mandiStore.$inferInsert
+export type MandiStoreSelect = typeof mandiStore.$inferSelect

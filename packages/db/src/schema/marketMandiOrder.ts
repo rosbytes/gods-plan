@@ -5,6 +5,8 @@ import { marketStore } from "./marketStore"
 import { mandiStore } from "./mandiStore"
 import { veg } from "./veg"
 import { marketMandiOrderStatus } from "../common-utils/enums"
+import { marketMandiOrderStatusHistory } from "./marketMandiOrderStatusHistory"
+import { marketMandiOrderPayment } from "./marketMandiOrderPayment"
 
 // Market Place the order on Mandi
 export const marketMandiOrder = pgTable("market_mandi_order", {
@@ -15,16 +17,16 @@ export const marketMandiOrder = pgTable("market_mandi_order", {
 
     // stores reference
     marketStoreId: uuid("market_store_id")
-        .references(() => marketStore.id)
+        .references(() => marketStore.id, { onDelete: "restrict" })
         .notNull(),
 
     mandiStoreId: uuid("mandi_store_id")
-        .references(() => mandiStore.id)
+        .references(() => mandiStore.id, { onDelete: "restrict" })
         .notNull(),
 
     // vegie reference
     vegId: uuid("veg_id")
-        .references(() => veg.id)
+        .references(() => veg.id, { onDelete: "restrict" })
         .notNull(),
 
     // snapshots (store names/product names can change later — freeze them here)
@@ -41,12 +43,12 @@ export const marketMandiOrder = pgTable("market_mandi_order", {
 
     // order lifecycle
     status: marketMandiOrderStatus("status").notNull().default("pending"),
-    confirmedAt: timestamp("confirmed_at", { withTimezone: true }), // see note below
+    confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
 
     ...timestamps,
 })
 
-export const marketMandiOrderRelations = relations(marketMandiOrder, ({ one }) => ({
+export const marketMandiOrderRelations = relations(marketMandiOrder, ({ one, many }) => ({
     marketStore: one(marketStore, {
         fields: [marketMandiOrder.marketStoreId],
         references: [marketStore.id],
@@ -59,4 +61,14 @@ export const marketMandiOrderRelations = relations(marketMandiOrder, ({ one }) =
         fields: [marketMandiOrder.vegId],
         references: [veg.id],
     }),
+
+    // status change history for this order
+    statusHistory: many(marketMandiOrderStatusHistory),
+
+    // payments for this order
+    payments: many(marketMandiOrderPayment),
 }))
+
+// Inferred types
+export type MarketMandiOrderInsert = typeof marketMandiOrder.$inferInsert
+export type MarketMandiOrderSelect = typeof marketMandiOrder.$inferSelect

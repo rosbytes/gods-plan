@@ -1,10 +1,4 @@
-// import { z } from "zod"
-
 import { pgEnum } from "drizzle-orm/pg-core"
-
-// export const vendorType = ["market_vendor", "mandi_vendor"] as const
-// export const ZVendorType = z.enum(vendorType)
-// export type TVendorType = z.infer<typeof ZVendorType>
 
 const marketMandiOrderStatusEnum = [
     "pending",
@@ -20,3 +14,12 @@ export const marketMandiOrderStatus = pgEnum(
     "market_mandi_order_status",
     marketMandiOrderStatusEnum,
 )
+
+const adminRoleEnum = ["super_admin", "admin", "operator"] as const
+export const adminRole = pgEnum("admin_role", adminRoleEnum)
+
+const paymentStatusEnum = ["pending", "success", "failed", "refunded"] as const
+export const paymentStatus = pgEnum("payment_status", paymentStatusEnum)
+
+const paymentMethodEnum = ["upi", "card", "net_banking", "cash"] as const
+export const paymentMethod = pgEnum("payment_method", paymentMethodEnum)

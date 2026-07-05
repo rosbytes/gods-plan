@@ -9,7 +9,7 @@ export const mandiVendor = pgTable("mandi_vendor", {
     id: uuid("id").primaryKey().defaultRandom(),
     mandiId: uuid("mandi_id")
         .notNull()
-        .references(() => mandi.id),
+        .references(() => mandi.id, { onDelete: "restrict" }),
 
     fullName: varchar("full_name", { length: 255 }).notNull(),
     // phone should of length 15
@@ -23,11 +23,9 @@ export const mandiVendor = pgTable("mandi_vendor", {
     lat: doublePrecision().notNull(),
     lng: doublePrecision().notNull(),
 
-    // image that represent the mandi
-    // mandiImage: varchar({ length: 500 }),
     createdBy: uuid("created_by")
         .notNull()
-        .references(() => admin.id),
+        .references(() => admin.id, { onDelete: "restrict" }),
 
     ...timestamps,
 })
@@ -48,3 +46,7 @@ export const mandiVendorRelations = relations(mandiVendor, ({ one, many }) => ({
         references: [admin.id],
     }),
 }))
+
+// Inferred types
+export type MandiVendorInsert = typeof mandiVendor.$inferInsert
+export type MandiVendorSelect = typeof mandiVendor.$inferSelect

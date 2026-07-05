@@ -6,16 +6,18 @@ import { admin } from "./admin"
 
 export const city = pgTable("city", {
     id: uuid("id").primaryKey().defaultRandom(),
-    city: varchar({ length: 255 }).notNull(),
+    name: varchar({ length: 255 }).notNull(),
+    state: varchar({ length: 255 }).notNull(),
+    pincode: varchar({ length: 10 }),
 
     // image that represent the city
     cityImage: varchar("city_image", { length: 500 }),
-    createdBy: uuid("created_by").references(() => admin.id),
+    createdBy: uuid("created_by").references(() => admin.id, { onDelete: "set null" }),
     ...timestamps,
 })
 
 export const cityRelations = relations(city, ({ one, many }) => ({
-    mandi: many(mandi),
+    mandis: many(mandi),
 
     // this city is created by which admin
     admin: one(admin, {
@@ -23,3 +25,7 @@ export const cityRelations = relations(city, ({ one, many }) => ({
         references: [admin.id],
     }),
 }))
+
+// Inferred types
+export type CityInsert = typeof city.$inferInsert
+export type CitySelect = typeof city.$inferSelect

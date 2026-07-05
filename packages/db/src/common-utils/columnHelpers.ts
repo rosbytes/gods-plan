@@ -8,4 +8,5 @@ export const timestamps = {
         .$onUpdate(() => new Date())
         // .$onUpdate(() =>  sql`CURRENT_TIMESTAMP`)
         .notNull(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
 }

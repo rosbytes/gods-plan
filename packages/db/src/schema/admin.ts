@@ -1,24 +1,42 @@
 import { relations } from "drizzle-orm"
-import { pgTable, uuid, varchar } from "drizzle-orm/pg-core"
+import { boolean, pgTable, uuid, varchar } from "drizzle-orm/pg-core"
 import { timestamps } from "../common-utils/columnHelpers"
+import { adminRole } from "../common-utils/enums"
 import { city } from "./city"
+import { mandi } from "./mandi"
 import { mandiVendor } from "./mandiVendor"
+import { marketVendor } from "./marketVendor"
+import { veg } from "./veg"
 
 export const admin = pgTable("admin", {
     id: uuid("id").primaryKey().defaultRandom(),
     // first name and last name, last could be null
     name: varchar("name", { length: 255 }).notNull(),
+    email: varchar({ length: 255 }).unique(),
     // phone length, ideally should be 15
     phone: varchar({ length: 20 }).unique().notNull(),
-    pin: varchar({ length: 6 }),
-    // TODO: Create role and permission based access and necessary db field for that
+    // 4 digit pin
+    pin: varchar({ length: 4 }),
+
+    role: adminRole("role").notNull().default("admin"),
+    isActive: boolean("is_active").notNull().default(true),
+
     ...timestamps,
 })
 
 export const adminRelations = relations(admin, ({ many }) => ({
-    // city created by this admin
-    city: many(city),
-
+    // cities created by this admin
+    cities: many(city),
+    // mandis created by this admin
+    mandis: many(mandi),
     // mandiVendors created by this admin
-    mandiVendor: many(mandiVendor),
+    mandiVendors: many(mandiVendor),
+    // marketVendors created by this admin
+    marketVendors: many(marketVendor),
+    // vegs created by this admin
+    vegs: many(veg),
 }))
+
+// Inferred types
+export type AdminInsert = typeof admin.$inferInsert
+export type AdminSelect = typeof admin.$inferSelect

@@ -2,14 +2,18 @@ import { relations } from "drizzle-orm"
 import { pgTable, uuid, integer, doublePrecision, varchar } from "drizzle-orm/pg-core"
 import { timestamps } from "../common-utils/columnHelpers"
 import { marketVendor } from "./marketVendor"
-// import { kycDocs } from "./kycDocs"
+import { city } from "./city"
 
 export const marketStore = pgTable("market_store", {
     id: uuid("id").primaryKey().defaultRandom(),
 
-    marketVendorId: uuid("vendor_id")
+    marketVendorId: uuid("market_vendor_id")
         .notNull()
-        .references(() => marketVendor.id),
+        .references(() => marketVendor.id, { onDelete: "cascade" }),
+
+    cityId: uuid("city_id")
+        .notNull()
+        .references(() => city.id, { onDelete: "restrict" }),
 
     lat: doublePrecision().notNull(),
     lng: doublePrecision().notNull(),
@@ -19,19 +23,25 @@ export const marketStore = pgTable("market_store", {
 
     fullAddress: varchar("full_address", { length: 500 }).notNull(),
     // serving capacity radius in meters
-    radiusKm: integer("radius_km").default(4000),
+    radiusM: integer("radius_m").default(4000),
 
     ...timestamps,
 })
 
 export const marketStoreRelations = relations(marketStore, ({ one }) => ({
-    // vendor  owner of this store
+    // vendor/owner of this store
     marketVendor: one(marketVendor, {
         fields: [marketStore.marketVendorId],
         references: [marketVendor.id],
     }),
-    // kycDocs: one(kycDocs, {
-    //     fields: [marketStore.id],
-    //     references: [kycDocs.storeId],
-    // }),
+
+    // city this store is in
+    city: one(city, {
+        fields: [marketStore.cityId],
+        references: [city.id],
+    }),
 }))
+
+// Inferred types
+export type MarketStoreInsert = typeof marketStore.$inferInsert
+export type MarketStoreSelect = typeof marketStore.$inferSelect

@@ -31,3 +31,7 @@ export const marketMandiOrderStatusHistoryRelations = relations(
         }),
     }),
 )
+
+// Inferred types
+export type MarketMandiOrderStatusHistoryInsert = typeof marketMandiOrderStatusHistory.$inferInsert
+export type MarketMandiOrderStatusHistorySelect = typeof marketMandiOrderStatusHistory.$inferSelect

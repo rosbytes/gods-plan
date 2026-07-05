@@ -9,16 +9,20 @@ import { admin } from "./admin"
 export const mandi = pgTable("mandi", {
     id: uuid("id").primaryKey().defaultRandom(),
 
+    name: varchar({ length: 255 }).notNull(),
+
     cityId: uuid("city_id")
-        .references(() => city.id)
+        .references(() => city.id, { onDelete: "restrict" })
         .notNull(),
     createdBy: uuid("created_by")
-        .references(() => admin.id)
+        .references(() => admin.id, { onDelete: "restrict" })
         .notNull(),
 
     // mandi's latitude and longitude
     lat: doublePrecision().notNull(),
     lng: doublePrecision().notNull(),
+
+    fullAddress: varchar("full_address", { length: 500 }),
 
     // image that represent the mandi
     mandiImage: varchar("mandi_image", { length: 500 }),
@@ -31,13 +35,20 @@ export const mandiRelations = relations(mandi, ({ one, many }) => ({
         fields: [mandi.cityId],
         references: [city.id],
     }),
-    // mandi vendors of this mandi
-    mandiVendor: many(mandiVendor),
 
-    // stores: many(stores),
-    // kycDocs: many(kycDocs),
-    // createdBy: one(admin, {
-    // fields: [vendors.createdBy],
-    // references: [admin.id],
-    // }),
+    // admin who created this mandi
+    admin: one(admin, {
+        fields: [mandi.createdBy],
+        references: [admin.id],
+    }),
+
+    // mandi vendors of this mandi
+    mandiVendors: many(mandiVendor),
+
+    // stores in this mandi
+    mandiStores: many(mandiStore),
 }))
+
+// Inferred types
+export type MandiInsert = typeof mandi.$inferInsert
+export type MandiSelect = typeof mandi.$inferSelect
