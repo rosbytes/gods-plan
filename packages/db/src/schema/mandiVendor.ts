@@ -1,20 +1,23 @@
 import { doublePrecision, pgTable, uuid, varchar } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 import { timestamps } from "../common-utils/columnHelpers"
-import { city } from "./city"
 import { mandi } from "./mandi"
 import { admin } from "./admin"
+import { mandiStore } from "./mandiStore"
 
 export const mandiVendor = pgTable("mandi_vendor", {
     id: uuid("id").primaryKey().defaultRandom(),
-    mandi: uuid("store_id")
+    mandiId: uuid("mandi_id")
         .notNull()
         .references(() => mandi.id),
 
-    fullName: varchar({ length: 255 }).notNull(),
+    fullName: varchar("full_name", { length: 255 }).notNull(),
     // phone should of length 15
-    primaryPhone: varchar({ length: 20 }).unique().notNull(),
-    alternatePhone: varchar({ length: 20 }),
+    primaryPhone: varchar("primary_phone", { length: 20 }).unique().notNull(),
+    alternatePhone: varchar("alternate_phone", { length: 20 }),
+
+    // 4 digit pin
+    pin: varchar({ length: 4 }),
 
     // mandi_vendor's latitude and longitude
     lat: doublePrecision().notNull(),
@@ -30,14 +33,18 @@ export const mandiVendor = pgTable("mandi_vendor", {
 })
 
 export const mandiVendorRelations = relations(mandiVendor, ({ one, many }) => ({
-    city: one(city, {
-        fields: [mandiVendor.mandi],
-        references: [city.id],
+    // stores of this vendor
+    mandiStores: many(mandiStore),
+
+    // mandi of this vendor
+    mandi: one(mandi, {
+        fields: [mandiVendor.mandiId],
+        references: [mandi.id],
     }),
-    // stores: many(stores),
-    // kycDocs: many(kycDocs),
-    // createdBy: one(admin, {
-    // fields: [vendors.createdBy],
-    // references: [admin.id],
-    // }),
+
+    // admin who created this vendor
+    admin: one(admin, {
+        fields: [mandiVendor.createdBy],
+        references: [admin.id],
+    }),
 }))
