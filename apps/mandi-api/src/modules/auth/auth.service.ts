@@ -1,6 +1,6 @@
-import { db, admin, eq } from "@ros/db"
+import { db, eq, mandiVendor } from "@ros/db"
 
-export const findAdminByPhone = async ({ phone }: { phone: string }) => {
-    const [adminRecord] = await db.select().from(admin).where(eq(admin.phone, phone))
-    return adminRecord
+export const findMandiVendorByPhone = async ({ phone }: { phone: string }) => {
+    const [vendor] = await db.select().from(mandiVendor).where(eq(mandiVendor.primaryPhone, phone))
+    return vendor
 }

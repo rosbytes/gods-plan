@@ -26,7 +26,8 @@ const zPhone = z
  * */
 export const ZLoginSchema = z.object({
     phone: zPhone,
-    pin: z.string().min(4).max(6),
+    // a string of 4 length and each character to be digit
+    pin: z.string().regex(/^\d{4}$/),
 })
 
 export type TLoginSchema = z.infer<typeof ZLoginSchema>

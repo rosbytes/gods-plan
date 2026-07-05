@@ -2,9 +2,10 @@ import { TRPCError } from "@trpc/server"
 import { type Context } from "../../trpc"
 // import { rateLimit } from "../../utils"
 import { type TLoginSchema } from "./auth.schema"
-import { findAdminByPhone } from "./auth.service"
-// import { generateAdminAccessToken } from "../../utils/tokens"
+import { findMandiVendorByPhone } from "./auth.service"
+import { generateAccessToken } from "../../utils/tokens"
 import { logger } from "../../configs"
+import { compareMandiVendorPassword } from "@ros/commons"
 
 export async function login({ input, ctx }: { input: TLoginSchema; ctx: Context }) {
     try {
@@ -12,8 +13,8 @@ export async function login({ input, ctx }: { input: TLoginSchema; ctx: Context 
         // await rateLimit(`rateLimit:login:phone:${input.phone}`, 2, 120)
 
         // check if admin already exists
-        const adminExists = await findAdminByPhone({ phone: input.phone })
-        if (!adminExists) {
+        const vendorExists = await findMandiVendorByPhone({ phone: input.phone })
+        if (!vendorExists) {
             throw new TRPCError({
                 message: "Admin not available",
                 code: "UNAUTHORIZED",
@@ -21,7 +22,7 @@ export async function login({ input, ctx }: { input: TLoginSchema; ctx: Context 
         }
 
         // check if admin pin is correct
-        if (adminExists.pin !== input.pin) {
+        if (!compareMandiVendorPassword(input.pin, vendorExists.pin!)) {
             throw new TRPCError({
                 message: "Invalid pin",
                 code: "UNAUTHORIZED",
@@ -29,10 +30,10 @@ export async function login({ input, ctx }: { input: TLoginSchema; ctx: Context 
         }
 
         // generate access token and refresh token
-        // const accessToken = generateAdminAccessToken({ id: adminExists.id })
+        const accessToken = generateAccessToken({ id: vendorExists.id })
 
         // set headers
-        // ctx.res.setHeader("Authorization", `Bearer ${accessToken}`)
+        ctx.res.setHeader("Authorization", `Bearer ${accessToken}`)
 
         return { success: true, status: "200 Ok", message: "Login Successful" }
     } catch (error) {
@@ -44,3 +45,5 @@ export async function login({ input, ctx }: { input: TLoginSchema; ctx: Context 
         })
     }
 }
+
+// TODO: forget password

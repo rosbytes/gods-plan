@@ -1,4 +1,4 @@
-import { admin, db, eq, ne } from "@ros/db"
+import { db } from "@ros/db"
 import { router, publicProcedure } from "../../trpc"
 import { ZLoginSchema } from "./auth.schema"
 
@@ -8,6 +8,8 @@ export const authRouter = router({
         const { login } = await import("./auth.controller")
         return login({ input, ctx })
     }),
+
+    // TODO: remove this endpoint, this one is unnnecessary and add health endpoints only
     test: publicProcedure.query(async () => {
         console.log("res")
         const res = await db.execute("SELECT 1")
