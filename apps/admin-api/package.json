@@ -1,5 +1,5 @@
 {
-    "name": "@ros/admin-be",
+    "name": "@ros/admin-api",
     "module": "index.ts",
     "type": "module",
     "private": true,

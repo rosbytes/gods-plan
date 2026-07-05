@@ -30,12 +30,10 @@ export const uploadMedia = async (req: Request, res: Response) => {
         return res.status(200).json({ success: true, url: result.secure_url })
     } catch (error) {
         logger.error("Media Upload Error:", error)
-        return res
-            .status(500)
-            .json({
-                success: false,
-                message: "Internal server error",
-                error: error instanceof Error ? error.message : error,
-            })
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error instanceof Error ? error.message : error,
+        })
     }
 }
