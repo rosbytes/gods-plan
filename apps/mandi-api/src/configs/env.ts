@@ -10,6 +10,12 @@ const envSchema = z.object({
     NODE_ENV: z.enum(["development", "production"]),
 
     VERCEL: z.enum(["true", "false"]).transform((value) => value === "true"),
+
+    // Tokens
+    JWT_ACCESS_TOKEN_SECRET: z.string().nonempty(),
+    JWT_ACCESS_TOKEN_EXPIRY: z.string().nonempty(),
+    JWT_REFRESH_TOKEN_SECRET: z.string().nonempty(),
+    JWT_REFRESH_TOKEN_EXPIRY: z.string().nonempty(),
 })
 
 const createEnv = (env: NodeJS.ProcessEnv) => {
