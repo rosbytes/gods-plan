@@ -1,5 +1,5 @@
 {
-    "name": "@ros/mandi-app",
+    "name": "@ros/mandi",
     "private": true,
     "version": "0.0.0",
     "type": "module",
