@@ -17,17 +17,22 @@ const baseFormat = format.combine(
     format.metadata({ fillExcept: ["timestamp", "level", "message", "stack"] }),
 )
 
-const isProduction = env.NODE_ENV === "production" || !!process.env.VERCEL
+const isProduction = env.NODE_ENV === "production" || !!env.VERCEL
+
+const consoleFormat = format.combine(
+    format.colorize({ all: true }),
+    format.printf(({ timestamp, level, message }) => `${timestamp} [${level}]: ${message}`),
+)
 
 const loggerTransports: (transports.FileTransportInstance | transports.ConsoleTransportInstance)[] =
     isProduction
-        ? [new transports.Console()]
+        ? [new transports.Console({ format: consoleFormat })]
         : [
               new transports.File({
                   filename: "log/app.log",
                   format: format.json(),
               }),
-              new transports.Console(),
+              new transports.Console({ format: consoleFormat }),
           ]
 
 export const logger = createLogger({

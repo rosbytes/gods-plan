@@ -29,7 +29,7 @@ const envSchema = z.object({
     RAZORPAY_KEY_ID: z.string().nonempty(),
     RAZORPAY_KEY_SECRET: z.string().nonempty(),
 
-    VERCEL: z.coerce.boolean(),
+    VERCEL: z.enum(["true", "false"]).transform((value) => value === "true"),
 
     //  User Token Credentials
     // USER_JWT_ACCESS_TOKEN_SECRET: z.string().nonempty(),
