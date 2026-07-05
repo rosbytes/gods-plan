@@ -9,6 +9,7 @@ export default defineConfig({
     sourcemap: true,
     clean: false,
     bundle: true,
+    // noExternal bundles all the external lib code in the bundlepnpm
     noExternal: [/.*/],
     outDir: "./dist",
     outExtension: () => ({ js: ".cjs" }),

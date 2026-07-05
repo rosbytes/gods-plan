@@ -2,12 +2,12 @@
     "compilerOptions": {
         // Environment setup & latest features
         "lib": ["ESNext"],
-        "target": "ES2022",
-        "module": "commonjs",
+        "target": "esnext",
+        "module": "esnext",
         "moduleDetection": "force",
         "jsx": "react-jsx",
         "allowJs": true,
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "esModuleInterop": true,
         "noEmit": false,
         "outDir": "dist",
