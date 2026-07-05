@@ -3,6 +3,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express"
 import { appRouter, createContext } from "./trpc"
 import cors from "cors"
 import { env, logger } from "./configs"
+import { testConnection } from "@ros/db"
 
 const app: Express = express()
 
@@ -21,6 +22,7 @@ app.use("/trpc", createExpressMiddleware({ router: appRouter, createContext }))
 if (env.NODE_ENV !== "production") {
     app.listen(env.SERVER_PORT, async () => {
         logger.info(`Server is running on port: ${env.SERVER_PORT}`)
+        await testConnection()
         // await connectCache()
     })
 }
