@@ -1,8 +1,8 @@
 import { relations } from "drizzle-orm"
 import { pgTable, uuid, varchar } from "drizzle-orm/pg-core"
 import { timestamps } from "../common-utils/columnHelpers"
-// import { vendors } from "./vendors"
-// import { registrationCharges } from "./registrationCharges"
+import { city } from "./city"
+import { mandiVendor } from "./mandiVendor"
 
 export const admin = pgTable("admin", {
     id: uuid("id").primaryKey().defaultRandom(),
@@ -16,6 +16,9 @@ export const admin = pgTable("admin", {
 })
 
 export const adminRelations = relations(admin, ({ many }) => ({
-    // vendors: many(vendors),
-    // registrationCharges: many(registrationCharges),
+    // city created by this admin
+    city: many(city),
+
+    // mandiVendors created by this admin
+    mandiVendor: many(mandiVendor),
 }))
