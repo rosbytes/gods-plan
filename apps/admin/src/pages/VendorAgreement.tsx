@@ -37,6 +37,22 @@ export default function VendorAgreement() {
         ? formatPhone(vendorData.vendor.primaryPhone)
         : ""
 
+    const sendOtp = async (phone: string) => {
+        if (!phone) return
+        setSending(true)
+        setError("")
+        try {
+            const verifier = recaptchaRef.current!
+            const confirmation = await signInWithPhoneNumber(auth, phone, verifier)
+            setConfirmationResult(confirmation)
+        } catch (err: any) {
+            console.error("OTP Send Error:", err)
+            setError(err.message || "Failed to send OTP")
+        } finally {
+            setSending(false)
+        }
+    }
+
     useEffect(() => {
         if (phoneNumber && !recaptchaRef.current) {
             try {
@@ -65,22 +81,6 @@ export default function VendorAgreement() {
             }
         }
     }, [phoneNumber])
-
-    const sendOtp = async (phone: string) => {
-        if (!phone) return
-        setSending(true)
-        setError("")
-        try {
-            const verifier = recaptchaRef.current!
-            const confirmation = await signInWithPhoneNumber(auth, phone, verifier)
-            setConfirmationResult(confirmation)
-        } catch (err: any) {
-            console.error("OTP Send Error:", err)
-            setError(err.message || "Failed to send OTP")
-        } finally {
-            setSending(false)
-        }
-    }
 
     const handleOtpChange = (index: number, value: string) => {
         if (!/^[0-9]?$/.test(value)) return
