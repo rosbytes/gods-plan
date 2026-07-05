@@ -1,0 +1,26 @@
+{
+    "name": "@ros/commons",
+    "version": "0.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "echo 'Add dev script here'",
+        "build": "pnpm typecheck && tsdown",
+        "test": "echo 'Add test script here'",
+        "lint": "echo 'Add lint script here'",
+        "typecheck": "tsc --noEmit"
+    },
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.mts",
+            "import": "./dist/index.mjs",
+            "default": "./dist/index.mjs"
+        }
+    },
+    "dependencies": {
+        "bcryptjs": "^3.0.3",
+        "tsdown": "^0.22.3"
+    },
+    "devDependencies": {
+        "@types/node": "^26.1.0"
+    }
+}
