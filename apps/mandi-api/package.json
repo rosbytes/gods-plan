@@ -16,10 +16,12 @@
     "license": "ISC",
     "dependencies": {
         "@ros/db": "workspace:*",
+        "@ros/commons": "workspace:*",
         "@trpc/server": "^11.14.1",
         "cors": "^2.8.6",
         "dotenv": "^17.3.1",
         "express": "^5.2.1",
+        "jsonwebtoken": "^9.0.3",
         "libphonenumber-js": "^1.12.40",
         "winston": "^3.19.0",
         "zod": "^4.4.3"
@@ -27,6 +29,7 @@
     "devDependencies": {
         "@types/cors": "^2.8.19",
         "@types/express": "^5.0.6",
+        "@types/jsonwebtoken": "^9.0.10",
         "@types/node": "^26.0.1",
         "tsdown": "^0.22.3",
         "tsx": "^4.21.0",
