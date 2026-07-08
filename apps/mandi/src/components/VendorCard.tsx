@@ -1,13 +1,4 @@
-interface Vendor {
-    id: string
-    name: string
-    quantity: number
-    status: "order-picked" | "cancelled" | "running-late" | "active"
-    hasAvatar?: boolean
-    totalBill?: number
-    pickupTime?: string
-    avatarUrl?: string
-}
+import type { Vendor } from "@/types"
 
 interface VendorListProps {
     vendors: Vendor[]

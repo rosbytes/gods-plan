@@ -1,25 +1,77 @@
 import { Routes, Route } from "react-router-dom"
-import Home from "./pages/Home"
-import Login from "./pages/Login"
-import Orders from "./pages/Orders"
-import Payment from "./pages/Payment"
-import Transaction from "./pages/Transaction"
-import Finance from "./pages/Finance"
-import Search from "./pages/Search"
-import Profile from "./pages/Profile"
-import "./App.css"
+import ProtectedRoute from "@/components/ProtectedRoute"
+import Home from "@/pages/Home"
+import Login from "@/pages/Login"
+import Orders from "@/pages/Orders"
+import Payment from "@/pages/Payment"
+import Transaction from "@/pages/Transaction"
+import Finance from "@/pages/Finance"
+import Search from "@/pages/Search"
+import Profile from "@/pages/Profile"
 
 function App() {
     return (
         <Routes>
-            <Route path="/" element={<Home />} />
+            {/* Public */}
             <Route path="/login" element={<Login />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="/payment" element={<Payment />} />
-            <Route path="/transaction" element={<Transaction />} />
-            <Route path="/finance" element={<Finance />} />
-            <Route path="/search" element={<Search />} />
-            <Route path="/profile" element={<Profile />} />
+
+            {/* Protected */}
+            <Route
+                path="/"
+                element={
+                    <ProtectedRoute>
+                        <Home />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/orders"
+                element={
+                    <ProtectedRoute>
+                        <Orders />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/payment"
+                element={
+                    <ProtectedRoute>
+                        <Payment />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/transaction"
+                element={
+                    <ProtectedRoute>
+                        <Transaction />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/finance"
+                element={
+                    <ProtectedRoute>
+                        <Finance />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/search"
+                element={
+                    <ProtectedRoute>
+                        <Search />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/profile"
+                element={
+                    <ProtectedRoute>
+                        <Profile />
+                    </ProtectedRoute>
+                }
+            />
         </Routes>
     )
 }

@@ -1,33 +1,13 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
+import { formatTransactionDate } from "@/libs/utils"
 
 type TransactionStatus = "processing" | "success" | "failed"
 
 function simulateTransactionResult(): Promise<TransactionStatus> {
     return new Promise((resolve) => {
-        setTimeout(() => {
-            const n = Math.floor(Math.random() * 6)
-            resolve(n % 2 === 0 ? "success" : "failed")
-        }, 1000)
+        setTimeout(() => resolve(Math.random() > 0.5 ? "success" : "failed"), 1000)
     })
-}
-
-function getCurrentDate(): string {
-    const now = new Date()
-    const formatter = new Intl.DateTimeFormat("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-    })
-    const parts = formatter.formatToParts(now)
-    const day = parts.find((p) => p.type === "day")?.value
-    const month = parts.find((p) => p.type === "month")?.value
-    const year = parts.find((p) => p.type === "year")?.value
-    const time = formatter.format(now).split(", ")[1]
-    return `${day} ${month}, ${year} | ${time}`
 }
 
 export default function TransactionPage() {
@@ -42,15 +22,14 @@ export default function TransactionPage() {
     const totalBill = searchParams.get("totalBill") || "0"
     const quantity = searchParams.get("quantity") || "0"
     const paymentMethod = searchParams.get("paymentMethod") || "UPI QR"
-
     const [transactionId] = useState(() => `${vendorId}${Date.now().toString().slice(-6)}`)
 
     const details = {
         to: "ROS@ybl",
         from: "9028465360@UPI",
-        transactionId: transactionId,
-        paymentMethod: paymentMethod,
-        date: getCurrentDate(),
+        transactionId,
+        paymentMethod,
+        date: formatTransactionDate(),
         amount: `₹ ${totalBill}`,
     }
 
@@ -74,21 +53,20 @@ export default function TransactionPage() {
         success: { bg: "bg-[#59AC77]", label: "Payment Successful", btnLabel: "Payment Received" },
         failed: { bg: "bg-[#E21931]", label: "Payment Failed", btnLabel: "Back to payment" },
     }
-
     const cfg = statusConfig[status]
 
     return (
         <>
             <style>{`
-        @keyframes scaleIn { 0% { transform: scale(0); opacity: 0; } 70% { transform: scale(1.12); } 100% { transform: scale(1); opacity: 1; } }
-        @keyframes pulsate { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.08); opacity: 0.8; } }
-        @keyframes bounceDot { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }
-        .icon-scale-in { animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-        .icon-pulsate { animation: pulsate 1.4s ease-in-out infinite; }
-        .dot1 { animation: bounceDot 1.2s ease-in-out infinite 0ms; }
-        .dot2 { animation: bounceDot 1.2s ease-in-out infinite 150ms; }
-        .dot3 { animation: bounceDot 1.2s ease-in-out infinite 300ms; }
-      `}</style>
+                @keyframes scaleIn { 0% { transform: scale(0); opacity: 0; } 70% { transform: scale(1.12); } 100% { transform: scale(1); opacity: 1; } }
+                @keyframes pulsate { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.08); opacity: 0.8; } }
+                @keyframes bounceDot { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }
+                .icon-scale-in { animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+                .icon-pulsate { animation: pulsate 1.4s ease-in-out infinite; }
+                .dot1 { animation: bounceDot 1.2s ease-in-out infinite 0ms; }
+                .dot2 { animation: bounceDot 1.2s ease-in-out infinite 150ms; }
+                .dot3 { animation: bounceDot 1.2s ease-in-out infinite 300ms; }
+            `}</style>
 
             <div className="mx-auto flex min-h-screen max-w-103 flex-col bg-[#F2F3F6] pb-10">
                 <div className="h-12 w-full shrink-0 bg-[#F2F3F6]" />
@@ -131,14 +109,12 @@ export default function TransactionPage() {
                             </svg>
                         )}
                     </div>
-
                     <p className="text-[28px] leading-8 font-bold text-[#000000]">
                         {details.amount}
                     </p>
                     <p className="text-5 text-center leading-6 font-bold text-[#444444]">
                         {cfg.label}
                     </p>
-
                     {status === "processing" && (
                         <div className="mt-1 flex items-center gap-1.5">
                             <span className="dot1 inline-block h-2 w-2 rounded-full bg-[#FE5D27]" />
@@ -163,7 +139,7 @@ export default function TransactionPage() {
                             </p>
                             <button
                                 onClick={handleCopyId}
-                                className="ml-2 shrink-0 transition-opacity active:opacity-50"
+                                className="ml-2 shrink-0 cursor-pointer border-none bg-transparent transition-opacity active:opacity-50"
                                 title="Copy Transaction ID"
                             >
                                 {copied ? (
@@ -211,18 +187,18 @@ export default function TransactionPage() {
                         <button
                             onClick={() => {
                                 if (status === "failed") {
-                                    const queryParams = new URLSearchParams({
+                                    const qp = new URLSearchParams({
                                         vendorId,
                                         vendorName,
                                         totalBill,
                                         quantity,
                                     }).toString()
-                                    navigate(`/payment?${queryParams}`)
+                                    navigate(`/payment?${qp}`)
                                 } else {
                                     navigate("/")
                                 }
                             }}
-                            className="text-5 icon-scale-in h-12.5 w-full rounded-[25px] bg-[#0A5445] font-bold tracking-wide text-white transition-opacity active:opacity-80"
+                            className="text-5 icon-scale-in h-12.5 w-full cursor-pointer rounded-[25px] border-none bg-[#0A5445] font-bold tracking-wide text-white transition-opacity active:opacity-80"
                         >
                             {cfg.btnLabel}
                         </button>
