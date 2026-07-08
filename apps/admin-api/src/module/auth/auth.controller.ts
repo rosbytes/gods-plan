@@ -5,6 +5,7 @@ import { type TLoginSchema } from "./auth.schema"
 import { findAdminByPhone } from "./auth.service"
 import { generateAdminAccessToken } from "../../utils/tokens"
 import { logger } from "../../configs"
+import { comparePassword } from "@ros/commons"
 
 export async function login({ input, ctx }: { input: TLoginSchema; ctx: Context }) {
     try {
@@ -21,7 +22,7 @@ export async function login({ input, ctx }: { input: TLoginSchema; ctx: Context 
         }
 
         // check if admin pin is correct
-        if (adminExists.pin !== input.pin) {
+        if (!adminExists.pin || !comparePassword(input.pin, adminExists.pin)) {
             throw new TRPCError({
                 message: "Invalid pin",
                 code: "UNAUTHORIZED",

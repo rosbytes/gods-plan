@@ -14,7 +14,7 @@ export const marketVendor = pgTable("market_vendor", {
     alternatePhone: varchar("alternate_phone", { length: 20 }),
 
     // 4 digit pin
-    pin: varchar({ length: 4 }),
+    pin: varchar({ length: 255 }),
 
     batch: integer(),
 

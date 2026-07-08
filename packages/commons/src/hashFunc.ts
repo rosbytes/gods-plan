@@ -11,3 +11,13 @@ export const compareMandiVendorPassword = (plainPassword: string, hashPassword: 
     const res = bcrypt.compareSync(plainPassword, hashPassword)
     return res
 }
+
+export const hashAdminPassword = (password: string) => {
+    const hash = bcrypt.hashSync(password, SALT_ROUNDS)
+    return hash
+}
+
+export const compareAdminPassword = (plainPassword: string, hashPassword: string) => {
+    const res = bcrypt.compareSync(plainPassword, hashPassword)
+    return res
+}

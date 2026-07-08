@@ -15,8 +15,8 @@ export const admin = pgTable("admin", {
     email: varchar({ length: 255 }).unique(),
     // phone length, ideally should be 15
     phone: varchar({ length: 20 }).unique().notNull(),
-    // 4 digit pin
-    pin: varchar({ length: 4 }),
+    // 4 digit pin (stored as bcrypt hash)
+    pin: varchar({ length: 255 }),
 
     role: adminRole("role").notNull().default("admin"),
     isActive: boolean("is_active").notNull().default(true),

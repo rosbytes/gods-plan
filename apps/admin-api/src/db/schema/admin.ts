@@ -10,7 +10,7 @@ export const admin = pgTable("admin", {
     name: varchar("name", { length: 255 }).notNull(),
     // phone length, ideally should be 15
     phone: varchar({ length: 20 }).unique().notNull(),
-    pin: varchar({ length: 6 }),
+    pin: varchar({ length: 255 }),
     ...timestamps,
 })
 

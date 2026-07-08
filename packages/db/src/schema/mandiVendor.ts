@@ -16,8 +16,8 @@ export const mandiVendor = pgTable("mandi_vendor", {
     primaryPhone: varchar("primary_phone", { length: 20 }).unique().notNull(),
     alternatePhone: varchar("alternate_phone", { length: 20 }),
 
-    // 4 digit pin
-    pin: varchar({ length: 4 }),
+    // 4 digit pin (stored as bcrypt hash)
+    pin: varchar({ length: 255 }),
 
     // mandi_vendor's latitude and longitude
     lat: doublePrecision().notNull(),

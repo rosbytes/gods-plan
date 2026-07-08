@@ -16,7 +16,9 @@
         "test": "echo 'Add test script here'",
         "lint": "echo 'Add lint script here'",
         "typecheck": "tsc --noEmit",
+        "db:seed": "tsx --env-file=.env ./seed.ts",
         "db:up": "drizzle-kit up --config drizzle-dev.config.ts",
+        "db:drop": "drizzle-kit drop --config drizzle-dev.config.ts",
         "db:push": "drizzle-kit push --config drizzle-dev.config.ts",
         "db:pull": "drizzle-kit pull --config drizzle-dev.config.ts",
         "db:export": "drizzle-kit export --config=drizzle-dev.config.ts",
@@ -25,19 +27,17 @@
         "db:generate": "drizzle-kit generate --config drizzle-dev.config.ts",
         "db:prod:up": "drizzle-kit up --config drizzle-prod.config.ts",
         "db:prod:migrate": "drizzle-kit migrate --config drizzle-prod.config.ts",
-        "db:prod:generate": "drizzle-kit generate --config drizzle-prod.config.ts",
-        "db:drop": "drizzle-kit drop --config drizzle-dev.config.ts",
-        "db:build": "node --env-file=.env -r esbuild-register ./build_data.ts",
-        "db:prod:drop": "drizzle-kit drop --config drizzle-prod.config.ts",
-        "db:prod:build": "node --env-file=.env.prod -r esbuild-register ./build_data.ts"
+        "db:prod:generate": "drizzle-kit generate --config drizzle-prod.config.ts"
     },
     "dependencies": {
+        "bcryptjs": "^3.0.3",
         "dotenv": "^17.4.2",
         "drizzle-orm": "^0.45.2",
         "postgres": "^3.4.9",
         "zod": "^4.4.3"
     },
     "devDependencies": {
+        "@types/bcryptjs": "^2.4.6",
         "@types/node": "^26.0.1",
         "drizzle-kit": "^0.31.10",
         "tsdown": "^0.22.3",
