@@ -1,6 +1,4 @@
-import { pgEnum } from "drizzle-orm/pg-core"
-
-const marketMandiOrderStatusEnum = [
+export const marketMandiOrderStatusEnum = [
     "pending",
     "rejected",
     "confirmed",
@@ -9,17 +7,8 @@ const marketMandiOrderStatusEnum = [
     "cancelled",
 ] as const
 
-// db Enums
-export const marketMandiOrderStatus = pgEnum(
-    "market_mandi_order_status",
-    marketMandiOrderStatusEnum,
-)
+export const adminRoleEnum = ["super_admin", "admin", "operator"] as const
 
-const adminRoleEnum = ["super_admin", "admin", "operator"] as const
-export const adminRole = pgEnum("admin_role", adminRoleEnum)
+export const paymentStatusEnum = ["pending", "success", "failed", "refunded"] as const
 
-const paymentStatusEnum = ["pending", "success", "failed", "refunded"] as const
-export const paymentStatus = pgEnum("payment_status", paymentStatusEnum)
-
-const paymentMethodEnum = ["upi", "card", "net_banking", "cash"] as const
-export const paymentMethod = pgEnum("payment_method", paymentMethodEnum)
+export const paymentMethodEnum = ["upi", "card", "net_banking", "cash"] as const

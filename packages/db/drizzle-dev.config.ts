@@ -10,6 +10,6 @@ export default defineConfig({
     },
     casing: "snake_case",
     // extensionsFilters: ["postgis"],
-    verbose: true,
+    verbose: false,
     strict: true,
 })

@@ -1,12 +1,14 @@
 import { relations } from "drizzle-orm"
-import { boolean, pgTable, uuid, varchar } from "drizzle-orm/pg-core"
+import { boolean, pgEnum, pgTable, uuid, varchar } from "drizzle-orm/pg-core"
 import { timestamps } from "../common-utils/columnHelpers"
-import { adminRole } from "../common-utils/enums"
+import { adminRoleEnum } from "../common-utils/enums"
 import { city } from "./city"
 import { mandi } from "./mandi"
 import { mandiVendor } from "./mandiVendor"
 import { marketVendor } from "./marketVendor"
 import { veg } from "./veg"
+
+export const adminRole = pgEnum("admin_role", adminRoleEnum)
 
 export const admin = pgTable("admin", {
     id: uuid("id").primaryKey().defaultRandom(),

@@ -16,12 +16,9 @@ export { marketMandiOrderPayment } from "./schema/marketMandiOrderPayment"
 export { veg } from "./schema/veg"
 
 // Enums
-export {
-    marketMandiOrderStatus,
-    adminRole,
-    paymentStatus,
-    paymentMethod,
-} from "./common-utils/enums"
+export { adminRole } from "./schema/admin"
+export { marketMandiOrderStatus } from "./schema/marketMandiOrder"
+export { paymentStatus, paymentMethod } from "./schema/marketMandiOrderPayment"
 
 // Inferred Types
 export type { AdminInsert, AdminSelect } from "./schema/admin"

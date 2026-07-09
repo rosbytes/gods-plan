@@ -1,8 +1,11 @@
 import { relations } from "drizzle-orm"
-import { integer, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core"
+import { integer, pgEnum, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core"
 import { timestamps } from "../common-utils/columnHelpers"
-import { paymentStatus, paymentMethod } from "../common-utils/enums"
+import { paymentStatusEnum, paymentMethodEnum } from "../common-utils/enums"
 import { marketMandiOrder } from "./marketMandiOrder"
+
+export const paymentStatus = pgEnum("payment_status", paymentStatusEnum)
+export const paymentMethod = pgEnum("payment_method", paymentMethodEnum)
 
 export const marketMandiOrderPayment = pgTable("market_mandi_order_payment", {
     id: uuid("id").primaryKey().defaultRandom(),

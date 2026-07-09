@@ -106,7 +106,7 @@ async function main() {
             console.log("🥦 Seeding Vegetables...")
             const vegetablesList = [
                 {
-                    id: "v1v1v1v1-1111-1111-1111-111111111111",
+                    id: "11111111-1111-1111-1111-111111111111",
                     name: "Tomato",
                     nameInHindi: "टमाटर",
                     vegPrimaryImage: "https://images.unsplash.com/photo-1518977676601-b53f82aba655",
@@ -117,7 +117,7 @@ async function main() {
                     createdBy: superAdminRecord.id,
                 },
                 {
-                    id: "v2v2v2v2-2222-2222-2222-222222222222",
+                    id: "22222222-2222-2222-2222-222222222222",
                     name: "Potato",
                     nameInHindi: "आलू",
                     vegPrimaryImage: "https://images.unsplash.com/photo-1518977676601-b53f82aba655",
@@ -127,7 +127,7 @@ async function main() {
                     createdBy: superAdminRecord.id,
                 },
                 {
-                    id: "v3v3v3v3-3333-3333-3333-333333333333",
+                    id: "33333333-3333-3333-3333-333333333333",
                     name: "Onion",
                     nameInHindi: "प्याज़",
                     vegPrimaryImage: "https://images.unsplash.com/photo-1508747703725-719ae25db29f",
@@ -135,7 +135,7 @@ async function main() {
                     createdBy: superAdminRecord.id,
                 },
                 {
-                    id: "v4v4v4v4-4444-4444-4444-444444444444",
+                    id: "44444444-4444-4444-4444-444444444444",
                     name: "Spinach",
                     nameInHindi: "पालक",
                     vegPrimaryImage: "https://images.unsplash.com/photo-1576045057995-568f588f82fb",
@@ -143,7 +143,7 @@ async function main() {
                     createdBy: superAdminRecord.id,
                 },
                 {
-                    id: "v5v5v5v5-5555-5555-5555-555555555555",
+                    id: "55555555-5555-5555-5555-555555555555",
                     name: "Carrot",
                     nameInHindi: "गाजर",
                     vegPrimaryImage: "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37",
@@ -164,7 +164,7 @@ async function main() {
             const [vashiMandi] = await tx
                 .insert(mandi)
                 .values({
-                    id: "m1m1m1m1-1111-1111-1111-111111111111",
+                    id: "d1d1d1d1-1111-1111-1111-111111111111",
                     name: "Vashi Mandi",
                     cityId: mumbaiCity.id,
                     createdBy: superAdminRecord.id,
@@ -178,7 +178,7 @@ async function main() {
             const [azadpurMandi] = await tx
                 .insert(mandi)
                 .values({
-                    id: "m2m2m2m2-2222-2222-2222-222222222222",
+                    id: "d2d2d2d2-2222-2222-2222-222222222222",
                     name: "Azadpur Mandi",
                     cityId: delhiCity.id,
                     createdBy: superAdminRecord.id,
@@ -200,7 +200,7 @@ async function main() {
             const [mandiVendor1] = await tx
                 .insert(mandiVendor)
                 .values({
-                    id: "mv11mv11-1111-1111-1111-111111111111",
+                    id: "de11de11-1111-1111-1111-111111111111",
                     mandiId: vashiMandi.id,
                     fullName: "Ramesh Kumar",
                     primaryPhone: "+919999999901",
@@ -215,7 +215,7 @@ async function main() {
             const [mandiVendor2] = await tx
                 .insert(mandiVendor)
                 .values({
-                    id: "mv22mv22-2222-2222-2222-222222222222",
+                    id: "de22de22-2222-2222-2222-222222222222",
                     mandiId: azadpurMandi.id,
                     fullName: "Amit Sharma",
                     primaryPhone: "+919999999902",
@@ -237,7 +237,7 @@ async function main() {
             const [tomatoMandiStore] = await tx
                 .insert(mandiStore)
                 .values({
-                    id: "ms11ms11-1111-1111-1111-111111111111",
+                    id: "da11da11-1111-1111-1111-111111111111",
                     mandiId: vashiMandi.id,
                     mandiVendorId: mandiVendor1.id,
                     vegId: seededVegetables[0]!.id, // Tomato
@@ -252,7 +252,7 @@ async function main() {
             const [potatoMandiStore] = await tx
                 .insert(mandiStore)
                 .values({
-                    id: "ms22ms22-2222-2222-2222-222222222222",
+                    id: "da22da22-2222-2222-2222-222222222222",
                     mandiId: azadpurMandi.id,
                     mandiVendorId: mandiVendor2.id,
                     vegId: seededVegetables[1]!.id, // Potato
@@ -272,14 +272,14 @@ async function main() {
             // 2.8. Insert Mandi Prices
             console.log("💰 Seeding Mandi Prices...")
             await tx.insert(mandiPrice).values({
-                id: "mp11mp11-1111-1111-1111-111111111111",
+                id: "df11df11-1111-1111-1111-111111111111",
                 mandiStoreId: tomatoMandiStore.id,
                 vegId: seededVegetables[0]!.id, // Tomato
                 price: 2500, // 25.00 Rs/kg in paise
             })
 
             await tx.insert(mandiPrice).values({
-                id: "mp22mp22-2222-2222-2222-222222222222",
+                id: "df22df22-2222-2222-2222-222222222222",
                 mandiStoreId: potatoMandiStore.id,
                 vegId: seededVegetables[1]!.id, // Potato
                 price: 1800, // 18.00 Rs/kg in paise
@@ -291,7 +291,7 @@ async function main() {
             const [marketVendor1] = await tx
                 .insert(marketVendor)
                 .values({
-                    id: "mkv1mkv1-1111-1111-1111-111111111111",
+                    id: "cde1cde1-1111-1111-1111-111111111111",
                     fullName: "Suresh Patel",
                     primaryPhone: "+918888888801",
                     alternatePhone: "+918888888811",
@@ -304,7 +304,7 @@ async function main() {
             const [marketVendor2] = await tx
                 .insert(marketVendor)
                 .values({
-                    id: "mkv2mkv2-2222-2222-2222-222222222222",
+                    id: "cde2cde2-2222-2222-2222-222222222222",
                     fullName: "Rajesh Verma",
                     primaryPhone: "+918888888802",
                     alternatePhone: null,
@@ -322,7 +322,7 @@ async function main() {
             // 2.10. Insert Market Stores
             console.log("🛒 Seeding Market Stores...")
             await tx.insert(marketStore).values({
-                id: "mks1mks1-1111-1111-1111-111111111111",
+                id: "cab1cab1-1111-1111-1111-111111111111",
                 marketVendorId: marketVendor1.id,
                 cityId: mumbaiCity.id,
                 lat: 19.082,
@@ -334,7 +334,7 @@ async function main() {
             })
 
             await tx.insert(marketStore).values({
-                id: "mks2mks2-2222-2222-2222-222222222222",
+                id: "cab2cab2-2222-2222-2222-222222222222",
                 marketVendorId: marketVendor2.id,
                 cityId: delhiCity.id,
                 lat: 28.625,

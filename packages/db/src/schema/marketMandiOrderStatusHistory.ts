@@ -1,8 +1,13 @@
 import { relations } from "drizzle-orm"
-import { pgTable, uuid, varchar } from "drizzle-orm/pg-core"
+import { pgEnum, pgTable, uuid, varchar } from "drizzle-orm/pg-core"
 import { timestamps } from "../common-utils/columnHelpers"
 import { marketMandiOrder } from "./marketMandiOrder"
-import { marketMandiOrderStatus } from "../common-utils/enums"
+import { marketMandiOrderStatusEnum } from "../common-utils/enums"
+
+export const marketMandiOrderStatus = pgEnum(
+    "market_mandi_order_status",
+    marketMandiOrderStatusEnum,
+)
 
 export const marketMandiOrderStatusHistory = pgTable("market_mandi_order_status_history", {
     id: uuid("id").primaryKey().defaultRandom(),
