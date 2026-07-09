@@ -1,11 +1,11 @@
 import { useState, type ChangeEvent, type KeyboardEvent } from "react"
 import { useNavigate } from "react-router-dom"
 import { trpc } from "@/libs/trpc"
-import { useAuth } from "@/store/auth-context"
+import { useStore } from "@/store"
 
 export default function LoginPage() {
     const navigate = useNavigate()
-    const { login } = useAuth()
+    const login = useStore((state) => state.login)
 
     const [phone, setPhone] = useState("")
     const [pin, setPin] = useState("")

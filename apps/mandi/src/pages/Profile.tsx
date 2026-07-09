@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom"
 import { BackArrowIcon } from "@/components/icons"
-import { useAuth } from "@/store/auth-context"
+import { useStore } from "@/store"
 
 // ─── Page-specific icons (only used here) ───────────────────────────
 function HeadsetIcon() {
@@ -74,7 +74,7 @@ function InfoRow({
 
 export default function Profile() {
     const navigate = useNavigate()
-    const { logout } = useAuth()
+    const logout = useStore((state) => state.logout)
 
     const handleLogout = () => {
         logout()
