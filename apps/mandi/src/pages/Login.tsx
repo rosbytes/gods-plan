@@ -3,6 +3,68 @@ import { useNavigate } from "react-router-dom"
 import { trpc } from "@/libs/trpc"
 import { useStore } from "@/store"
 
+function RosOctagonLogo() {
+    return (
+        <svg
+            width="74"
+            height="64"
+            viewBox="0 0 74 64"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-[64px] w-[74px] shrink-0"
+        >
+            {/* Chamfered Octagon Shape */}
+            <path d="M24 0H50L74 20V44L50 64H24L0 44V20Z" fill="black" />
+            {/* Top Text 'R' */}
+            <text
+                x="37"
+                y="24"
+                fill="white"
+                fontSize="17"
+                fontWeight="900"
+                fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                textAnchor="middle"
+            >
+                R
+            </text>
+            {/* Bottom Text 'O S' (using parenthesis styling for the O) */}
+            <text
+                x="28"
+                y="46"
+                fill="white"
+                fontSize="17"
+                fontWeight="900"
+                fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                textAnchor="middle"
+            >
+                (
+            </text>
+            <text
+                x="34"
+                y="46"
+                fill="white"
+                fontSize="17"
+                fontWeight="900"
+                fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                textAnchor="middle"
+            >
+                )
+            </text>
+            <text
+                x="47"
+                y="46"
+                fill="white"
+                fontSize="17"
+                fontWeight="900"
+                fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                textAnchor="middle"
+            >
+                S
+            </text>
+        </svg>
+    )
+}
+
 export default function LoginPage() {
     const navigate = useNavigate()
     const login = useStore((state) => state.login)
@@ -14,25 +76,27 @@ export default function LoginPage() {
 
     const loginMutation = trpc.auth.login.useMutation({
         onSuccess: (_data, _vars, _ctx) => {
-            // The API sets the token in the Authorization header.
-            // For now we store a placeholder token — once the backend
-            // returns the token in the response body, use that instead.
             login("authenticated")
             navigate("/", { replace: true })
         },
         onError: (error) => {
-            const msg = error.message
-            if (msg.toLowerCase().includes("pin")) {
-                setPinError("Incorrect PIN")
+            const msg = error.message.toLowerCase()
+            if (
+                msg.includes("pin") ||
+                msg.includes("invalid pin") ||
+                msg.includes("unauthorized")
+            ) {
+                setPinError("Incorrect Password")
                 setPin("")
             } else {
-                setPhoneError(msg || "Login failed")
+                setPhoneError("Invalid mobile number")
                 setPhone("")
             }
         },
     })
 
     const bothFilled = phone.trim().length > 0 && pin.trim().length > 0
+    const isLoading = loginMutation.isPending
 
     const onPhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
         setPhone(e.target.value)
@@ -45,29 +109,29 @@ export default function LoginPage() {
     }
 
     const handleLogin = () => {
-        if (!bothFilled) return
+        if (!bothFilled || isLoading) return
         let valid = true
         const trimmedPhone = phone.trim()
 
         // Basic client-side validation
         const allDigits = /^\d+$/.test(trimmedPhone)
-        if (allDigits && trimmedPhone.length !== 10) {
+        const isWithCountryCode =
+            trimmedPhone.startsWith("+91") &&
+            trimmedPhone.slice(3).length === 10 &&
+            /^\d+$/.test(trimmedPhone.slice(3))
+
+        if (!allDigits && !isWithCountryCode) {
             setPhoneError("Invalid mobile number")
             setPhone("")
             valid = false
-        } else if (
-            !allDigits &&
-            (!/^[A-Za-z0-9]+$/.test(trimmedPhone) ||
-                !trimmedPhone.startsWith("ROS") ||
-                trimmedPhone.length !== 10)
-        ) {
-            setPhoneError("Invalid ROS ID")
+        } else if (allDigits && trimmedPhone.length !== 10) {
+            setPhoneError("Invalid mobile number")
             setPhone("")
             valid = false
         }
 
         if (pin.trim().length !== 4 || !/^\d{4}$/.test(pin.trim())) {
-            setPinError("PIN must be 4 digits")
+            setPinError("Incorrect Password")
             setPin("")
             valid = false
         }
@@ -84,112 +148,125 @@ export default function LoginPage() {
         if (e.key === "Enter") handleLogin()
     }
 
-    const inputBase =
-        "block w-[324px] h-[50px] px-4 rounded-xl outline-none appearance-none transition-colors duration-150 " +
-        "font-apercu font-normal text-[20px] leading-[24px] tracking-[0] box-border"
-
-    const inputNormal =
-        inputBase +
-        " border-[1.5px] border-transparent bg-white text-[#111111] " +
-        "placeholder:text-[#AEAFB8] focus:border-[#3D7A6A] shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
-
-    const inputError =
-        inputBase +
-        " border-[1.5px] border-[#C8383A] bg-white text-[#C8383A] " +
-        "placeholder:text-[#C8383A] focus:border-[#C8383A] focus:shadow-[0_0_0_3px_rgba(200,56,58,0.09)]"
-
-    const isLoading = loginMutation.isPending
-
     return (
-        <div className="flex min-h-screen items-stretch justify-center bg-[#EDEEF2] sm:items-center sm:bg-[#D8D9DE]">
-            <div className="relative box-border flex min-h-dvh w-full max-w-107.5 flex-col bg-[#EDEEF2] px-11 sm:shadow-[0_0_60px_rgba(0,0,0,0.18)]">
-                <header className="pt-4.5 pb-0">
-                    <span className="font-apercu text-[20px] leading-6 font-bold tracking-normal text-[#111111]">
+        <div className="flex min-h-screen bg-[#F4F5F8]">
+            {/* Desktop Left Side Brand Panel (Visible on md and up) */}
+            <div className="relative hidden flex-col justify-between overflow-hidden bg-[#0B4E3E] p-12 text-white md:flex md:w-1/2">
+                {/* Background decorative patterns */}
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-teal-200 via-teal-900 to-black opacity-10" />
+
+                <header className="z-10">
+                    <span className="font-apercu text-[24px] font-bold tracking-tight">
                         ROS Mandi 👋
                     </span>
                 </header>
 
-                <main className="flex flex-1 flex-col justify-center pb-27.5">
-                    <div className="mb-12 flex items-center justify-center">
-                        <img
-                            src="/assets/images/roslogo.png"
-                            alt="ROS Mandi"
-                            width={72}
-                            height={60}
-                            className="h-15 w-18 object-contain"
-                        />
+                <main className="z-10 mx-auto flex max-w-lg flex-1 flex-col items-center justify-center gap-6 text-center">
+                    <div className="mb-4 rounded-3xl border border-white/10 bg-white/10 p-6 shadow-lg backdrop-blur-md">
+                        <RosOctagonLogo />
+                    </div>
+                    <h1 className="font-apercu text-4xl leading-tight font-black tracking-tight lg:text-5xl">
+                        Connecting Mandi Vendors Directly
+                    </h1>
+                    <p className="font-apercu text-lg leading-relaxed font-medium text-teal-100/90">
+                        Manage your orders, process payments, and track pricing in real time with
+                        the ROS Mandi vendor platform.
+                    </p>
+                </main>
+
+                <footer className="z-10 text-sm font-medium text-teal-200/60">
+                    © {new Date().getFullYear()} ROS Mandi. All rights reserved.
+                </footer>
+            </div>
+
+            {/* Login Form Panel */}
+            <div className="flex min-h-screen w-full flex-col items-center justify-between bg-[#F4F5F8] px-6 py-6 md:w-1/2 md:p-12">
+                {/* Top Header - Mobile only */}
+                <header className="w-full max-w-[340px] self-center pt-2 text-left md:hidden">
+                    <span className="font-apercu flex items-center gap-1.5 text-[20px] font-bold text-[#111111]">
+                        ROS Mandi 👋
+                    </span>
+                </header>
+
+                {/* Central Form Container */}
+                <main className="flex w-full max-w-[340px] flex-1 flex-col justify-center gap-8">
+                    {/* Logo Section */}
+                    <div className="flex justify-center">
+                        <RosOctagonLogo />
                     </div>
 
-                    <div className="flex flex-col items-center gap-2">
-                        <input
-                            className={phoneError ? inputError : inputNormal}
-                            type="text"
-                            placeholder={phoneError || "Phone number (+91...)"}
-                            value={phone}
-                            onChange={onPhoneChange}
-                            onKeyDown={onKeyDown}
-                            autoComplete="username"
-                            autoCapitalize="none"
-                            spellCheck={false}
-                            disabled={isLoading}
-                        />
-                        <input
-                            className={pinError ? inputError : inputNormal}
-                            type="password"
-                            inputMode="numeric"
-                            maxLength={4}
-                            placeholder={pinError || "4-digit PIN"}
-                            value={pin}
-                            onChange={onPinChange}
-                            onKeyDown={onKeyDown}
-                            autoComplete="current-password"
-                            disabled={isLoading}
-                        />
+                    {/* Inputs and Submit Button */}
+                    <div className="flex flex-col gap-3">
+                        <div className="relative">
+                            <input
+                                className={`font-apercu h-[52px] w-full rounded-xl border-[1.5px] bg-white px-4 text-[18px] text-[#111111] transition-all duration-150 outline-none ${
+                                    phoneError
+                                        ? "border-[#C8383A] placeholder-[#C8383A]"
+                                        : "border-transparent focus:border-[#0B4E3E]"
+                                } shadow-[0_1px_2px_rgba(0,0,0,0.04)]`}
+                                type="text"
+                                placeholder={phoneError || "ROS ID or mobile number"}
+                                value={phone}
+                                onChange={onPhoneChange}
+                                onKeyDown={onKeyDown}
+                                autoComplete="username"
+                                autoCapitalize="none"
+                                spellCheck={false}
+                                disabled={isLoading}
+                            />
+                        </div>
+
+                        <div className="relative">
+                            <input
+                                className={`font-apercu h-[52px] w-full rounded-xl border-[1.5px] bg-white px-4 text-[18px] text-[#111111] transition-all duration-150 outline-none ${
+                                    pinError
+                                        ? "border-[#C8383A] placeholder-[#C8383A]"
+                                        : "border-transparent focus:border-[#0B4E3E]"
+                                } shadow-[0_1px_2px_rgba(0,0,0,0.04)]`}
+                                type="password"
+                                inputMode="numeric"
+                                maxLength={4}
+                                placeholder={pinError || "Password"}
+                                value={pin}
+                                onChange={onPinChange}
+                                onKeyDown={onKeyDown}
+                                autoComplete="current-password"
+                                disabled={isLoading}
+                            />
+                        </div>
+
                         <button
-                            className={
-                                "box-border block h-12.5 w-81 rounded-xl border-none outline-none " +
-                                "font-apercu text-[20px] leading-6 font-bold " +
-                                "text-center tracking-normal transition-all duration-150 " +
-                                (bothFilled && !isLoading
-                                    ? "cursor-pointer bg-[#1E5C50] text-white hover:bg-[#185044] active:scale-[0.990] active:bg-[#144038]"
-                                    : "pointer-events-none cursor-default bg-[#DAE6E3] text-[#4A7A6E]")
-                            }
+                            className={`font-apercu h-[52px] w-full rounded-xl text-center text-[18px] font-bold transition-all duration-150 ${
+                                bothFilled && !isLoading
+                                    ? "cursor-pointer bg-[#0B4E3E] text-white hover:bg-[#093F32] active:scale-[0.985]"
+                                    : "pointer-events-none bg-[#D9E5E2] text-[#4A7A6E]"
+                            }`}
                             onClick={handleLogin}
                             type="button"
                             disabled={!bothFilled || isLoading}
                         >
                             {isLoading ? "Logging in..." : "Log in"}
                         </button>
-                        <span
-                            role="button"
-                            tabIndex={0}
+
+                        <button
+                            type="button"
+                            className="font-apercu mt-2 cursor-pointer self-center border-none bg-transparent text-[16px] font-medium text-[#6B7280] transition-colors duration-150 outline-none hover:text-[#0B4E3E]"
                             onClick={() => {}}
-                            onKeyDown={(e) => e.key === "Enter" && {}}
-                            className={
-                                "font-apercu text-[18px] leading-5.5 font-normal " +
-                                "mt-1 cursor-pointer py-1.5 text-center tracking-normal text-[#7A7C85] " +
-                                "transition-colors duration-150 select-none hover:text-[#1E5C50]"
-                            }
                         >
                             Forgot Password?
-                        </span>
+                        </button>
                     </div>
                 </main>
 
-                <div className="fixed bottom-0 left-1/2 box-border flex w-full max-w-107.5 -translate-x-1/2 justify-center bg-[#EDEEF2] px-5 pt-3 pb-8">
+                {/* Footer Outlined Button */}
+                <footer className="mt-8 w-full max-w-[340px] pb-4 md:mt-0">
                     <button
-                        className={
-                            "block h-12.5 w-81 rounded-xl border-[1.5px] border-[#3D7A6A] " +
-                            "box-border cursor-pointer bg-transparent text-[#1E5C50] outline-none " +
-                            "font-apercu text-[20px] leading-6 font-normal " +
-                            "text-center tracking-normal transition-colors duration-150 " +
-                            "hover:bg-[rgba(61,122,106,0.07)] active:bg-[rgba(61,122,106,0.14)]"
-                        }
+                        className="font-apercu h-[52px] w-full cursor-pointer rounded-xl border-[1.5px] border-[#0B4E3E] bg-transparent text-center text-[18px] font-semibold text-[#0B4E3E] transition-colors duration-150 outline-none hover:bg-[#0B4E3E]/5 active:bg-[#0B4E3E]/10"
                         type="button"
                     >
                         Become a mandi vendor
                     </button>
-                </div>
+                </footer>
             </div>
         </div>
     )
