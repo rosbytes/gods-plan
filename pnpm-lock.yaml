@@ -24,7 +24,7 @@ importers:
         specifier: ^0.7.2
         version: 0.7.2(prettier@3.8.1)
       turbo:
-        specifier: latest
+        specifier: ^2.10.5
         version: 2.10.5
 
   apps/admin:
