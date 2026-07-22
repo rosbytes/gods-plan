@@ -1,9 +1,9 @@
 import { useLocation, Link } from "react-router-dom"
 
-const ACTIVE = "#0A5445"
-const INACTIVE = "#444444"
+export const ACTIVE = "#0B4E3E"
+export const INACTIVE = "#6B7280"
 
-function HomeIcon({ active }: { active: boolean }) {
+export function HomeIcon({ active }: { active: boolean }) {
     return (
         <svg
             width="28"
@@ -26,7 +26,7 @@ function HomeIcon({ active }: { active: boolean }) {
     )
 }
 
-function OrdersIcon({ active }: { active: boolean }) {
+export function OrdersIcon({ active }: { active: boolean }) {
     return (
         <svg
             width="28"
@@ -51,7 +51,7 @@ function OrdersIcon({ active }: { active: boolean }) {
     )
 }
 
-function FinanceIcon({ active }: { active: boolean }) {
+export function FinanceIcon({ active }: { active: boolean }) {
     return active ? (
         <svg
             width="28"
@@ -114,7 +114,7 @@ export default function BottomNavbar() {
 
     return (
         <nav className="fixed right-0 bottom-0 left-0 z-50 border-t border-gray-200 bg-white">
-            <div className="mx-auto flex h-[72px] max-w-[430px] items-center justify-around px-6">
+            <div className="mx-auto flex h-18 max-w-107.5 items-center justify-around px-6">
                 {navItems.map(({ label, path, Icon }) => {
                     const isActive =
                         label === "Home"

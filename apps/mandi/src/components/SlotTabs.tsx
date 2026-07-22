@@ -39,10 +39,10 @@ export default function SlotTabs({ tabs = [], onTabChange }: SlotTabsProps) {
                         <button
                             key={index}
                             onClick={() => handleTabClick(index)}
-                            className={`flex-shrink-0 cursor-pointer rounded-full border-none px-5 py-2 text-[15px] leading-[22px] text-[#111111] transition-all duration-150 ${
+                            className={`shrink-0 cursor-pointer rounded-full border-none px-5 py-2.5 text-[15px] leading-[22px] transition-all duration-150 ${
                                 isActive
-                                    ? "bg-white font-bold shadow-md"
-                                    : "bg-[#E8E9EE] font-medium"
+                                    ? "bg-white font-bold text-[#111111] shadow-[0_2px_4px_rgba(0,0,0,0.06)]"
+                                    : "bg-transparent font-medium text-[#6B7280] hover:text-[#111111]"
                             }`}
                         >
                             {tab.label}

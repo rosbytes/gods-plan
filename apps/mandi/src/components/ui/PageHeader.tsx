@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom"
 import { SearchIcon } from "@/components/icons"
+import { trpc } from "@/libs/trpc"
 
 interface PageHeaderProps {
     title: string
@@ -18,6 +19,11 @@ export default function PageHeader({
     leftElement,
 }: PageHeaderProps) {
     const navigate = useNavigate()
+
+    const { data: profile } = trpc.vendor.getProfile.useQuery(undefined, {
+        retry: false,
+        refetchOnWindowFocus: false,
+    })
 
     return (
         <div className="flex h-12 w-full items-center justify-between bg-[#F2F3F6] px-5">
@@ -38,10 +44,25 @@ export default function PageHeader({
                 )}
                 {showAvatar && (
                     <div
-                        className="flex h-10.5 w-10.5 shrink-0 cursor-pointer items-center justify-center rounded-full bg-[#CBD5E1]"
+                        className="flex h-10.5 w-10.5 shrink-0 cursor-pointer overflow-hidden rounded-full border border-white bg-[#CBD5E1] shadow-sm"
                         onClick={() => navigate("/profile")}
                     >
-                        <span className="font-apercu text-[13px] font-bold text-[#334155]">RO</span>
+                        {profile?.avatarUrl ? (
+                            <img
+                                src={profile.avatarUrl}
+                                alt={profile.fullName}
+                                className="h-full w-full object-cover"
+                            />
+                        ) : (
+                            <span className="font-apercu flex h-full w-full items-center justify-center text-[13px] font-bold text-[#334155]">
+                                {profile?.fullName
+                                    ? profile.fullName
+                                          .split(" ")
+                                          .map((n) => n[0])
+                                          .join("")
+                                    : "RO"}
+                            </span>
+                        )}
                     </div>
                 )}
             </div>

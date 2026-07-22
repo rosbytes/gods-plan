@@ -1,4 +1,5 @@
 import type { Vendor } from "@/types"
+import { Avatar, Button } from "@/components/ui"
 
 interface VendorListProps {
     vendors: Vendor[]
@@ -7,41 +8,7 @@ interface VendorListProps {
     highlightedVendor?: Vendor | null
     view?: "collect" | "pickup"
     onCollect?: () => void
-}
-
-function Avatar({ name, avatarUrl }: { name: string; avatarUrl?: string }) {
-    const initials = name
-        .split(" ")
-        .map((w) => w[0])
-        .slice(0, 2)
-        .join("")
-        .toUpperCase()
-
-    if (avatarUrl) {
-        return (
-            <img
-                src={avatarUrl}
-                alt={name}
-                className="h-11 w-11 shrink-0 rounded-full object-cover"
-            />
-        )
-    }
-
-    return (
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#F2F3F6]">
-            <span
-                style={{
-                    fontFamily: "'Apercu Pro', sans-serif",
-                    fontWeight: 700,
-                    fontSize: 20,
-                    lineHeight: "24px",
-                    color: "#444444",
-                }}
-            >
-                {initials}
-            </span>
-        </div>
-    )
+    paidVendors?: Set<string>
 }
 
 function VendorRow({
@@ -137,36 +104,16 @@ function VendorRow({
                     </div>
 
                     {view === "collect" ? (
-                        <button
+                        <Button
                             onClick={(e) => {
                                 e.stopPropagation()
                                 onCollect?.()
                             }}
-                            className="flex w-full cursor-pointer items-center justify-center rounded-xl border-none bg-[#0A5445] text-white"
-                            style={{
-                                height: 48,
-                                fontFamily: "'Apercu Pro', sans-serif",
-                                fontWeight: 700,
-                                fontSize: 20,
-                                lineHeight: "24px",
-                            }}
                         >
                             Collect Payment
-                        </button>
+                        </Button>
                     ) : (
-                        <div
-                            className="flex w-full items-center justify-center rounded-xl bg-[#DAE6E3] text-center"
-                            style={{
-                                height: 48,
-                                fontFamily: "'Apercu Pro', sans-serif",
-                                fontWeight: 700,
-                                fontSize: 20,
-                                lineHeight: "24px",
-                                color: "#0A5445",
-                            }}
-                        >
-                            Pickup at {vendor.pickupTime}
-                        </div>
+                        <Button variant="status">Pickup at {vendor.pickupTime}</Button>
                     )}
                 </div>
             )}
@@ -176,25 +123,33 @@ function VendorRow({
 
 export function VendorList({
     vendors,
-    selectedVendorId,
+    selectedVendorId: _selectedVendorId,
     onSelectVendor,
     highlightedVendor,
-    view = "collect",
+    view: _view,
     onCollect,
+    paidVendors = new Set(),
 }: VendorListProps) {
+    const isBefore4AM = new Date().getHours() < 4
+
     return (
         <div className="overflow-hidden rounded-lg bg-white">
-            {vendors.map((vendor, index) => (
-                <VendorRow
-                    key={vendor.id}
-                    vendor={vendor}
-                    isLast={index === vendors.length - 1}
-                    isSelected={highlightedVendor?.name === vendor.name}
-                    view={view}
-                    onClick={() => onSelectVendor?.(vendor)}
-                    onCollect={onCollect}
-                />
-            ))}
+            {vendors.map((vendor, index) => {
+                const isRowPickedUp =
+                    vendor.status === "order-picked" || paidVendors.has(vendor.name)
+                const rowView = isBefore4AM || isRowPickedUp ? "pickup" : "collect"
+                return (
+                    <VendorRow
+                        key={vendor.id}
+                        vendor={vendor}
+                        isLast={index === vendors.length - 1}
+                        isSelected={highlightedVendor?.name === vendor.name}
+                        view={rowView}
+                        onClick={() => onSelectVendor?.(vendor)}
+                        onCollect={onCollect}
+                    />
+                )
+            })}
         </div>
     )
 }
