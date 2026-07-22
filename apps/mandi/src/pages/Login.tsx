@@ -2,6 +2,7 @@ import { useState, type ChangeEvent, type KeyboardEvent } from "react"
 import { useNavigate } from "react-router-dom"
 import { trpc } from "@/libs/trpc"
 import { useStore } from "@/store"
+import { Button, Input } from "@/components/ui"
 
 function RosOctagonLogo() {
     return (
@@ -11,7 +12,7 @@ function RosOctagonLogo() {
             viewBox="0 0 74 64"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className="h-[64px] w-[74px] shrink-0"
+            className="h-16 w-18.5 shrink-0"
         >
             {/* Chamfered Octagon Shape */}
             <path d="M24 0H50L74 20V44L50 64H24L0 44V20Z" fill="black" />
@@ -75,8 +76,8 @@ export default function LoginPage() {
     const [pinError, setPinError] = useState("")
 
     const loginMutation = trpc.auth.login.useMutation({
-        onSuccess: (_data, _vars, _ctx) => {
-            login("authenticated")
+        onSuccess: (data) => {
+            login(data.token)
             navigate("/", { replace: true })
         },
         onError: (error) => {
@@ -153,7 +154,7 @@ export default function LoginPage() {
             {/* Desktop Left Side Brand Panel (Visible on md and up) */}
             <div className="relative hidden flex-col justify-between overflow-hidden bg-[#0B4E3E] p-12 text-white md:flex md:w-1/2">
                 {/* Background decorative patterns */}
-                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-teal-200 via-teal-900 to-black opacity-10" />
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-teal-200 via-teal-900 to-black opacity-10" />
 
                 <header className="z-10">
                     <span className="font-apercu text-[24px] font-bold tracking-tight">
@@ -182,14 +183,14 @@ export default function LoginPage() {
             {/* Login Form Panel */}
             <div className="flex min-h-screen w-full flex-col items-center justify-between bg-[#F4F5F8] px-6 py-6 md:w-1/2 md:p-12">
                 {/* Top Header - Mobile only */}
-                <header className="w-full max-w-[340px] self-center pt-2 text-left md:hidden">
+                <header className="w-full max-w-85 self-center pt-2 text-left md:hidden">
                     <span className="font-apercu flex items-center gap-1.5 text-[20px] font-bold text-[#111111]">
                         ROS Mandi 👋
                     </span>
                 </header>
 
                 {/* Central Form Container */}
-                <main className="flex w-full max-w-[340px] flex-1 flex-col justify-center gap-8">
+                <main className="flex w-full max-w-85 flex-1 flex-col justify-center gap-8">
                     {/* Logo Section */}
                     <div className="flex justify-center">
                         <RosOctagonLogo />
@@ -197,56 +198,39 @@ export default function LoginPage() {
 
                     {/* Inputs and Submit Button */}
                     <div className="flex flex-col gap-3">
-                        <div className="relative">
-                            <input
-                                className={`font-apercu h-[52px] w-full rounded-xl border-[1.5px] bg-white px-4 text-[18px] text-[#111111] transition-all duration-150 outline-none ${
-                                    phoneError
-                                        ? "border-[#C8383A] placeholder-[#C8383A]"
-                                        : "border-transparent focus:border-[#0B4E3E]"
-                                } shadow-[0_1px_2px_rgba(0,0,0,0.04)]`}
-                                type="text"
-                                placeholder={phoneError || "ROS ID or mobile number"}
-                                value={phone}
-                                onChange={onPhoneChange}
-                                onKeyDown={onKeyDown}
-                                autoComplete="username"
-                                autoCapitalize="none"
-                                spellCheck={false}
-                                disabled={isLoading}
-                            />
-                        </div>
+                        <Input
+                            type="text"
+                            placeholder="ROS ID or mobile number"
+                            error={phoneError}
+                            value={phone}
+                            onChange={onPhoneChange}
+                            onKeyDown={onKeyDown}
+                            autoComplete="username"
+                            autoCapitalize="none"
+                            spellCheck={false}
+                            disabled={isLoading}
+                        />
 
-                        <div className="relative">
-                            <input
-                                className={`font-apercu h-[52px] w-full rounded-xl border-[1.5px] bg-white px-4 text-[18px] text-[#111111] transition-all duration-150 outline-none ${
-                                    pinError
-                                        ? "border-[#C8383A] placeholder-[#C8383A]"
-                                        : "border-transparent focus:border-[#0B4E3E]"
-                                } shadow-[0_1px_2px_rgba(0,0,0,0.04)]`}
-                                type="password"
-                                inputMode="numeric"
-                                maxLength={4}
-                                placeholder={pinError || "Password"}
-                                value={pin}
-                                onChange={onPinChange}
-                                onKeyDown={onKeyDown}
-                                autoComplete="current-password"
-                                disabled={isLoading}
-                            />
-                        </div>
+                        <Input
+                            type="password"
+                            inputMode="numeric"
+                            maxLength={4}
+                            placeholder="Password"
+                            error={pinError}
+                            value={pin}
+                            onChange={onPinChange}
+                            onKeyDown={onKeyDown}
+                            autoComplete="current-password"
+                            disabled={isLoading}
+                        />
 
-                        <button
-                            className={`font-apercu h-[52px] w-full rounded-xl text-center text-[18px] font-bold transition-all duration-150 ${
-                                bothFilled && !isLoading
-                                    ? "cursor-pointer bg-[#0B4E3E] text-white hover:bg-[#093F32] active:scale-[0.985]"
-                                    : "pointer-events-none bg-[#D9E5E2] text-[#4A7A6E]"
-                            }`}
+                        <Button
                             onClick={handleLogin}
-                            type="button"
                             disabled={!bothFilled || isLoading}
+                            isLoading={isLoading}
                         >
-                            {isLoading ? "Logging in..." : "Log in"}
-                        </button>
+                            Log in
+                        </Button>
 
                         <button
                             type="button"
@@ -259,9 +243,9 @@ export default function LoginPage() {
                 </main>
 
                 {/* Footer Outlined Button */}
-                <footer className="mt-8 w-full max-w-[340px] pb-4 md:mt-0">
+                <footer className="mt-8 w-full max-w-85 pb-4 md:mt-0">
                     <button
-                        className="font-apercu h-[52px] w-full cursor-pointer rounded-xl border-[1.5px] border-[#0B4E3E] bg-transparent text-center text-[18px] font-semibold text-[#0B4E3E] transition-colors duration-150 outline-none hover:bg-[#0B4E3E]/5 active:bg-[#0B4E3E]/10"
+                        className="font-apercu h-13 w-full cursor-pointer rounded-xl border-[1.5px] border-[#0B4E3E] bg-transparent text-center text-[18px] font-semibold text-[#0B4E3E] transition-colors duration-150 outline-none hover:bg-[#0B4E3E]/5 active:bg-[#0B4E3E]/10"
                         type="button"
                     >
                         Become a mandi vendor

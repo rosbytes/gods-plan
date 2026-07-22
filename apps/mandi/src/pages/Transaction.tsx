@@ -15,7 +15,6 @@ export default function TransactionPage() {
     const [searchParams] = useSearchParams()
     const [status, setStatus] = useState<TransactionStatus>("processing")
     const [copied, setCopied] = useState(false)
-    const [visible, setVisible] = useState(false)
 
     const vendorId = searchParams.get("vendorId") || ""
     const vendorName = searchParams.get("vendorName") || "Unknown Vendor"
@@ -36,10 +35,7 @@ export default function TransactionPage() {
     useEffect(() => {
         simulateTransactionResult().then((result) => {
             setStatus(result)
-            setVisible(false)
-            setTimeout(() => setVisible(true), 30)
         })
-        setTimeout(() => setVisible(true), 0)
     }, [])
 
     const handleCopyId = () => {
