@@ -7,7 +7,7 @@ import { generateAccessToken } from "../../utils/tokens"
 import { logger } from "../../configs"
 import { compareMandiVendorPassword } from "@ros/commons"
 
-export async function login({ input, ctx }: { input: TLoginSchema; ctx: Context }) {
+export async function login({ input, ctx: _ctx }: { input: TLoginSchema; ctx: Context }) {
     try {
         // await rateLimit(`rateLimit:login:ip:${ctx.req.ip}`, 5, 60)
         // await rateLimit(`rateLimit:login:phone:${input.phone}`, 2, 120)
@@ -32,10 +32,7 @@ export async function login({ input, ctx }: { input: TLoginSchema; ctx: Context 
         // generate access token and refresh token
         const accessToken = generateAccessToken({ id: vendorExists.id })
 
-        // set headers
-        ctx.res.setHeader("Authorization", `Bearer ${accessToken}`)
-
-        return { success: true, status: "200 Ok", message: "Login Successful" }
+        return { success: true, status: "200 Ok", message: "Login Successful", token: accessToken }
     } catch (error) {
         logger.error(error)
         if (error instanceof TRPCError) throw error

@@ -1,7 +1,6 @@
 import { t } from "./trpc"
 import { logger } from "../configs"
-// import { tokenBucket } from "../utils"
-// import { isUser, isVendor, isBoard } from "../middlewares"
+import { isVendor } from "../middlewares/mandiVendor"
 
 // tRPC Logger for request and response duration, and path of the request
 const trpcLogger = t.middleware(async ({ path, type, next }) => {
@@ -12,15 +11,12 @@ const trpcLogger = t.middleware(async ({ path, type, next }) => {
     return result
 })
 
-// TODO: Review this token Bucket limitter, It is written by AI.
-const globalRateLimit = t.middleware(async ({ ctx, next }) => {
-    // Global limit: 50 capacity, refill 25 tokens every 30 seconds
-    // await tokenBucket(`rateLimit:global:ip:${ctx.req.ip}`, 50, 25, 30)
+// Rate limit placeholder middleware
+const globalRateLimit = t.middleware(async ({ ctx: _ctx, next }) => {
+    // TODO: Rate Limit Logic Here
     return next()
 })
 
 export const router = t.router
 export const publicProcedure = t.procedure.use(trpcLogger).use(globalRateLimit)
-// export const userProcedure = publicProcedure.use(isUser)
-// export const vendorProcedure = publicProcedure.use(isVendor)
-// export const boardProcedure = publicProcedure.use(isBoard)
+export const vendorProcedure = publicProcedure.use(isVendor)
