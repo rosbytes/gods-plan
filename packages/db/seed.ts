@@ -10,6 +10,9 @@ import {
     mandiPrice,
     marketVendor,
     marketStore,
+    marketMandiOrder,
+    marketMandiOrderPayment,
+    marketMandiOrderStatusHistory,
 } from "./src/index"
 
 async function main() {
@@ -27,6 +30,9 @@ async function main() {
         await db.transaction(async (tx) => {
             // 2.1. Clean existing records in reverse dependency order
             console.log("🧹 Cleaning old database records...")
+            await tx.delete(marketMandiOrderPayment)
+            await tx.delete(marketMandiOrderStatusHistory)
+            await tx.delete(marketMandiOrder)
             await tx.delete(mandiPrice)
             await tx.delete(marketStore)
             await tx.delete(marketVendor)
@@ -288,63 +294,428 @@ async function main() {
 
             // 2.9. Insert Market Vendors
             console.log("🤝 Seeding Market Vendors...")
-            const [marketVendor1] = await tx
-                .insert(marketVendor)
-                .values({
+            const marketVendorsList = [
+                {
                     id: "cde1cde1-1111-1111-1111-111111111111",
                     fullName: "Suresh Patel",
                     primaryPhone: "+918888888801",
-                    alternatePhone: "+918888888811",
                     pin: hashedPin,
-                    batch: 1,
+                    slot: 1,
                     createdBy: superAdminRecord.id,
-                })
-                .returning()
-
-            const [marketVendor2] = await tx
-                .insert(marketVendor)
-                .values({
+                },
+                {
                     id: "cde2cde2-2222-2222-2222-222222222222",
                     fullName: "Rajesh Verma",
                     primaryPhone: "+918888888802",
-                    alternatePhone: null,
                     pin: hashedPin,
-                    batch: 1,
+                    slot: 2,
                     createdBy: superAdminRecord.id,
-                })
-                .returning()
+                },
+                {
+                    id: "cde3cde3-3333-3333-3333-333333333333",
+                    fullName: "Sharma Vendor",
+                    primaryPhone: "+918888888803",
+                    pin: hashedPin,
+                    slot: 1,
+                    createdBy: superAdminRecord.id,
+                },
+                {
+                    id: "cde4cde4-4444-4444-4444-444433333333",
+                    fullName: "Aarya Vendor",
+                    primaryPhone: "+918888888804",
+                    pin: hashedPin,
+                    slot: 2,
+                    createdBy: superAdminRecord.id,
+                },
+                {
+                    id: "cde5cde5-5555-5555-5555-555533333333",
+                    fullName: "Bhati Vendor",
+                    primaryPhone: "+918888888805",
+                    pin: hashedPin,
+                    slot: 3,
+                    createdBy: superAdminRecord.id,
+                },
+                {
+                    id: "cde6cde6-6666-6666-6666-666633333333",
+                    fullName: "Bhawani Vendor",
+                    primaryPhone: "+918888888806",
+                    pin: hashedPin,
+                    slot: 4,
+                    createdBy: superAdminRecord.id,
+                },
+                {
+                    id: "cde7cde7-7777-7777-7777-777733333333",
+                    fullName: "Sid Vendor",
+                    primaryPhone: "+918888888807",
+                    pin: hashedPin,
+                    slot: 5,
+                    createdBy: superAdminRecord.id,
+                },
+                {
+                    id: "cde8cde8-8888-8888-8888-888833333333",
+                    fullName: "Rehman Vendor",
+                    primaryPhone: "+918888888808",
+                    pin: hashedPin,
+                    slot: 1,
+                    createdBy: superAdminRecord.id,
+                },
+                {
+                    id: "cde9cde9-9999-9999-9999-999933333333",
+                    fullName: "Hamza Vendor",
+                    primaryPhone: "+918888888809",
+                    pin: hashedPin,
+                    slot: 2,
+                    createdBy: superAdminRecord.id,
+                },
+                {
+                    id: "cdea1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                    fullName: "Maanvi Vendor",
+                    primaryPhone: "+918888888810",
+                    pin: hashedPin,
+                    slot: 3,
+                    createdBy: superAdminRecord.id,
+                },
+                {
+                    id: "cdeb1111-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                    fullName: "Mishra Vendor",
+                    primaryPhone: "+918888888812",
+                    pin: hashedPin,
+                    slot: 4,
+                    createdBy: superAdminRecord.id,
+                },
+                {
+                    id: "cdec1111-cccc-cccc-cccc-cccccccccccc",
+                    fullName: "Noor Vendor",
+                    primaryPhone: "+918888888813",
+                    pin: hashedPin,
+                    slot: 5,
+                    createdBy: superAdminRecord.id,
+                },
+            ]
 
-            if (!marketVendor1 || !marketVendor2) {
-                throw new Error("Failed to create market vendors.")
+            for (const v of marketVendorsList) {
+                await tx.insert(marketVendor).values(v)
             }
             console.log("✅ Market Vendors seeded.")
 
             // 2.10. Insert Market Stores
             console.log("🛒 Seeding Market Stores...")
-            await tx.insert(marketStore).values({
-                id: "cab1cab1-1111-1111-1111-111111111111",
-                marketVendorId: marketVendor1.id,
-                cityId: mumbaiCity.id,
-                lat: 19.082,
-                lng: 72.889,
-                storeName: "Suresh Patel Grocery",
-                storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
-                fullAddress: "Shop 12, Main Street, Kurla, Mumbai",
-                radiusM: 4000,
-            })
+            const marketStoresList = [
+                {
+                    id: "cab1cab1-1111-1111-1111-111111111111",
+                    marketVendorId: "cde1cde1-1111-1111-1111-111111111111",
+                    cityId: mumbaiCity.id,
+                    lat: 19.082,
+                    lng: 72.889,
+                    storeName: "Suresh Patel Grocery",
+                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
+                    fullAddress: "Shop 12, Main Street, Kurla, Mumbai",
+                    radiusM: 4000,
+                },
+                {
+                    id: "cab2cab2-2222-2222-2222-222222222222",
+                    marketVendorId: "cde2cde2-2222-2222-2222-222222222222",
+                    cityId: delhiCity.id,
+                    lat: 28.625,
+                    lng: 77.22,
+                    storeName: "Rajesh Supermarket",
+                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
+                    fullAddress: "Shop 4, Market Complex, Connaught Place, New Delhi",
+                    radiusM: 5000,
+                },
+                {
+                    id: "cab3cab3-3333-3333-3333-333333333333",
+                    marketVendorId: "cde3cde3-3333-3333-3333-333333333333",
+                    cityId: mumbaiCity.id,
+                    lat: 19.083,
+                    lng: 72.89,
+                    storeName: "Sharma Vegetables",
+                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
+                    fullAddress: "Shop 14, Main Road, Vashi, Navi Mumbai",
+                    radiusM: 3000,
+                },
+                {
+                    id: "cab4cab4-4444-4444-4444-444433333333",
+                    marketVendorId: "cde4cde4-4444-4444-4444-444433333333",
+                    cityId: mumbaiCity.id,
+                    lat: 19.084,
+                    lng: 72.891,
+                    storeName: "Aarya Vegetables",
+                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
+                    fullAddress: "Shop 15, Sector 17, Vashi, Navi Mumbai",
+                    radiusM: 3000,
+                },
+                {
+                    id: "cab5cab5-5555-5555-5555-555533333333",
+                    marketVendorId: "cde5cde5-5555-5555-5555-555533333333",
+                    cityId: mumbaiCity.id,
+                    lat: 19.085,
+                    lng: 72.892,
+                    storeName: "Bhati Vegetables",
+                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
+                    fullAddress: "Gala No 5, Market Yard, Vashi, Navi Mumbai",
+                    radiusM: 3000,
+                },
+                {
+                    id: "cab6cab6-6666-6666-6666-666633333333",
+                    marketVendorId: "cde6cde6-6666-6666-6666-666633333333",
+                    cityId: mumbaiCity.id,
+                    lat: 19.086,
+                    lng: 72.893,
+                    storeName: "Bhawani Vegetables",
+                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
+                    fullAddress: "Shop 21, APMC Market, Vashi, Navi Mumbai",
+                    radiusM: 3000,
+                },
+                {
+                    id: "cab7cab7-7777-7777-7777-777733333333",
+                    marketVendorId: "cde7cde7-7777-7777-7777-777733333333",
+                    cityId: mumbaiCity.id,
+                    lat: 19.087,
+                    lng: 72.894,
+                    storeName: "Sid Vegetables",
+                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
+                    fullAddress: "Shop 22, APMC Market, Vashi, Navi Mumbai",
+                    radiusM: 3000,
+                },
+                {
+                    id: "cab8cab8-8888-8888-8888-888833333333",
+                    marketVendorId: "cde8cde8-8888-8888-8888-888833333333",
+                    cityId: mumbaiCity.id,
+                    lat: 19.088,
+                    lng: 72.895,
+                    storeName: "Rehman Vegetables",
+                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
+                    fullAddress: "Gala No 12, APMC Sector 19, Vashi, Navi Mumbai",
+                    radiusM: 3000,
+                },
+                {
+                    id: "cab9cab9-9999-9999-9999-999933333333",
+                    marketVendorId: "cde9cde9-9999-9999-9999-999933333333",
+                    cityId: mumbaiCity.id,
+                    lat: 19.089,
+                    lng: 72.896,
+                    storeName: "Hamza Vegetables",
+                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
+                    fullAddress: "Shop 8, APMC Gate 2, Vashi, Navi Mumbai",
+                    radiusM: 3000,
+                },
+                {
+                    id: "caba1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                    marketVendorId: "cdea1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                    cityId: mumbaiCity.id,
+                    lat: 19.09,
+                    lng: 72.897,
+                    storeName: "Maanvi Vegetables",
+                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
+                    fullAddress: "Shop 9, APMC Gate 2, Vashi, Navi Mumbai",
+                    radiusM: 3000,
+                },
+                {
+                    id: "cabb1111-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                    marketVendorId: "cdeb1111-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                    cityId: mumbaiCity.id,
+                    lat: 19.091,
+                    lng: 72.898,
+                    storeName: "Mishra Vegetables",
+                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
+                    fullAddress: "Shop 10, APMC Gate 2, Vashi, Navi Mumbai",
+                    radiusM: 3000,
+                },
+                {
+                    id: "cabc1111-cccc-cccc-cccc-cccccccccccc",
+                    marketVendorId: "cdec1111-cccc-cccc-cccc-cccccccccccc",
+                    cityId: mumbaiCity.id,
+                    lat: 19.092,
+                    lng: 72.899,
+                    storeName: "Noor Vegetables",
+                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
+                    fullAddress: "Shop 11, APMC Gate 2, Vashi, Navi Mumbai",
+                    radiusM: 3000,
+                },
+            ]
 
-            await tx.insert(marketStore).values({
-                id: "cab2cab2-2222-2222-2222-222222222222",
-                marketVendorId: marketVendor2.id,
-                cityId: delhiCity.id,
-                lat: 28.625,
-                lng: 77.22,
-                storeName: "Rajesh Supermarket",
-                storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
-                fullAddress: "Shop 4, Market Complex, Connaught Place, New Delhi",
-                radiusM: 5000,
-            })
+            for (const s of marketStoresList) {
+                await tx.insert(marketStore).values(s)
+            }
             console.log("✅ Market Stores seeded.")
+
+            // 2.11. Insert Market Mandi Orders (Associated with Dispatch Slots)
+            console.log("📦 Seeding Market Mandi Orders...")
+            const today = new Date()
+            const makeDate = (hour: number, minute: number) => {
+                const d = new Date(today)
+                d.setHours(hour, minute, 0, 0)
+                return d
+            }
+
+            const ordersToSeed = [
+                // Slot 1: 04:00 AM - 04:12 AM (Suresh Patel, Sharma, Rehman)
+                {
+                    orderCode: "ORD-40261",
+                    marketStoreId: "cab1cab1-1111-1111-1111-111111111111",
+                    marketStoreName: "Suresh Patel Grocery",
+                    quantityInGram: 100000,
+                    status: "confirmed" as const,
+                    createdAt: makeDate(4, 0),
+                },
+                {
+                    orderCode: "ORD-40262",
+                    marketStoreId: "cab3cab3-3333-3333-3333-333333333333",
+                    marketStoreName: "Sharma Vegetables",
+                    quantityInGram: 80000,
+                    status: "cancelled" as const,
+                    createdAt: makeDate(4, 0),
+                },
+                {
+                    orderCode: "ORD-40263",
+                    marketStoreId: "cab8cab8-8888-8888-8888-888833333333",
+                    marketStoreName: "Rehman Vegetables",
+                    quantityInGram: 60000,
+                    status: "dispatched" as const,
+                    createdAt: makeDate(4, 5),
+                },
+
+                // Slot 2: 05:00 AM - 05:20 AM (Rajesh Verma, Aarya, Hamza)
+                {
+                    orderCode: "ORD-40264",
+                    marketStoreId: "cab2cab2-2222-2222-2222-222222222222",
+                    marketStoreName: "Rajesh Supermarket",
+                    quantityInGram: 120000,
+                    status: "dispatched" as const,
+                    createdAt: makeDate(5, 0),
+                },
+                {
+                    orderCode: "ORD-40265",
+                    marketStoreId: "cab4cab4-4444-4444-4444-444433333333",
+                    marketStoreName: "Aarya Vegetables",
+                    quantityInGram: 140000,
+                    status: "confirmed" as const,
+                    createdAt: makeDate(5, 8),
+                },
+                {
+                    orderCode: "ORD-40266",
+                    marketStoreId: "cab9cab9-9999-9999-9999-999933333333",
+                    marketStoreName: "Hamza Vegetables",
+                    quantityInGram: 100000,
+                    status: "confirmed" as const,
+                    createdAt: makeDate(5, 6),
+                },
+
+                // Slot 3: 06:00 AM - 06:30 AM (Bhati, Maanvi)
+                {
+                    orderCode: "ORD-40267",
+                    marketStoreId: "cab5cab5-5555-5555-5555-555533333333",
+                    marketStoreName: "Bhati Vegetables",
+                    quantityInGram: 80000,
+                    status: "confirmed" as const,
+                    createdAt: makeDate(6, 4),
+                },
+                {
+                    orderCode: "ORD-40268",
+                    marketStoreId: "caba1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                    marketStoreName: "Maanvi Vegetables",
+                    quantityInGram: 60000,
+                    status: "confirmed" as const,
+                    createdAt: makeDate(6, 2),
+                },
+
+                // Slot 4: 07:00 AM - 07:15 AM (Bhawani, Mishra)
+                {
+                    orderCode: "ORD-40269",
+                    marketStoreId: "cab6cab6-6666-6666-6666-666633333333",
+                    marketStoreName: "Bhawani Vegetables",
+                    quantityInGram: 140000,
+                    status: "confirmed" as const,
+                    createdAt: makeDate(7, 9),
+                },
+                {
+                    orderCode: "ORD-40270",
+                    marketStoreId: "cabb1111-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                    marketStoreName: "Mishra Vegetables",
+                    quantityInGram: 120000,
+                    status: "confirmed" as const,
+                    createdAt: makeDate(7, 11),
+                },
+
+                // Slot 5: 08:00 AM - 08:45 AM (Sid, Noor)
+                {
+                    orderCode: "ORD-40271",
+                    marketStoreId: "cab7cab7-7777-7777-7777-777733333333",
+                    marketStoreName: "Sid Vegetables",
+                    quantityInGram: 120000,
+                    status: "confirmed" as const,
+                    createdAt: makeDate(8, 0),
+                },
+                {
+                    orderCode: "ORD-40272",
+                    marketStoreId: "cabc1111-cccc-cccc-cccc-cccccccccccc",
+                    marketStoreName: "Noor Vegetables",
+                    quantityInGram: 90000,
+                    status: "dispatched" as const,
+                    createdAt: makeDate(8, 5),
+                },
+            ]
+
+            let seededOrdersCount = 0
+            let seededHistoryCount = 0
+            let seededPaymentsCount = 0
+
+            for (const o of ordersToSeed) {
+                const pricePerKgInPaise = 2400
+                const totalAmountInPaise = (o.quantityInGram / 1000) * pricePerKgInPaise
+
+                const [insertedOrder] = await tx
+                    .insert(marketMandiOrder)
+                    .values({
+                        marketStoreId: o.marketStoreId,
+                        mandiStoreId: "da11da11-1111-1111-1111-111111111111", // Ramesh Tomato Wholesale
+                        vegId: "11111111-1111-1111-1111-111111111111", // Tomato
+                        orderCode: o.orderCode,
+                        mandiStoreName: "Ramesh Tomato Wholesale",
+                        marketStoreName: o.marketStoreName,
+                        vegName: "Tomato",
+                        quantityInGram: o.quantityInGram,
+                        pricePerKgInPaise,
+                        totalAmountInPaise,
+                        status: o.status,
+                        confirmedAt: o.createdAt,
+                        createdAt: o.createdAt,
+                    })
+                    .returning()
+
+                if (!insertedOrder) {
+                    throw new Error("Failed to insert order during seeding")
+                }
+
+                seededOrdersCount++
+
+                // Insert Status History
+                await tx.insert(marketMandiOrderStatusHistory).values({
+                    orderId: insertedOrder.id,
+                    status: o.status,
+                    changedByType: "system",
+                    note: "Initial seed status",
+                    createdAt: o.createdAt,
+                })
+                seededHistoryCount++
+
+                // Insert Payment record
+                const isPaid = o.status !== "cancelled"
+                await tx.insert(marketMandiOrderPayment).values({
+                    orderId: insertedOrder.id,
+                    amountInPaise: totalAmountInPaise,
+                    paymentStatus: isPaid ? ("success" as const) : ("failed" as const),
+                    paymentMethod: "upi" as const,
+                    transactionId: `TXN${o.orderCode.replace("ORD-", "")}`,
+                    paidAt: isPaid ? o.createdAt : null,
+                    createdAt: o.createdAt,
+                })
+                seededPaymentsCount++
+            }
+            console.log(
+                `✅ ${seededOrdersCount} Orders, ${seededHistoryCount} History records, and ${seededPaymentsCount} Payments seeded.`,
+            )
         })
 
         console.log("\n📊 Seeding Summary:")
@@ -356,8 +727,11 @@ async function main() {
             { Entity: "Mandi Vendors", Count: 2 },
             { Entity: "Mandi Stores", Count: 2 },
             { Entity: "Mandi Prices", Count: 2 },
-            { Entity: "Market Vendors", Count: 2 },
-            { Entity: "Market Stores", Count: 2 },
+            { Entity: "Market Vendors", Count: 12 },
+            { Entity: "Market Stores", Count: 12 },
+            { Entity: "Market Mandi Orders", Count: 12 },
+            { Entity: "Market Status History", Count: 12 },
+            { Entity: "Market Mandi Payments", Count: 12 },
         ])
 
         console.log("🎉 Database seeding completed successfully!")

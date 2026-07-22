@@ -16,7 +16,7 @@ export const marketVendor = pgTable("market_vendor", {
     // 4 digit pin
     pin: varchar({ length: 255 }),
 
-    batch: integer(),
+    slot: integer(),
 
     createdBy: uuid("created_by")
         .notNull()

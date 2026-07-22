@@ -42,4 +42,4 @@ export type {
 export type { VegInsert, VegSelect } from "./schema/veg"
 
 // DB Utils from drizzle-orm package
-export { eq, ne } from "drizzle-orm"
+export { eq, ne, and, or, gte, lte, gt, lt } from "drizzle-orm"
