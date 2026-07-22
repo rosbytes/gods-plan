@@ -196,7 +196,7 @@ export default function AppLayout({ children, showNav = true, className = "" }: 
                 {/* Mobile View Container */}
                 <div className="md:hidden">
                     <div
-                        className={`relative mx-auto min-h-screen max-w-[430px] bg-[#F2F3F6] ${showNav ? "pb-20" : "pb-10"} ${className}`}
+                        className={`relative mx-auto min-h-screen max-w-107.5 bg-[#F2F3F6] ${showNav ? "pb-20" : "pb-10"} ${className}`}
                     >
                         {/* Status bar spacer */}
                         <div className="h-8" />
@@ -206,7 +206,7 @@ export default function AppLayout({ children, showNav = true, className = "" }: 
                 </div>
 
                 {/* Desktop View Container (Full width responsive layout) */}
-                <div className="mx-auto hidden w-full max-w-6xl flex-grow px-8 py-8 md:block">
+                <div className="mx-auto hidden w-full max-w-6xl grow px-8 py-8 md:block">
                     <main className={className}>{children}</main>
                 </div>
             </div>

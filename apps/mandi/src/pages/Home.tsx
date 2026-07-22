@@ -77,7 +77,7 @@ export default function HomePage() {
 
             {/* Grid Layout: Left Column (Slots + List) & Right Column (Billing detail panel on desktop) */}
             <div className="mt-4 flex flex-col gap-6 lg:flex-row">
-                <div className="min-w-0 flex-grow">
+                <div className="min-w-0 grow">
                     <SlotTabs
                         tabs={SLOTS.map((s) => ({ label: s.label }))}
                         onTabChange={(idx) => {
@@ -86,9 +86,9 @@ export default function HomePage() {
                         }}
                     />
 
-                    <div className="flex items-center gap-[10px] px-4 py-3">
+                    <div className="flex items-center gap-2.5 px-4 py-3">
                         <div className="h-px flex-1 bg-[#EAEBED]" />
-                        <span className="rounded-full border border-[#EAEBED] bg-white px-[14px] py-1 text-[13px] font-medium whitespace-nowrap text-[#444444]">
+                        <span className="rounded-full border border-[#EAEBED] bg-white px-3.5 py-1 text-[13px] font-medium whitespace-nowrap text-[#444444]">
                             {activeSlot.time}
                         </span>
                         <div className="h-px flex-1 bg-[#EAEBED]" />
@@ -114,7 +114,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Right detail dashboard panel (visible on lg screens and up) */}
-                <div className="hidden w-[360px] shrink-0 lg:block">
+                <div className="hidden w-90 shrink-0 lg:block">
                     {selectedVendor ? (
                         <div className="sticky top-8 flex flex-col gap-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                             <div className="flex items-center gap-4">
@@ -180,7 +180,7 @@ export default function HomePage() {
                             )}
                         </div>
                     ) : (
-                        <div className="sticky top-8 flex min-h-[300px] flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-white p-8 text-center shadow-sm">
+                        <div className="sticky top-8 flex min-h-75 flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-white p-8 text-center shadow-sm">
                             <svg
                                 className="mb-4 h-12 w-12 text-gray-300"
                                 fill="none"
@@ -197,7 +197,7 @@ export default function HomePage() {
                             <h3 className="font-apercu text-[16px] font-bold text-gray-900">
                                 No Order Selected
                             </h3>
-                            <p className="font-apercu mt-1.5 max-w-[200px] text-sm leading-relaxed font-medium text-gray-400">
+                            <p className="font-apercu mt-1.5 max-w-50 text-sm leading-relaxed font-medium text-gray-400">
                                 Select a client order on the left to view full billing details and
                                 collect payment.
                             </p>
