@@ -16,6 +16,12 @@ const envSchema = z.object({
     JWT_ACCESS_TOKEN_EXPIRY: z.string().nonempty(),
     JWT_REFRESH_TOKEN_SECRET: z.string().nonempty(),
     JWT_REFRESH_TOKEN_EXPIRY: z.string().nonempty(),
+
+    // AWS S3
+    AWS_REGION: z.string().nonempty(),
+    AWS_ACCESS_KEY_ID: z.string().nonempty(),
+    AWS_SECRET_ACCESS_KEY: z.string().nonempty(),
+    AWS_S3_BUCKET_NAME: z.string().nonempty(),
 })
 
 const createEnv = (env: NodeJS.ProcessEnv) => {
