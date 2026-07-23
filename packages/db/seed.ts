@@ -207,13 +207,10 @@ async function main() {
                 .insert(mandiVendor)
                 .values({
                     id: "de11de11-1111-1111-1111-111111111111",
-                    mandiId: vashiMandi.id,
                     fullName: "Ramesh Kumar",
                     primaryPhone: "+919999999901",
                     alternatePhone: "+919999999911",
                     pin: hashedPin,
-                    lat: 19.0761,
-                    lng: 72.8778,
                     createdBy: superAdminRecord.id,
                 })
                 .returning()
@@ -222,13 +219,10 @@ async function main() {
                 .insert(mandiVendor)
                 .values({
                     id: "de22de22-2222-2222-2222-222222222222",
-                    mandiId: azadpurMandi.id,
                     fullName: "Amit Sharma",
                     primaryPhone: "+919999999902",
                     alternatePhone: null,
                     pin: hashedPin,
-                    lat: 28.614,
-                    lng: 77.2091,
                     createdBy: superAdminRecord.id,
                 })
                 .returning()
@@ -245,7 +239,7 @@ async function main() {
                 .values({
                     id: "da11da11-1111-1111-1111-111111111111",
                     mandiId: vashiMandi.id,
-                    mandiVendorId: mandiVendor1.id,
+                    vendorId: mandiVendor1.id,
                     vegId: seededVegetables[0]!.id, // Tomato
                     lat: 19.0762,
                     lng: 72.8779,
@@ -260,7 +254,7 @@ async function main() {
                 .values({
                     id: "da22da22-2222-2222-2222-222222222222",
                     mandiId: azadpurMandi.id,
-                    mandiVendorId: mandiVendor2.id,
+                    vendorId: mandiVendor2.id,
                     vegId: seededVegetables[1]!.id, // Potato
                     lat: 28.6141,
                     lng: 77.2092,
@@ -403,7 +397,8 @@ async function main() {
             const marketStoresList = [
                 {
                     id: "cab1cab1-1111-1111-1111-111111111111",
-                    marketVendorId: "cde1cde1-1111-1111-1111-111111111111",
+                    vendorId: "cde1cde1-1111-1111-1111-111111111111",
+                    mandiId: vashiMandi.id,
                     cityId: mumbaiCity.id,
                     lat: 19.082,
                     lng: 72.889,
@@ -414,7 +409,8 @@ async function main() {
                 },
                 {
                     id: "cab2cab2-2222-2222-2222-222222222222",
-                    marketVendorId: "cde2cde2-2222-2222-2222-222222222222",
+                    vendorId: "cde2cde2-2222-2222-2222-222222222222",
+                    mandiId: azadpurMandi.id,
                     cityId: delhiCity.id,
                     lat: 28.625,
                     lng: 77.22,
@@ -425,7 +421,8 @@ async function main() {
                 },
                 {
                     id: "cab3cab3-3333-3333-3333-333333333333",
-                    marketVendorId: "cde3cde3-3333-3333-3333-333333333333",
+                    vendorId: "cde3cde3-3333-3333-3333-333333333333",
+                    mandiId: vashiMandi.id,
                     cityId: mumbaiCity.id,
                     lat: 19.083,
                     lng: 72.89,
@@ -436,7 +433,8 @@ async function main() {
                 },
                 {
                     id: "cab4cab4-4444-4444-4444-444433333333",
-                    marketVendorId: "cde4cde4-4444-4444-4444-444433333333",
+                    vendorId: "cde4cde4-4444-4444-4444-444433333333",
+                    mandiId: vashiMandi.id,
                     cityId: mumbaiCity.id,
                     lat: 19.084,
                     lng: 72.891,
@@ -447,7 +445,8 @@ async function main() {
                 },
                 {
                     id: "cab5cab5-5555-5555-5555-555533333333",
-                    marketVendorId: "cde5cde5-5555-5555-5555-555533333333",
+                    vendorId: "cde5cde5-5555-5555-5555-555533333333",
+                    mandiId: vashiMandi.id,
                     cityId: mumbaiCity.id,
                     lat: 19.085,
                     lng: 72.892,
@@ -458,7 +457,8 @@ async function main() {
                 },
                 {
                     id: "cab6cab6-6666-6666-6666-666633333333",
-                    marketVendorId: "cde6cde6-6666-6666-6666-666633333333",
+                    vendorId: "cde6cde6-6666-6666-6666-666633333333",
+                    mandiId: vashiMandi.id,
                     cityId: mumbaiCity.id,
                     lat: 19.086,
                     lng: 72.893,
@@ -469,7 +469,8 @@ async function main() {
                 },
                 {
                     id: "cab7cab7-7777-7777-7777-777733333333",
-                    marketVendorId: "cde7cde7-7777-7777-7777-777733333333",
+                    vendorId: "cde7cde7-7777-7777-7777-777733333333",
+                    mandiId: vashiMandi.id,
                     cityId: mumbaiCity.id,
                     lat: 19.087,
                     lng: 72.894,
@@ -480,7 +481,8 @@ async function main() {
                 },
                 {
                     id: "cab8cab8-8888-8888-8888-888833333333",
-                    marketVendorId: "cde8cde8-8888-8888-8888-888833333333",
+                    vendorId: "cde8cde8-8888-8888-8888-888833333333",
+                    mandiId: vashiMandi.id,
                     cityId: mumbaiCity.id,
                     lat: 19.088,
                     lng: 72.895,
@@ -491,7 +493,8 @@ async function main() {
                 },
                 {
                     id: "cab9cab9-9999-9999-9999-999933333333",
-                    marketVendorId: "cde9cde9-9999-9999-9999-999933333333",
+                    vendorId: "cde9cde9-9999-9999-9999-999933333333",
+                    mandiId: vashiMandi.id,
                     cityId: mumbaiCity.id,
                     lat: 19.089,
                     lng: 72.896,
@@ -502,7 +505,8 @@ async function main() {
                 },
                 {
                     id: "caba1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-                    marketVendorId: "cdea1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                    vendorId: "cdea1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                    mandiId: vashiMandi.id,
                     cityId: mumbaiCity.id,
                     lat: 19.09,
                     lng: 72.897,
@@ -513,7 +517,8 @@ async function main() {
                 },
                 {
                     id: "cabb1111-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-                    marketVendorId: "cdeb1111-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                    vendorId: "cdeb1111-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                    mandiId: vashiMandi.id,
                     cityId: mumbaiCity.id,
                     lat: 19.091,
                     lng: 72.898,
@@ -524,7 +529,8 @@ async function main() {
                 },
                 {
                     id: "cabc1111-cccc-cccc-cccc-cccccccccccc",
-                    marketVendorId: "cdec1111-cccc-cccc-cccc-cccccccccccc",
+                    vendorId: "cdec1111-cccc-cccc-cccc-cccccccccccc",
+                    mandiId: vashiMandi.id,
                     cityId: mumbaiCity.id,
                     lat: 19.092,
                     lng: 72.899,
@@ -572,7 +578,7 @@ async function main() {
                     marketStoreId: "cab8cab8-8888-8888-8888-888833333333",
                     marketStoreName: "Rehman Vegetables",
                     quantityInGram: 60000,
-                    status: "dispatched" as const,
+                    status: "out_for_delivery" as const,
                     createdAt: makeDate(4, 5),
                 },
 
@@ -582,7 +588,7 @@ async function main() {
                     marketStoreId: "cab2cab2-2222-2222-2222-222222222222",
                     marketStoreName: "Rajesh Supermarket",
                     quantityInGram: 120000,
-                    status: "dispatched" as const,
+                    status: "out_for_delivery" as const,
                     createdAt: makeDate(5, 0),
                 },
                 {
@@ -652,7 +658,7 @@ async function main() {
                     marketStoreId: "cabc1111-cccc-cccc-cccc-cccccccccccc",
                     marketStoreName: "Noor Vegetables",
                     quantityInGram: 90000,
-                    status: "dispatched" as const,
+                    status: "out_for_delivery" as const,
                     createdAt: makeDate(8, 5),
                 },
             ]

@@ -13,9 +13,11 @@ export const marketVendor = pgTable("market_vendor", {
     primaryPhone: varchar("primary_phone", { length: 20 }).unique().notNull(),
     alternatePhone: varchar("alternate_phone", { length: 20 }),
 
-    // 4 digit pin
+    // 4 digit pin (stored as bcrypt hash)
     pin: varchar({ length: 255 }),
 
+    // slot is kind of batch, this will contain 10 vendor in a slot/batch then next slot will be assigned to new vendor,
+    // and it will be probably based on sequence like first 10 vendor in slot 1 then 11 - 20 vendor in slot 2
     slot: integer(),
 
     createdBy: uuid("created_by")

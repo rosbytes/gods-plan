@@ -4,15 +4,12 @@ import { timestamps } from "../common-utils/columnHelpers"
 import { marketStore } from "./marketStore"
 import { mandiStore } from "./mandiStore"
 import { veg } from "./veg"
-import { marketMandiOrderStatusEnum } from "../common-utils/enums"
+import { orderStatusEnum } from "../common-utils/enums"
 import { marketMandiOrderStatusHistory } from "./marketMandiOrderStatusHistory"
 import { marketMandiOrderPayment } from "./marketMandiOrderPayment"
 
 // db Enums
-export const marketMandiOrderStatus = pgEnum(
-    "market_mandi_order_status",
-    marketMandiOrderStatusEnum,
-)
+export const marketMandiOrderStatus = pgEnum("market_mandi_order_status", orderStatusEnum)
 
 // Market Place the order on Mandi
 export const marketMandiOrder = pgTable("market_mandi_order", {

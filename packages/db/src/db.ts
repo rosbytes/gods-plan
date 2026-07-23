@@ -13,6 +13,10 @@ import * as marketStoreSchema from "./schema/marketStore"
 import * as marketVendorSchema from "./schema/marketVendor"
 import * as marketMandiOrderPaymentSchema from "./schema/marketMandiOrderPayment"
 import * as vegSchema from "./schema/veg"
+import * as marketKycDocSchema from "./schema/marketKycDoc"
+import * as mandiKycDocSchema from "./schema/mandiKycDoc"
+import * as marketSubscriptionChargesSchema from "./schema/marketSubscriptionCharges"
+import * as mandiSubscriptionChargesSchema from "./schema/mandiSubscriptionCharges"
 
 const client = postgres(env.DATABASE_URL)
 
@@ -41,6 +45,10 @@ export const db = drizzle(client, {
         ...marketVendorSchema,
         ...marketMandiOrderPaymentSchema,
         ...vegSchema,
+        ...marketKycDocSchema,
+        ...mandiKycDocSchema,
+        ...marketSubscriptionChargesSchema,
+        ...mandiSubscriptionChargesSchema,
     },
     casing: "snake_case",
 })

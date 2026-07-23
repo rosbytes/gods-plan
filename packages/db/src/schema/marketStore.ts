@@ -3,11 +3,17 @@ import { pgTable, uuid, integer, doublePrecision, varchar } from "drizzle-orm/pg
 import { timestamps } from "../common-utils/columnHelpers"
 import { marketVendor } from "./marketVendor"
 import { city } from "./city"
+import { mandi } from "./mandi"
 
 export const marketStore = pgTable("market_store", {
     id: uuid("id").primaryKey().defaultRandom(),
 
-    marketVendorId: uuid("market_vendor_id")
+    // assigned mandi to the vendor
+    mandiId: uuid("mandi_id")
+        .references(() => mandi.id, { onDelete: "restrict" })
+        .notNull(),
+
+    vendorId: uuid("vendor_id")
         .notNull()
         .references(() => marketVendor.id, { onDelete: "cascade" }),
 
@@ -15,10 +21,12 @@ export const marketStore = pgTable("market_store", {
         .notNull()
         .references(() => city.id, { onDelete: "restrict" }),
 
+    // market store's latitude and longitude
     lat: doublePrecision().notNull(),
     lng: doublePrecision().notNull(),
 
     storeName: varchar("store_name", { length: 255 }),
+    // url of storefront
     storeImage: varchar("store_image", { length: 500 }),
 
     fullAddress: varchar("full_address", { length: 500 }).notNull(),
@@ -29,9 +37,15 @@ export const marketStore = pgTable("market_store", {
 })
 
 export const marketStoreRelations = relations(marketStore, ({ one }) => ({
+    // mandi this store belongs to
+    mandi: one(mandi, {
+        fields: [marketStore.mandiId],
+        references: [mandi.id],
+    }),
+
     // vendor/owner of this store
     marketVendor: one(marketVendor, {
-        fields: [marketStore.marketVendorId],
+        fields: [marketStore.vendorId],
         references: [marketVendor.id],
     }),
 

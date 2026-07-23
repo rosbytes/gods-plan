@@ -9,11 +9,12 @@ import { mandiPrice } from "./mandiPrice"
 export const mandiStore = pgTable("mandi_store", {
     id: uuid("id").primaryKey().defaultRandom(),
 
+    // assigned mandi to the vendor
     mandiId: uuid("mandi_id")
         .references(() => mandi.id, { onDelete: "restrict" })
         .notNull(),
 
-    mandiVendorId: uuid("mandi_vendor_id")
+    vendorId: uuid("vendor_id")
         .references(() => mandiVendor.id, { onDelete: "cascade" })
         .notNull(),
 
@@ -25,9 +26,11 @@ export const mandiStore = pgTable("mandi_store", {
     lat: doublePrecision().notNull(),
     lng: doublePrecision().notNull(),
 
-    fullAddress: varchar("full_address", { length: 500 }).notNull(),
     storeName: varchar("store_name", { length: 255 }),
+    // url of storefront
     storeImage: varchar("store_image", { length: 500 }),
+
+    fullAddress: varchar("full_address", { length: 500 }).notNull(),
 
     ...timestamps,
 })
@@ -41,7 +44,7 @@ export const mandiStoresRelations = relations(mandiStore, ({ one, many }) => ({
 
     // vendor/owner of this store
     mandiVendor: one(mandiVendor, {
-        fields: [mandiStore.mandiVendorId],
+        fields: [mandiStore.vendorId],
         references: [mandiVendor.id],
     }),
 
