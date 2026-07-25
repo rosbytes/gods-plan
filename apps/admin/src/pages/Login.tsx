@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { trpc } from "../lib/trpc"
+import ROSLogo from "../assets/logo/ros-black.svg"
 
 export default function Login() {
     const navigate = useNavigate()
@@ -44,7 +45,7 @@ export default function Login() {
             {/* Main Content Container */}
             <div className="flex flex-1 flex-col items-center justify-center px-6">
                 {/* Logo */}
-                <div
+                {/* <div
                     className="mb-12 flex h-20 w-20 flex-col items-center justify-center bg-black leading-none text-white"
                     style={{
                         clipPath: "polygon(28% 0%, 72% 0%, 100% 50%, 72% 100%, 28% 100%, 0% 50%)",
@@ -54,7 +55,11 @@ export default function Login() {
                     <div className="flex items-center text-[1.3rem] font-bold tracking-widest">
                         <span className="mr-[1px] tracking-tighter">()</span>S
                     </div>
-                </div>
+                </div> */}
+                <img
+                    src={ROSLogo}
+                    className="mb-12 flex h-20 w-20 flex-col items-center justify-center bg-transparent leading-none text-white"
+                />
 
                 {/* Login Form */}
                 <form className="flex w-full max-w-[320px] flex-col gap-4" onSubmit={handleLogin}>
