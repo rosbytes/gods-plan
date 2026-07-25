@@ -63,7 +63,7 @@ export async function getSlotOrders({ vendorId, slotId }: { vendorId: string; sl
             })
             .from(marketMandiOrder)
             .innerJoin(marketStore, eq(marketMandiOrder.marketStoreId, marketStore.id))
-            .innerJoin(marketVendor, eq(marketStore.marketVendorId, marketVendor.id))
+            .innerJoin(marketVendor, eq(marketStore.vendorId, marketVendor.id))
             .where(
                 and(eq(marketMandiOrder.mandiStoreId, store.id), eq(marketVendor.slot, slotNumber)),
             )
@@ -75,7 +75,7 @@ export async function getSlotOrders({ vendorId, slotId }: { vendorId: string; sl
                 statusStr = "order-picked"
             } else if (o.status === "cancelled" || o.status === "rejected") {
                 statusStr = "cancelled"
-            } else if (o.status === "dispatched") {
+            } else if (o.status === "out_for_delivery") {
                 statusStr = "running-late"
             } else if (o.status === "pending") {
                 statusStr = "active"
@@ -171,7 +171,7 @@ export async function getGroupedOrders({ vendorId, date }: { vendorId: string; d
             })
             .from(marketMandiOrder)
             .innerJoin(marketStore, eq(marketMandiOrder.marketStoreId, marketStore.id))
-            .innerJoin(marketVendor, eq(marketStore.marketVendorId, marketVendor.id))
+            .innerJoin(marketVendor, eq(marketStore.vendorId, marketVendor.id))
             .where(
                 and(
                     eq(marketMandiOrder.mandiStoreId, store.id),
@@ -209,7 +209,7 @@ export async function getGroupedOrders({ vendorId, date }: { vendorId: string; d
                 statusStr = "order-picked"
             } else if (o.status === "cancelled" || o.status === "rejected") {
                 statusStr = "cancelled"
-            } else if (o.status === "dispatched") {
+            } else if (o.status === "out_for_delivery") {
                 statusStr = "running-late"
             } else if (o.status === "pending") {
                 statusStr = "active"
@@ -274,7 +274,7 @@ export async function getSlots(vendorId: string, date: string) {
             })
             .from(marketMandiOrder)
             .innerJoin(marketStore, eq(marketMandiOrder.marketStoreId, marketStore.id))
-            .innerJoin(marketVendor, eq(marketStore.marketVendorId, marketVendor.id))
+            .innerJoin(marketVendor, eq(marketStore.vendorId, marketVendor.id))
             .where(
                 and(
                     eq(marketMandiOrder.mandiStoreId, store.id),

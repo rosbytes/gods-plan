@@ -1,7 +1,7 @@
 import { db, eq, mandiPrice, mandiStore, mandiVendor, marketMandiOrder } from "@ros/db"
 
 export const getMandiStore = async (vendorId: string) => {
-    const [store] = await db.select().from(mandiStore).where(eq(mandiStore.mandiVendorId, vendorId))
+    const [store] = await db.select().from(mandiStore).where(eq(mandiStore.vendorId, vendorId))
     return store
 }
 
