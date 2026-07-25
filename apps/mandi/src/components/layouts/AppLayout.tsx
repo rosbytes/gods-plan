@@ -3,6 +3,7 @@ import { useLocation, Link, useNavigate } from "react-router-dom"
 import BottomNavbar, { HomeIcon, OrdersIcon, FinanceIcon } from "@/components/BottomNavbar"
 import { useStore } from "@/store"
 import { trpc } from "@/libs/trpc"
+import ROSLogo from "../../assets/logos/ros-black.svg"
 
 interface AppLayoutProps {
     children: ReactNode
@@ -10,26 +11,6 @@ interface AppLayoutProps {
     showNav?: boolean
     /** Additional CSS classes on the main container */
     className?: string
-}
-
-function RosMiniLogo() {
-    return (
-        <svg
-            width="36"
-            height="32"
-            viewBox="0 0 74 64"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-        >
-            <path d="M24 0H50L74 20V44L50 64H24L0 44V20Z" fill="white" />
-            <text x="37" y="27" fill="#0B4E3E" fontSize="22" fontWeight="bold" textAnchor="middle">
-                R
-            </text>
-            <text x="37" y="52" fill="#0B4E3E" fontSize="16" fontWeight="bold" textAnchor="middle">
-                ( ) S
-            </text>
-        </svg>
-    )
 }
 
 function UserIcon({ active }: { active: boolean }) {
@@ -124,7 +105,8 @@ export default function AppLayout({ children, showNav = true, className = "" }: 
                 <div className="flex flex-col gap-8">
                     {/* Header Brand */}
                     <div className="flex items-center gap-3">
-                        <RosMiniLogo />
+                        <img src={ROSLogo} className="" />
+
                         <div className="flex flex-col">
                             <span className="font-apercu text-xl font-bold tracking-tight">
                                 ROS Mandi

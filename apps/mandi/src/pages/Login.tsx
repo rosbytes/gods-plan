@@ -3,68 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { trpc } from "@/libs/trpc"
 import { useStore } from "@/store"
 import { Button, Input } from "@/components/ui"
-
-function RosOctagonLogo() {
-    return (
-        <svg
-            width="74"
-            height="64"
-            viewBox="0 0 74 64"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-16 w-18.5 shrink-0"
-        >
-            {/* Chamfered Octagon Shape */}
-            <path d="M24 0H50L74 20V44L50 64H24L0 44V20Z" fill="black" />
-            {/* Top Text 'R' */}
-            <text
-                x="37"
-                y="24"
-                fill="white"
-                fontSize="17"
-                fontWeight="900"
-                fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-                textAnchor="middle"
-            >
-                R
-            </text>
-            {/* Bottom Text 'O S' (using parenthesis styling for the O) */}
-            <text
-                x="28"
-                y="46"
-                fill="white"
-                fontSize="17"
-                fontWeight="900"
-                fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-                textAnchor="middle"
-            >
-                (
-            </text>
-            <text
-                x="34"
-                y="46"
-                fill="white"
-                fontSize="17"
-                fontWeight="900"
-                fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-                textAnchor="middle"
-            >
-                )
-            </text>
-            <text
-                x="47"
-                y="46"
-                fill="white"
-                fontSize="17"
-                fontWeight="900"
-                fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-                textAnchor="middle"
-            >
-                S
-            </text>
-        </svg>
-    )
-}
+import ROSLogo from "../assets/logos/ros-black.svg"
 
 export default function LoginPage() {
     const navigate = useNavigate()
@@ -164,7 +103,8 @@ export default function LoginPage() {
 
                 <main className="z-10 mx-auto flex max-w-lg flex-1 flex-col items-center justify-center gap-6 text-center">
                     <div className="mb-4 rounded-3xl border border-white/10 bg-white/10 p-6 shadow-lg backdrop-blur-md">
-                        <RosOctagonLogo />
+                        {/* <RosOctagonLogo /> */}
+                        <img src={ROSLogo} />
                     </div>
                     <h1 className="font-apercu text-4xl leading-tight font-black tracking-tight lg:text-5xl">
                         Connecting Mandi Vendors Directly
@@ -193,7 +133,8 @@ export default function LoginPage() {
                 <main className="flex w-full max-w-85 flex-1 flex-col justify-center gap-8">
                     {/* Logo Section */}
                     <div className="flex justify-center">
-                        <RosOctagonLogo />
+                        {/* <RosOctagonLogo /> */}
+                        <img src={ROSLogo} />
                     </div>
 
                     {/* Inputs and Submit Button */}

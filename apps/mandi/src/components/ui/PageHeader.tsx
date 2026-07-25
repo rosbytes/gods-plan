@@ -28,7 +28,7 @@ export default function PageHeader({
     return (
         <div className="flex h-12 w-full items-center justify-between bg-[#F2F3F6] px-5">
             {leftElement ?? (
-                <span className="font-apercu text-[20px] leading-[24px] font-bold text-[#000000]">
+                <span className="font-apercu text-[20px] leading-6 font-bold text-[#000000]">
                     {title}
                 </span>
             )}
