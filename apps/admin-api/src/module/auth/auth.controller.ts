@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server"
-import { parse } from "cookie"
+import { parseCookie } from "cookie"
 import { type Context } from "../../trpc"
 import { rateLimit } from "../../utils"
 import { type TLoginSchema } from "./auth.schema"
@@ -81,7 +81,7 @@ export async function refresh(ctx: Context) {
         await rateLimit(`rateLimit:login:ip:${ctx.req.ip}`, 5, 60)
         // extract refresh token
 
-        const cookies = parse(ctx.req.headers.cookie ?? "")
+        const cookies = parseCookie(ctx.req.headers.cookie ?? "")
 
         const refreshToken = cookies.refreshToken
 

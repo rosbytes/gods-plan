@@ -2,13 +2,13 @@ import { t } from "../trpc/trpc"
 import type { Context } from "../trpc"
 import { TRPCError } from "@trpc/server"
 import { verifyAdminAccessToken } from "../utils"
-import { parse } from "cookie"
+import { parseCookie } from "cookie"
 import type { Request, Response, NextFunction } from "express"
 
 // Admin Auth Middleware (tRPC)
 export const isAdmin = t.middleware(async ({ ctx, next }) => {
     // cookies parsed
-    const cookies = parse(ctx.req.headers.cookie ?? "")
+    const cookies = parseCookie(ctx.req.headers.cookie ?? "")
 
     // auth header
     const authHeader = ctx.req.headers.authorization
@@ -37,7 +37,7 @@ export const expressIsAdmin = (
     res: Response,
     next: NextFunction,
 ) => {
-    const cookies = parse(req.headers.cookie ?? "")
+    const cookies = parseCookie(req.headers.cookie ?? "")
     const authHeader = req.headers.authorization
     const headerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined
 

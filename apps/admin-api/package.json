@@ -1,13 +1,14 @@
 {
     "name": "@ros/admin-api",
-    "main": "dist/index.js",
+    "main": "api/index.js",
+    "type": "module",
     "private": true,
     "scripts": {
         "dev": "tsx watch src/index.ts",
-        "build": "tsc -b && tsc-alias -f",
-        "dev:build": "tsup",
+        "build": "tsup",
+        "dev:build": "tsc -b && tsc-alias -f",
         "prod:build": "turbo run build",
-        "start": "node dist/index.js",
+        "start": "node api/index.js",
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {

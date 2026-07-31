@@ -3,15 +3,14 @@
         // Environment setup & latest features
         "lib": ["ESNext", "DOM"],
         "target": "esnext",
-        "module": "CommonJS",
+        "module": "esnext",
         "moduleDetection": "force",
         "jsx": "react-jsx",
         "allowJs": true,
-        "moduleResolution": "Node",
+        "moduleResolution": "bundler",
         "esModuleInterop": true,
         "noEmit": false,
         "outDir": "dist",
-        "rootDir": "src",
 
         // Best practices
         "strict": true,
@@ -25,6 +24,5 @@
         "noUnusedLocals": false,
         "noUnusedParameters": false,
         "noPropertyAccessFromIndexSignature": false
-    },
-    "include": ["src/**/*"]
+    }
 }
