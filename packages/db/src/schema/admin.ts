@@ -1,5 +1,5 @@
-import { relations } from "drizzle-orm"
-import { boolean, pgEnum, pgTable, uuid, varchar } from "drizzle-orm/pg-core"
+import { relations, sql } from "drizzle-orm"
+import { boolean, pgEnum, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core"
 import { timestamps } from "../common-utils/columnHelpers"
 import { adminRoleEnum } from "../common-utils/enums"
 import { city } from "./city"
@@ -20,9 +20,19 @@ export const admin = pgTable("admin", {
     // 4 digit pin (stored as bcrypt hash)
     pin: varchar({ length: 255 }),
 
+    // role of the admin
     role: adminRole("role").notNull().default("admin"),
+
+    // tokens used for admin authentication
+    refreshToken: varchar("refresh_token", { length: 255 }),
+
+    // last login at, update this on login
+    lastLoginAt: timestamp("last_login_at", { withTimezone: true }).default(sql`now()`),
+
+    // account status
     isActive: boolean("is_active").notNull().default(true),
 
+    // timestamps
     ...timestamps,
 })
 
