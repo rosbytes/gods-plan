@@ -1,11 +1,18 @@
 import { useNavigate, useParams } from "react-router-dom"
 import { trpc } from "../lib/trpc"
 
+type KycDoc = {
+    storefrontUrl?: string
+    docId?: string
+    frontUrl?: string
+    backUrl?: string
+}
+
 export default function VendorProfile() {
     const navigate = useNavigate()
     const { vendorId } = useParams<{ vendorId: string }>()
 
-    const { data, isLoading, error } = trpc.vendor.get.useQuery(
+    const { data, isLoading, error } = trpc.vendor.getMarket.useQuery(
         { vendorId: vendorId! },
         { enabled: !!vendorId },
     )
@@ -27,8 +34,8 @@ export default function VendorProfile() {
     }
 
     const { vendor, charge } = data
-    const store = vendor.stores?.[0]
-    const kyc = vendor.kycDocs?.[0]
+    const store = vendor.marketStores?.[0]
+    const kyc: KycDoc | null = (vendor as any).kycDocs?.[0] ?? null
 
     const shortId = vendorId?.substring(0, 4).toUpperCase() || "0000"
 
@@ -71,36 +78,28 @@ export default function VendorProfile() {
 
             <div className="space-y-6 px-5">
                 {/* Top Card */}
-                <div className="flex items-center gap-4 rounded-[16px] bg-white p-[18px] shadow-sm">
+                <div className="flex items-center gap-4 rounded-2xl bg-white p-4.5 shadow-sm">
                     <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-gray-200 shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]">
-                        {kyc?.storefrontUrl ? (
-                            <img
-                                src={kyc.storefrontUrl}
-                                alt="Storefront"
-                                className="h-full w-full object-cover"
-                            />
-                        ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-gray-100">
-                                <svg
-                                    width="24"
-                                    height="24"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="#9ca3af"
-                                    strokeWidth="2"
-                                >
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <path d="M12 8v4l3 3"></path>
-                                </svg>
-                            </div>
-                        )}
+                        <div className="flex h-full w-full items-center justify-center bg-gray-100">
+                            <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#9ca3af"
+                                strokeWidth="2"
+                            >
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M12 8v4l3 3"></path>
+                            </svg>
+                        </div>
                     </div>
                     <div className="flex flex-col">
                         <span className="text-[17px] font-bold tracking-tight text-gray-900">
                             {store?.storeName || vendor.fullName}
                         </span>
                         <span className="text-[14px] font-medium text-gray-400 capitalize">
-                            {vendor.type.replace("_", " ")}
+                            Market Vendor
                         </span>
                     </div>
                 </div>
@@ -108,7 +107,7 @@ export default function VendorProfile() {
                 {/* Basic Details */}
                 <div className="space-y-3">
                     <h2 className="text-[15px] font-bold text-gray-600">Basic Details</h2>
-                    <div className="space-y-5 rounded-[16px] bg-white p-5 shadow-sm">
+                    <div className="space-y-5 rounded-2xl bg-white p-5 shadow-sm">
                         <div>
                             <p className="mb-1 text-[12px] font-semibold text-gray-400">
                                 Full Name
@@ -139,7 +138,7 @@ export default function VendorProfile() {
                 {/* Store Details */}
                 <div className="space-y-3">
                     <h2 className="text-[15px] font-bold text-gray-600">Store Details</h2>
-                    <div className="space-y-5 rounded-[16px] bg-white p-5 shadow-sm">
+                    <div className="space-y-5 rounded-2xl bg-white p-5 shadow-sm">
                         <div>
                             <p className="mb-1 text-[12px] font-semibold text-gray-400">
                                 Store Name
@@ -162,7 +161,7 @@ export default function VendorProfile() {
                 {/* Store Photo */}
                 <div className="space-y-3">
                     <h2 className="text-[15px] font-bold text-gray-600">Store Photo</h2>
-                    <div className="relative aspect-21/9 w-full overflow-hidden rounded-[16px] bg-gray-200">
+                    <div className="relative aspect-21/9 w-full overflow-hidden rounded-2xl bg-gray-200">
                         {kyc?.storefrontUrl ? (
                             <>
                                 <img
@@ -199,7 +198,7 @@ export default function VendorProfile() {
                 {/* Credentials */}
                 <div className="space-y-3">
                     <h2 className="text-[15px] font-bold text-gray-600">Credentials</h2>
-                    <div className="space-y-5 rounded-[16px] bg-white p-5 shadow-sm">
+                    <div className="space-y-5 rounded-2xl bg-white p-5 shadow-sm">
                         <div>
                             <p className="mb-1 text-[12px] font-semibold text-gray-400">
                                 Aadhar Number
@@ -209,7 +208,7 @@ export default function VendorProfile() {
                             </p>
                         </div>
                         <div className="grid grid-cols-2 gap-3 pt-2">
-                            <div className="relative aspect-3/2 overflow-hidden rounded-[12px] border border-gray-200 bg-gray-100">
+                            <div className="relative aspect-3/2 overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
                                 {kyc?.frontUrl ? (
                                     <>
                                         <img
@@ -241,7 +240,7 @@ export default function VendorProfile() {
                                     </span>
                                 )}
                             </div>
-                            <div className="relative aspect-3/2 overflow-hidden rounded-[12px] border border-gray-200 bg-gray-100">
+                            <div className="relative aspect-3/2 overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
                                 {kyc?.backUrl ? (
                                     <>
                                         <img
@@ -280,7 +279,7 @@ export default function VendorProfile() {
                 {/* Payment Details */}
                 <div className="space-y-3 pb-6">
                     <h2 className="text-[15px] font-bold text-gray-600">Payment Details</h2>
-                    <div className="space-y-4 rounded-[16px] bg-white p-5 shadow-sm">
+                    <div className="space-y-4 rounded-2xl bg-white p-5 shadow-sm">
                         <div className="flex flex-col gap-1">
                             <span className="text-[13px] font-medium text-gray-600">
                                 To: <span className="font-semibold text-gray-800">ROS@ybl</span>
