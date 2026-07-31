@@ -1,23 +1,42 @@
 import { TRPCError } from "@trpc/server"
-import type { Context } from "../../trpc"
-import type { TListVendorsSchema, TCreateVendorSchema, TGetVendorSchema } from "./vendor.schema"
-import { db, vendors, admin, registrationCharges } from "../../db"
-import { ilike, or, desc, eq } from "drizzle-orm"
+import type {
+    TListVendorsSchema,
+    TCreateMarketVendorSchema,
+    TCreateMandiVendorSchema,
+    TGetVendorSchema,
+} from "./vendor.schema"
+import {
+    db,
+    marketVendor,
+    mandiVendor,
+    marketSubcriptionCharges,
+    eq,
+    ilike,
+    desc,
+    sql,
+    unionAll,
+} from "@ros/db"
+import { or } from "@ros/db"
+import type { AdminContext } from "../../middlewares"
 
-export async function listVendors({ input }: { input: TListVendorsSchema; ctx: Context }) {
+export async function listMarketVendors({
+    input,
+}: {
+    input: TListVendorsSchema
+    ctx: AdminContext
+}) {
     try {
-        const items = await db.query.vendors.findMany({
+        const items = await db.query.marketVendor.findMany({
             where: input.search
                 ? or(
-                      ilike(vendors.fullName, "%" + input.search + "%"),
-                      ilike(vendors.primaryPhone, "%" + input.search + "%"),
+                      ilike(marketVendor.fullName, "%" + input.search + "%"),
+                      ilike(marketVendor.primaryPhone, "%" + input.search + "%"),
                   )
                 : undefined,
-            orderBy: [desc(vendors.createdAt)],
+            orderBy: [desc(marketVendor.createdAt)],
             limit: 20,
             with: {
-                kycDocs: true,
-                stores: true,
+                marketStores: true,
             },
         })
 
@@ -30,24 +49,106 @@ export async function listVendors({ input }: { input: TListVendorsSchema; ctx: C
     }
 }
 
-export async function createVendor({ input }: { input: TCreateVendorSchema; ctx: Context }) {
+export async function listMandiVendors({
+    input,
+}: {
+    input: TListVendorsSchema
+    ctx: AdminContext
+}) {
     try {
-        // Link vendor to the first admin found (since we have a single admin setup)
-        const existingAdmin = await db
-            .select()
-            .from(admin)
-            .limit(1)
-            .then((res) => res[0])
-        if (!existingAdmin) throw new TRPCError({ message: "No admin found", code: "UNAUTHORIZED" })
+        const items = await db.query.mandiVendor.findMany({
+            where: input.search
+                ? or(
+                      ilike(mandiVendor.fullName, "%" + input.search + "%"),
+                      ilike(mandiVendor.primaryPhone, "%" + input.search + "%"),
+                  )
+                : undefined,
+            orderBy: [desc(mandiVendor.createdAt)],
+            limit: 20,
+            with: {
+                mandiStores: true,
+            },
+        })
 
+        return { items }
+    } catch (error) {
+        throw new TRPCError({
+            message: error instanceof Error ? error.message : "Database Error",
+            code: "INTERNAL_SERVER_ERROR",
+        })
+    }
+}
+
+export async function listVendors({ input }: { input: TListVendorsSchema; ctx: AdminContext }) {
+    try {
+        const items = await db.transaction(async (tx) => {
+            const marketQuery = tx
+                .select({
+                    id: marketVendor.id,
+                    fullName: marketVendor.fullName,
+                    primaryPhone: marketVendor.primaryPhone,
+                    createdAt: marketVendor.createdAt,
+                    type: sql<string>`'market'`.as("type"),
+                })
+                .from(marketVendor)
+                .where(
+                    input.search
+                        ? or(
+                              ilike(marketVendor.fullName, `%${input.search}%`),
+                              ilike(marketVendor.primaryPhone, `%${input.search}%`),
+                          )
+                        : undefined,
+                )
+
+            const mandiQuery = tx
+                .select({
+                    id: mandiVendor.id,
+                    fullName: mandiVendor.fullName,
+                    primaryPhone: mandiVendor.primaryPhone,
+                    createdAt: mandiVendor.createdAt,
+                    type: sql<string>`'mandi'`.as("type"),
+                })
+                .from(mandiVendor)
+                .where(
+                    input.search
+                        ? or(
+                              ilike(mandiVendor.fullName, `%${input.search}%`),
+                              ilike(mandiVendor.primaryPhone, `%${input.search}%`),
+                          )
+                        : undefined,
+                )
+
+            return await tx
+                .select()
+                .from(unionAll(marketQuery, mandiQuery).as("vendors"))
+                .orderBy(desc(sql`created_at`))
+                .limit(20)
+        })
+
+        return { items }
+    } catch (error) {
+        throw new TRPCError({
+            message: error instanceof Error ? error.message : "Database Error",
+            code: "INTERNAL_SERVER_ERROR",
+        })
+    }
+}
+
+export async function createMarketVendor({
+    input,
+    ctx,
+}: {
+    input: TCreateMarketVendorSchema
+    ctx: AdminContext
+}) {
+    try {
         const [newVendor] = await db
-            .insert(vendors)
+            .insert(marketVendor)
             .values({
                 fullName: input.fullName,
                 primaryPhone: input.primaryPhone,
                 alternatePhone: input.alternatePhone ?? null,
-                type: input.type,
-                createdBy: existingAdmin.id,
+                createdBy: ctx.admin.id,
             })
             .returning()
 
@@ -60,25 +161,70 @@ export async function createVendor({ input }: { input: TCreateVendorSchema; ctx:
     }
 }
 
-export async function getVendor({ input }: { input: TGetVendorSchema }) {
+export async function createMandiVendor({
+    input,
+    ctx,
+}: {
+    input: TCreateMandiVendorSchema
+    ctx: AdminContext
+}) {
     try {
-        const vendor = await db.query.vendors.findFirst({
-            where: eq(vendors.id, input.vendorId),
+        const [newVendor] = await db
+            .insert(mandiVendor)
+            .values({
+                fullName: input.fullName,
+                primaryPhone: input.primaryPhone,
+                alternatePhone: input.alternatePhone ?? null,
+                createdBy: ctx.admin.id,
+            })
+            .returning()
+
+        return { success: true, vendor: newVendor }
+    } catch (error) {
+        throw new TRPCError({
+            message: error instanceof Error ? error.message : "Database Error",
+            code: "INTERNAL_SERVER_ERROR",
+        })
+    }
+}
+
+export async function getMarketVendor({ input }: { input: TGetVendorSchema }) {
+    try {
+        const vendor = await db.query.marketVendor.findFirst({
+            where: eq(marketVendor.id, input.vendorId),
             with: {
-                kycDocs: true,
-                stores: true,
+                marketStores: true,
             },
         })
         if (!vendor) throw new TRPCError({ message: "Vendor not found", code: "NOT_FOUND" })
 
-        // Expose registration charges explicitly matching profile constraints
+        // Expose subscription charges for this vendor
         const [charge] = await db
             .select()
-            .from(registrationCharges)
-            .where(eq(registrationCharges.vendorId, vendor.id))
+            .from(marketSubcriptionCharges)
+            .where(eq(marketSubcriptionCharges.vendorId, vendor.id))
             .limit(1)
 
         return { vendor, charge: charge || null }
+    } catch (error) {
+        throw new TRPCError({
+            message: error instanceof Error ? error.message : "Database Error",
+            code: "INTERNAL_SERVER_ERROR",
+        })
+    }
+}
+
+export async function getMandiVendor({ input }: { input: TGetVendorSchema }) {
+    try {
+        const vendor = await db.query.mandiVendor.findFirst({
+            where: eq(mandiVendor.id, input.vendorId),
+            with: {
+                mandiStores: true,
+            },
+        })
+        if (!vendor) throw new TRPCError({ message: "Vendor not found", code: "NOT_FOUND" })
+
+        return { vendor, charge: null }
     } catch (error) {
         throw new TRPCError({
             message: error instanceof Error ? error.message : "Database Error",
