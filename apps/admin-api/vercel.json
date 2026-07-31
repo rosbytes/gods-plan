@@ -1,7 +1,7 @@
 {
     "functions": {
         "api/index.js": {
-            "includeFiles": "api/app.cjs"
+            "includeFiles": "dist/**"
         }
     },
     "rewrites": [

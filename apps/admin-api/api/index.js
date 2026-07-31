@@ -1,3 +1,3 @@
-import app from "./app.cjs"
+import app from "../dist/app.cjs"
 
 export default app
