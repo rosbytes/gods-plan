@@ -1,25 +1,61 @@
 import { useState } from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { trpc } from "../lib/trpc"
+import { toast } from "sonner"
+import { parseVendorType } from "../constants/vendor"
 
 export default function StoreDetails() {
     const navigate = useNavigate()
     const { vendorId } = useParams<{ vendorId: string }>()
+    const [searchParams] = useSearchParams()
+    const vendorType = parseVendorType(searchParams.get("type"))
+    const typeParam = vendorType ? `?type=${vendorType}` : ""
+
+    const mandiListQuery = trpc.mandi.listAllMandi.useQuery()
+    const vegListQuery = trpc.veg.getAll.useQuery(undefined, {
+        enabled: vendorType === "mandi_vendor",
+    })
 
     const [storeName, setStoreName] = useState("")
     const [fullAddress, setFullAddress] = useState("")
+    const [mandiId, setMandiId] = useState("")
+    const [vegId, setVegId] = useState("")
     const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
     const [isFetchingLocation, setIsFetchingLocation] = useState(false)
     const [locationLabel, setLocationLabel] = useState("Tap to add location")
 
     const saveMutation = trpc.store.saveStore.useMutation({
-        onSuccess: (data) => navigate(`/kyc/${vendorId}/${data.store.id}`),
-        onError: (e: any) => alert(e.message),
+        onSuccess: (data) => {
+            toast.success("Store details saved successfully")
+            navigate(`/kyc/${vendorId}/${data.store.id}${typeParam}`)
+        },
+        onError: (e: any) => toast.error(e.message || "Failed to save store"),
     })
+
+    const createMarketStoreMutation = trpc.store.createMarketStore.useMutation({
+        onSuccess: (data) => {
+            toast.success("Market store created successfully")
+            navigate(`/kyc/${vendorId}/${data.store.id}${typeParam}`)
+        },
+        onError: (e: any) => toast.error(e.message || "Failed to create market store"),
+    })
+
+    const createMandiStoreMutation = trpc.store.createMandiStore.useMutation({
+        onSuccess: (data) => {
+            toast.success("Mandi store created successfully")
+            navigate(`/kyc/${vendorId}/${data.store.id}${typeParam}`)
+        },
+        onError: (e: any) => toast.error(e.message || "Failed to create mandi store"),
+    })
+
+    const isPending =
+        saveMutation.isPending ||
+        createMarketStoreMutation.isPending ||
+        createMandiStoreMutation.isPending
 
     const handleGetLocation = () => {
         if (!navigator.geolocation) {
-            alert("Geolocation is not supported")
+            toast.error("Geolocation is not supported by your browser")
             return
         }
         setIsFetchingLocation(true)
@@ -29,34 +65,81 @@ export default function StoreDetails() {
                 setLocation({ lat: latitude, lng: longitude })
                 setLocationLabel(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`)
                 setIsFetchingLocation(false)
+                toast.success("Location fetched successfully")
             },
-            () => {
-                alert("Could not fetch location")
+            (error) => {
+                toast.error(error.message || "Could not fetch location")
                 setIsFetchingLocation(false)
             },
+            { timeout: 10000 },
         )
     }
 
     const handleContinue = () => {
-        if (!vendorId || !location) {
-            alert("Please provide location")
+        if (!vendorId) {
+            toast.error("Invalid vendor ID")
             return
         }
-        saveMutation.mutate({
-            vendorId,
-            storeName,
-            fullAddress,
-            lat: location.lat,
-            lng: location.lng,
-        })
+        if (!storeName.trim()) {
+            toast.error("Please enter store name")
+            return
+        }
+        if (!mandiId) {
+            toast.error("Please select a Mandi")
+            return
+        }
+        if (vendorType === "mandi_vendor" && !vegId) {
+            toast.error("Please select a Vegetable")
+            return
+        }
+        if (!location) {
+            toast.error("Please provide store location")
+            return
+        }
+        if (!fullAddress.trim()) {
+            toast.error("Please enter full address")
+            return
+        }
+
+        if (vendorType === "mandi_vendor") {
+            createMandiStoreMutation.mutate({
+                vendorId,
+                mandiId,
+                vegId,
+                storeName: storeName.trim(),
+                fullAddress: fullAddress.trim(),
+                lat: location.lat,
+                lng: location.lng,
+            })
+        } else if (vendorType === "market_vendor") {
+            createMarketStoreMutation.mutate({
+                vendorId,
+                mandiId,
+                storeName: storeName.trim(),
+                fullAddress: fullAddress.trim(),
+                lat: location.lat,
+                lng: location.lng,
+            })
+        } else {
+            saveMutation.mutate({
+                vendorId,
+                mandiId,
+                storeName: storeName.trim(),
+                fullAddress: fullAddress.trim(),
+                lat: location.lat,
+                lng: location.lng,
+            })
+        }
     }
 
     return (
         <div className="flex min-h-screen flex-col bg-[#F5F6F8] font-sans text-gray-900">
             {/* Header */}
             <div className="flex items-center px-4 pt-12 pb-6">
-                <button className="mr-4" onClick={() => navigate(-1)}>
-                    {/* Simple back icon */}
+                <button
+                    className="mr-4 rounded-full p-1 transition-colors hover:bg-gray-200"
+                    onClick={() => navigate(-1)}
+                >
                     <svg
                         width="24"
                         height="24"
@@ -75,8 +158,10 @@ export default function StoreDetails() {
             </div>
 
             {/* Form */}
-            <div className="flex flex-1 flex-col px-4">
-                <h2 className="mb-4 px-1 text-sm font-semibold text-gray-500">Store Details</h2>
+            <div className="flex flex-1 flex-col px-4 pb-28">
+                <h2 className="mb-4 px-1 text-sm font-semibold text-gray-500">
+                    Fill Store Information
+                </h2>
 
                 <div className="flex flex-col gap-4">
                     {/* Store Name Input */}
@@ -86,15 +171,62 @@ export default function StoreDetails() {
                         </label>
                         <input
                             type="text"
-                            className="w-full text-base font-semibold placeholder-gray-800 focus:outline-none"
-                            placeholder="Write Here"
+                            className="w-full text-base font-semibold placeholder-gray-400 focus:outline-none"
+                            placeholder="Enter store name"
                             value={storeName}
                             onChange={(e) => setStoreName(e.target.value)}
                         />
                     </div>
 
+                    {/* Select Mandi Dropdown */}
+                    <div className="rounded-xl bg-white p-4 shadow-sm">
+                        <label className="mb-1 block text-xs font-medium text-gray-400">
+                            Select Mandi
+                        </label>
+                        <select
+                            value={mandiId}
+                            onChange={(e) => setMandiId(e.target.value)}
+                            className="w-full bg-transparent text-base font-semibold text-gray-800 focus:outline-none"
+                        >
+                            <option value="">
+                                {mandiListQuery.isLoading ? "Loading Mandis..." : "Select Mandi"}
+                            </option>
+                            {mandiListQuery.data?.map((mandi) => (
+                                <option key={mandi.id} value={mandi.id}>
+                                    {mandi.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Select Vegetable Dropdown (Mandi Vendor Only) */}
+                    {vendorType === "mandi_vendor" && (
+                        <div className="rounded-xl bg-white p-4 shadow-sm">
+                            <label className="mb-1 block text-xs font-medium text-gray-400">
+                                Select Vegetable
+                            </label>
+                            <select
+                                value={vegId}
+                                onChange={(e) => setVegId(e.target.value)}
+                                className="w-full bg-transparent text-base font-semibold text-gray-800 focus:outline-none"
+                            >
+                                <option value="">
+                                    {vegListQuery.isLoading
+                                        ? "Loading Vegetables..."
+                                        : "Select Vegetable"}
+                                </option>
+                                {vegListQuery.data?.map((veg) => (
+                                    <option key={veg.id} value={veg.id}>
+                                        {veg.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
                     {/* Store Location */}
                     <button
+                        type="button"
                         onClick={handleGetLocation}
                         disabled={isFetchingLocation}
                         className="flex w-full items-center rounded-xl bg-white p-4 shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-60"
@@ -117,7 +249,7 @@ export default function StoreDetails() {
                             </svg>
                         </div>
                         <div className="flex flex-col text-left">
-                            <span className="text-[15px] font-semibold">Store location</span>
+                            <span className="text-[15px] font-semibold">Store Location</span>
                             <span
                                 className={`mt-0.5 text-xs ${location ? "font-medium text-[#135B47]" : "text-gray-400"}`}
                             >
@@ -133,8 +265,8 @@ export default function StoreDetails() {
                         </label>
                         <input
                             type="text"
-                            className="w-full text-base font-semibold placeholder-gray-800 focus:outline-none"
-                            placeholder="Write Here"
+                            className="w-full text-base font-semibold placeholder-gray-400 focus:outline-none"
+                            placeholder="Enter full store address"
                             value={fullAddress}
                             onChange={(e) => setFullAddress(e.target.value)}
                         />
@@ -143,12 +275,14 @@ export default function StoreDetails() {
             </div>
 
             {/* Bottom Button */}
-            <div className="px-4 pt-4 pb-8">
+            <div className="fixed bottom-0 left-0 w-full bg-linear-to-t from-[#F5F6F8] via-[#F5F6F8] to-transparent px-4 pt-4 pb-8">
                 <button
+                    type="button"
                     onClick={handleContinue}
-                    className="w-full rounded-xl bg-[#135B47] py-4 text-base font-semibold text-white shadow-sm"
+                    disabled={isPending}
+                    className="w-full rounded-xl bg-[#135B47] py-4 text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#0f4d3c] disabled:opacity-60"
                 >
-                    Continue
+                    {isPending ? "Saving..." : "Continue"}
                 </button>
             </div>
         </div>

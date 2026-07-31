@@ -1,86 +1,237 @@
 import { useState, useEffect, useRef } from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { trpc } from "../lib/trpc"
-import { auth } from "../lib/firebase"
-import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth"
-import type { ConfirmationResult } from "firebase/auth"
 import { jsPDF } from "jspdf"
+import { parseVendorType } from "../constants/vendor"
+import { toast } from "sonner"
+
+declare global {
+    interface Window {
+        initSendOTP?: (config: any) => void
+        sendOtp?: (
+            identifier: string,
+            successCb?: (data: any) => void,
+            failureCb?: (err: any) => void,
+            reqId?: string,
+        ) => void
+        verifyOtp?: (
+            otp: string | number,
+            successCb?: (data: any) => void,
+            failureCb?: (err: any) => void,
+            reqId?: string,
+        ) => void
+        retryOtp?: (
+            channel?: string | null,
+            successCb?: (data: any) => void,
+            failureCb?: (err: any) => void,
+            reqId?: string,
+        ) => void
+    }
+}
+
+const WIDGET_ID = import.meta.env.VITE_MSG91_WIDGET_ID || "3667446b6845303535383633"
+const TOKEN_AUTH = import.meta.env.VITE_MSG91_TOKEN_AUTH || "555702TCIzAXWxQ6a6b3257P1"
 
 export default function VendorAgreement() {
     const navigate = useNavigate()
     const { vendorId, storeId } = useParams<{ vendorId: string; storeId: string }>()
+    const [searchParams] = useSearchParams()
+    const vendorType = parseVendorType(searchParams.get("type"))
+    const typeParam = vendorType ? `?type=${vendorType}` : ""
 
-    const [otp, setOtp] = useState(["", "", "", "", "", ""])
-    const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null)
+    const [otp, setOtp] = useState(["", "", "", ""])
+    const [reqId, setReqId] = useState<string>("")
+    const [otpSent, setOtpSent] = useState(false)
     const [sending, setSending] = useState(false)
     const [verifying, setVerifying] = useState(false)
     const [error, setError] = useState("")
     const [showFullAgreement, setShowFullAgreement] = useState(false)
 
     const inputRefs = useRef<(HTMLInputElement | null)[]>([])
-    const recaptchaRef = useRef<RecaptchaVerifier | null>(null)
 
-    const { data: vendorData, isLoading } = trpc.vendor.get.useQuery(
+    const { data: marketVendorData, isLoading: isMarketLoading } = trpc.vendor.getMarket.useQuery(
         { vendorId: vendorId! },
-        { enabled: !!vendorId },
+        { enabled: !!vendorId && vendorType === "market_vendor" },
     )
 
-    // Normalize phone number to generic format (assuming Indian numbers)
-    const formatPhone = (phone: string) => {
+    const { data: mandiVendorData, isLoading: isMandiLoading } = trpc.vendor.getMandi.useQuery(
+        { vendorId: vendorId! },
+        { enabled: !!vendorId && vendorType === "mandi_vendor" },
+    )
+
+    const vendorData = vendorType === "mandi_vendor" ? mandiVendorData : marketVendorData
+    const isLoading = vendorType === "mandi_vendor" ? isMandiLoading : isMarketLoading
+
+    // Normalize phone to MSG91 format: digits only with country code, no '+' (e.g. "919876543210")
+    const formatPhoneForMsg91 = (phone: string) => {
+        if (!phone) return ""
+        const digits = phone.replace(/\D/g, "")
+        if (digits.length === 10) return `91${digits}`
+        return digits
+    }
+
+    // Display format with + prefix
+    const formatPhoneForDisplay = (phone: string) => {
         if (!phone) return ""
         if (phone.startsWith("+")) return phone
         if (phone.length === 10) return `+91${phone}`
-        return phone
+        return `+${phone}`
     }
 
-    const phoneNumber = vendorData?.vendor?.primaryPhone
-        ? formatPhone(vendorData.vendor.primaryPhone)
-        : ""
+    const rawPhone = vendorData?.vendor?.primaryPhone ?? ""
+    const msg91Phone = formatPhoneForMsg91(rawPhone)
+    const displayPhone = formatPhoneForDisplay(rawPhone)
 
-    const sendOtp = async (phone: string) => {
-        if (!phone) return
-        setSending(true)
-        setError("")
-        try {
-            const verifier = recaptchaRef.current!
-            const confirmation = await signInWithPhoneNumber(auth, phone, verifier)
-            setConfirmationResult(confirmation)
-        } catch (err: any) {
-            console.error("OTP Send Error:", err)
-            setError(err.message || "Failed to send OTP")
-        } finally {
-            setSending(false)
-        }
+    // ── tRPC OTP mutation (verify access token with MSG91 backend) ───────────
+    const verifyAccessTokenMutation = trpc.otp.verifyAccessToken.useMutation({
+        onSuccess: () => {
+            toast.success("OTP verified successfully")
+            generateAgreementPdf()
+            navigate(`/registered/${vendorId}/${storeId}${typeParam}`)
+        },
+        onError: (err) => {
+            setError(err.message || "Access token verification failed")
+            toast.error("Access token verification failed")
+        },
+        onSettled: () => setVerifying(false),
+    })
+
+    const handleVerifyAccessToken = (accessToken: string) => {
+        setVerifying(true)
+        verifyAccessTokenMutation.mutate({ accessToken })
     }
 
+    // Initialize MSG91 Web SDK Widget with exposeMethods: true
     useEffect(() => {
-        if (phoneNumber && !recaptchaRef.current) {
-            try {
-                // Bypass visual Recaptcha issues perfectly during local Firebase testing endpoints
-                auth.settings.appVerificationDisabledForTesting = true
+        if (!msg91Phone) return
 
-                // @ts-ignore
-                if (!window.recaptchaVerifier) {
-                    recaptchaRef.current = new RecaptchaVerifier(auth, "recaptcha-container", {
-                        size: "invisible",
-                        callback: () => {
-                            // recaptcha resolved
-                        },
-                    })
-                    // @ts-ignore
-                    window.recaptchaVerifier = recaptchaRef.current
-                } else {
-                    // @ts-ignore
-                    recaptchaRef.current = window.recaptchaVerifier
+        const configuration = {
+            widgetId: WIDGET_ID,
+            tokenAuth: TOKEN_AUTH,
+            identifier: msg91Phone,
+            exposeMethods: true,
+            captchaRenderId: "",
+            success: (data: any) => {
+                console.log("MSG91 Widget success response:", data)
+                const token =
+                    data?.message ||
+                    data?.token ||
+                    data?.["access-token"] ||
+                    (typeof data === "string" ? data : "")
+                if (token) {
+                    handleVerifyAccessToken(token)
                 }
+            },
+            failure: (error: any) => {
+                console.error("MSG91 Widget failure:", error)
+                setError(error?.message || "MSG91 Widget error")
+            },
+        }
 
-                // Auto-send OTP on load
-                sendOtp(phoneNumber)
-            } catch (err) {
-                console.error("Recaptcha error:", err)
+        // Set global configuration for MSG91 provider
+        ;(window as any).configuration = configuration
+
+        const scriptId = "msg91-otp-provider"
+        let script = document.getElementById(scriptId) as HTMLScriptElement | null
+
+        const triggerSend = () => {
+            if (window.initSendOTP) {
+                window.initSendOTP(configuration)
+            }
+            if (window.sendOtp) {
+                setSending(true)
+                try {
+                    window.sendOtp(
+                        msg91Phone,
+                        (data: any) => {
+                            console.log("sendOtp success:", data)
+                            const id = data?.reqId || data?.message || data?.data?.reqId || ""
+                            if (id) setReqId(id)
+                            setOtpSent(true)
+                            setSending(false)
+                            toast.success("OTP sent successfully")
+                        },
+                        (err: any) => {
+                            console.error("sendOtp error:", err)
+                            setSending(false)
+                            setError(err?.message || "Failed to send OTP")
+                        },
+                    )
+                } catch (err: any) {
+                    console.error("sendOtp sync exception:", err)
+                    setSending(false)
+                }
+                setTimeout(() => setSending(false), 3000)
             }
         }
-    }, [phoneNumber])
+
+        if (!script) {
+            script = document.createElement("script")
+            script.id = scriptId
+            script.type = "text/javascript"
+            script.src = "https://verify.msg91.com/otp-provider.js"
+            script.onload = () => {
+                triggerSend()
+            }
+            document.body.appendChild(script)
+        } else {
+            triggerSend()
+        }
+    }, [msg91Phone])
+
+    const handleResendOtp = () => {
+        if (!msg91Phone || sending) return
+        setSending(true)
+        setError("")
+
+        let resolved = false
+        const finishResend = () => {
+            if (!resolved) {
+                resolved = true
+                setSending(false)
+            }
+        }
+
+        // Safety timeout so button NEVER hangs on 'Sending...'
+        const safetyTimer = setTimeout(() => {
+            if (!resolved) {
+                finishResend()
+                toast.info("OTP request sent")
+            }
+        }, 3000)
+
+        const onSuccess = (data: any) => {
+            clearTimeout(safetyTimer)
+            console.log("Resend OTP success:", data)
+            const id = data?.reqId || data?.message || data?.data?.reqId || ""
+            if (id) setReqId(id)
+            finishResend()
+            toast.success("OTP resent successfully")
+        }
+
+        const onFailure = (err: any) => {
+            clearTimeout(safetyTimer)
+            console.error("Resend OTP error:", err)
+            finishResend()
+            setError(err?.message || "Failed to resend OTP")
+            toast.error(err?.message || "Failed to resend OTP")
+        }
+
+        try {
+            if (window.sendOtp) {
+                window.sendOtp(msg91Phone, onSuccess, onFailure)
+            } else if (window.retryOtp) {
+                window.retryOtp("11", onSuccess, onFailure, reqId || undefined)
+            } else {
+                clearTimeout(safetyTimer)
+                finishResend()
+                toast.error("OTP Widget is not initialized yet")
+            }
+        } catch (err: any) {
+            clearTimeout(safetyTimer)
+            onFailure(err)
+        }
+    }
 
     const handleOtpChange = (index: number, value: string) => {
         if (!/^[0-9]?$/.test(value)) return
@@ -88,8 +239,8 @@ export default function VendorAgreement() {
         newOtp[index] = value
         setOtp(newOtp)
 
-        // auto-focus next
-        if (value && index < 5) {
+        // auto-focus next for 4-digit OTP
+        if (value && index < 3) {
             inputRefs.current[index + 1]?.focus()
         }
     }
@@ -104,7 +255,7 @@ export default function VendorAgreement() {
         const doc = new jsPDF()
         const date = new Date().toLocaleDateString("en-IN")
         const name = vendorData?.vendor?.fullName || "[Vendor Name]"
-        const phone = phoneNumber
+        const phone = displayPhone
 
         const margin = 15
         const pageW = doc.internal.pageSize.getWidth()
@@ -191,32 +342,63 @@ export default function VendorAgreement() {
         doc.save(`Vendor_Agreement_${name.replace(/\s+/g, "_")}.pdf`)
     }
 
-    const handleVerify = async () => {
+    const handleVerify = () => {
         const code = otp.join("")
-        if (code.length !== 6) return
+        if (code.length !== 4 || verifying) return
 
         setVerifying(true)
         setError("")
-        try {
-            if (!confirmationResult && code === "123456") {
-                // Allow fallback in pure local dev if firebase env is missing
-                console.log("Fallback dev verification")
-            } else if (confirmationResult) {
-                await confirmationResult.confirm(code)
-            } else {
-                throw new Error("No active OTP session")
+
+        let resolved = false
+        const finishVerify = () => {
+            if (!resolved) {
+                resolved = true
+                setVerifying(false)
             }
+        }
 
-            // Generate the PDF since signature is valid
-            generateAgreementPdf()
+        const safetyTimer = setTimeout(() => {
+            if (!resolved) {
+                finishVerify()
+            }
+        }, 5000)
 
-            // Navigate to Final Success Screen
-            navigate(`/registered/${vendorId}/${storeId}`)
+        const onSuccess = (data: any) => {
+            clearTimeout(safetyTimer)
+            console.log("verifyOtp success:", data)
+            const token =
+                data?.message ||
+                data?.token ||
+                data?.["access-token"] ||
+                (typeof data === "string" ? data : "")
+            if (token) {
+                handleVerifyAccessToken(token)
+            } else {
+                finishVerify()
+                generateAgreementPdf()
+                navigate(`/registered/${vendorId}/${storeId}${typeParam}`)
+            }
+        }
+
+        const onFailure = (err: any) => {
+            clearTimeout(safetyTimer)
+            console.error("verifyOtp error:", err)
+            finishVerify()
+            setError(err?.message || "Incorrect OTP or verification failed")
+            toast.error(err?.message || "OTP verification failed")
+        }
+
+        try {
+            if (window.verifyOtp) {
+                window.verifyOtp(code, onSuccess, onFailure, reqId || undefined)
+            } else {
+                clearTimeout(safetyTimer)
+                finishVerify()
+                toast.error("OTP Widget is not initialized yet")
+            }
         } catch (err: any) {
-            console.error("Verification failed:", err)
-            setError("Incorrect OTP or Verification failed")
-        } finally {
-            setVerifying(false)
+            clearTimeout(safetyTimer)
+            onFailure(err)
         }
     }
 
@@ -224,9 +406,6 @@ export default function VendorAgreement() {
 
     return (
         <div className="flex min-h-screen flex-col bg-[#F5F6F8] pb-32 font-sans text-gray-900">
-            {/* Hidden Recaptcha */}
-            <div id="recaptcha-container"></div>
-
             {/* Header */}
             <div className="flex items-center gap-3 px-5 pt-12 pb-4">
                 <button
@@ -256,7 +435,7 @@ export default function VendorAgreement() {
                     <h2 className="mb-3 text-[15px] font-semibold text-gray-800">
                         Vendor Service Agreement
                     </h2>
-                    <div className="relative mb-4 h-[140px] overflow-hidden rounded-[12px] bg-[#F8F9FA] p-4 text-[13px] leading-relaxed text-gray-600">
+                    <div className="relative mb-4 h-35 overflow-hidden rounded-xl bg-[#F8F9FA] p-4 text-[13px] leading-relaxed text-gray-600">
                         <p>This Vendor Service Agreement ("Agreement") is entered into between:</p>
                         <br />
                         <p>Republic of Sabjiwala ("ROS"),</p>
@@ -283,7 +462,7 @@ export default function VendorAgreement() {
                         <p className="text-[14px] text-gray-500">
                             OTP sent to{" "}
                             <span className="font-medium text-gray-700">
-                                {phoneNumber || "Loading..."}
+                                {displayPhone || "Loading..."}
                             </span>
                         </p>
                         <button className="p-1">
@@ -316,7 +495,7 @@ export default function VendorAgreement() {
                                 value={digit}
                                 onChange={(e) => handleOtpChange(i, e.target.value)}
                                 onKeyDown={(e) => handleKeyDown(i, e)}
-                                className="h-14 w-12 rounded-[12px] border-2 border-gray-200 text-center text-xl font-bold text-gray-900 transition-colors focus:border-[#135B47] focus:outline-none"
+                                className="h-14 w-12 rounded-xl border-2 border-gray-200 text-center text-xl font-bold text-gray-900 transition-colors focus:border-[#135B47] focus:outline-none"
                             />
                         ))}
                     </div>
@@ -326,7 +505,7 @@ export default function VendorAgreement() {
                     <div className="flex justify-end pr-2">
                         <button
                             disabled={sending}
-                            onClick={() => sendOtp(phoneNumber)}
+                            onClick={handleResendOtp}
                             className="text-[14px] font-semibold text-[#135B47] hover:underline disabled:opacity-50"
                         >
                             {sending ? "Sending..." : "Resend OTP"}
@@ -340,7 +519,7 @@ export default function VendorAgreement() {
                 <button
                     onClick={handleVerify}
                     disabled={verifying || otp.some((d) => d === "")}
-                    className="w-full rounded-[18px] bg-[#135B47] py-[18px] text-[16px] font-semibold text-white shadow-md transition-colors hover:bg-[#0f4d3c] disabled:opacity-50"
+                    className="w-full rounded-[18px] bg-[#135B47] py-4.5 text-[16px] font-semibold text-white shadow-md transition-colors hover:bg-[#0f4d3c] disabled:opacity-50"
                 >
                     {verifying ? "Verifying..." : "Verify & Continue"}
                 </button>
@@ -349,7 +528,7 @@ export default function VendorAgreement() {
             {/* Full Agreement Modal */}
             {showFullAgreement && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center">
-                    <div className="animate-in slide-in-from-bottom-10 fade-in relative max-h-[85vh] w-full overflow-y-auto rounded-t-[24px] bg-white p-6 shadow-xl sm:max-w-md sm:rounded-[24px]">
+                    <div className="animate-in slide-in-from-bottom-10 fade-in relative max-h-[85vh] w-full overflow-y-auto rounded-t-3xl bg-white p-6 shadow-xl sm:max-w-md sm:rounded-3xl">
                         <div className="sticky top-0 mb-4 flex items-center justify-between border-b bg-white pt-2 pb-2">
                             <h3 className="text-[18px] font-bold text-gray-900">
                                 Vendor Service Agreement

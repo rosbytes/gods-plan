@@ -1,20 +1,32 @@
 import { useState } from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { trpc } from "../lib/trpc"
 import { toast } from "sonner"
 import { parseVendorType } from "../constants/vendor"
 
 export default function CreateStore() {
+    const mandilist = trpc.mandi.listAllMandi.useQuery()
+    const veglists = trpc.veg.getAll.useQuery()
+
     const navigate = useNavigate()
     const { vendorId } = useParams<{ vendorId: string }>()
+    const [searchParams] = useSearchParams()
+    const vendorType = parseVendorType(searchParams.get("type"))
 
     const [storeName, setStoreName] = useState("")
     const [fullAddress, setFullAddress] = useState("")
     const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
     const [locationLabel, setLocationLabel] = useState("Tap to add location")
     const [isFetchingLocation, setIsFetchingLocation] = useState(false)
+    const [mandiId, setMandiId] = useState<string>()
+    const [vegId, setVegId] = useState<string>()
 
-    const saveMutation = trpc.store.saveStore.useMutation({
+    const marketStoreMutation = trpc.store.createMarketStore.useMutation({
+        onSuccess: () => navigate("/dashboard"),
+        onError: (e) => toast.error(e.message),
+    })
+
+    const mandiStoreMutation = trpc.store.createMandiStore.useMutation({
         onSuccess: () => navigate("/dashboard"),
         onError: (e) => toast.error(e.message),
     })
@@ -48,20 +60,42 @@ export default function CreateStore() {
 
     const handleContinue = () => {
         if (!location || !vendorId) return
-        saveMutation.mutate(
-            {
-                vendorId,
-                storeName,
-                fullAddress,
-                lat: location.lat,
-                lng: location.lng,
-            },
-            {
-                onSuccess: (data) => {
-                    navigate(`/kyc/${vendorId}/${data.store.id}`)
+        if (vendorType === "mandi_vendor") {
+            mandiStoreMutation.mutate(
+                {
+                    vendorId,
+                    mandiId: mandiId!,
+                    vegId: vegId!,
+                    storeName,
+                    fullAddress,
+                    lat: location.lat,
+                    lng: location.lng,
                 },
-            },
-        )
+                {
+                    onSuccess: (data) => {
+                        const typeParam = vendorType ? `?type=${vendorType}` : ""
+                        navigate(`/kyc/${vendorId}/${data.store.id}${typeParam}`)
+                    },
+                },
+            )
+        } else if (vendorType === "market_vendor") {
+            marketStoreMutation.mutate(
+                {
+                    vendorId,
+                    mandiId: mandiId!,
+                    storeName,
+                    fullAddress,
+                    lat: location.lat,
+                    lng: location.lng,
+                },
+                {
+                    onSuccess: (data) => {
+                        const typeParam = vendorType ? `?type=${vendorType}` : ""
+                        navigate(`/kyc/${vendorId}/${data.store.id}${typeParam}`)
+                    },
+                },
+            )
+        }
     }
 
     return (
@@ -156,6 +190,36 @@ export default function CreateStore() {
                         />
                     </div>
                 </div>
+
+                {/* Mandi */}
+                <select
+                    value={mandiId}
+                    onChange={(e) => setMandiId(e.target.value)}
+                    className="bg-right-4 w-full appearance-none rounded-2xl border border-gray-300 bg-[url('/down-arrow.svg')] bg-no-repeat p-4 pr-10 placeholder:text-[16px] placeholder:font-medium"
+                >
+                    <option value="">Select Mandi</option>
+                    {mandilist.data?.map((mandi) => (
+                        <option key={mandi.id} value={mandi.id}>
+                            {mandi.name}
+                        </option>
+                    ))}
+                </select>
+
+                {/* Veg */}
+                {vendorType === "mandi_vendor" && (
+                    <select
+                        value={vegId}
+                        onChange={(e) => setVegId(e.target.value)}
+                        className="bg-right-4 w-full appearance-none rounded-2xl border border-gray-300 bg-[url('/down-arrow.svg')] bg-no-repeat p-4 pr-10 placeholder:text-[16px] placeholder:font-medium"
+                    >
+                        <option value="">Select Veg</option>
+                        {veglists.data?.map((veg) => (
+                            <option key={veg.id} value={veg.id}>
+                                {veg.name}
+                            </option>
+                        ))}
+                    </select>
+                )}
             </div>
 
             {/* Continue Button — only appears when form is valid */}
@@ -163,10 +227,20 @@ export default function CreateStore() {
                 <div className="fixed bottom-0 left-0 z-30 w-full bg-linear-to-t from-[#F5F6F8] via-[#F5F6F8] to-transparent px-5 py-6">
                     <button
                         onClick={handleContinue}
-                        disabled={saveMutation.isPending}
-                        className="flex w-full items-center justify-center rounded-[18px] bg-[#135B47] py-[18px] text-[16px] font-semibold text-white shadow-md transition-colors hover:bg-[#0f4d3c] disabled:opacity-60"
+                        disabled={
+                            vendorType === "mandi_vendor"
+                                ? mandiStoreMutation.isPending
+                                : marketStoreMutation.isPending
+                        }
+                        className="flex w-full items-center justify-center rounded-[18px] bg-[#135B47] py-4.5 text-[16px] font-semibold text-white shadow-md transition-colors hover:bg-[#0f4d3c] disabled:opacity-60"
                     >
-                        {saveMutation.isPending ? "Saving..." : "Continue"}
+                        {vendorType === "mandi_vendor"
+                            ? mandiStoreMutation.isPending
+                                ? "Saving..."
+                                : "Continue"
+                            : marketStoreMutation.isPending
+                              ? "Saving..."
+                              : "Continue"}
                     </button>
                 </div>
             )}

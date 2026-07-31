@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { trpc } from "../lib/trpc"
 import { parseVendorType } from "../constants/vendor"
 import { toast } from "sonner"
@@ -11,9 +11,7 @@ declare global {
     }
 }
 
-const REGISTRATION_AMOUNT = 5000
-
-type PaymentMode = "online" | "cash"
+type PaymentMode = "online" | "cash" | "skip"
 
 const loadRazorpayScript = () => {
     return new Promise((resolve) => {
@@ -28,11 +26,17 @@ const loadRazorpayScript = () => {
 export default function Payment() {
     const navigate = useNavigate()
     const { vendorId, storeId } = useParams<{ vendorId: string; storeId: string }>()
+    const [searchParams] = useSearchParams()
+    const vendorType = parseVendorType(searchParams.get("type"))
+    const typeParam = vendorType ? `&type=${vendorType}` : ""
+
     const [mode, setMode] = useState<PaymentMode>("online")
+    const [skipNote, setSkipNote] = useState("")
 
     const [orderData, setOrderData] = useState<{
         orderId: string
         keyId: string
+        amount: number // received from backend in PAISE
         vendorName?: string
         vendorContact?: string
     } | null>(null)
@@ -44,6 +48,7 @@ export default function Payment() {
             setOrderData({
                 orderId: data.orderId,
                 keyId: data.keyId,
+                amount: data.amount, // amount in PAISE from backend
                 vendorContact: data.vendorContact,
                 vendorName: data.vendorName,
             })
@@ -59,13 +64,13 @@ export default function Payment() {
         onSuccess: (data) => {
             toast.success("Payment verified successfully")
             navigate(
-                `/payment-status/${vendorId}/${storeId}?status=success&orderId=${orderData?.orderId}&paymentId=${data.paymentId}`,
+                `/payment-status/${vendorId}/${storeId}?status=success&orderId=${orderData?.orderId}&paymentId=${data.paymentId}${typeParam}`,
             )
         },
         onError: (err) => {
             toast.error("Payment verification failed: " + err.message)
             navigate(
-                `/payment-status/${vendorId}/${storeId}?status=failed&orderId=${orderData?.orderId}`,
+                `/payment-status/${vendorId}/${storeId}?status=failed&orderId=${orderData?.orderId}${typeParam}`,
             )
         },
     })
@@ -86,8 +91,15 @@ export default function Payment() {
     useEffect(() => {
         if (!storeId || !vendorId) return
         setCreating(true)
-        createOrderMutation.mutate({ storeId, vendorId })
-    }, [storeId, vendorId])
+        createOrderMutation.mutate({
+            storeId,
+            vendorId,
+            vendorType: vendorType ?? "market_vendor",
+        })
+    }, [storeId, vendorId, vendorType])
+
+    // Convert amount in PAISE (from backend) to RUPEES for visual display
+    const amountInRupees = orderData ? orderData.amount / 100 : 0
 
     // ── Handle Razorpay Payment ───────────────────────────────────────────────
     const handleRazorpayPayment = async () => {
@@ -101,7 +113,7 @@ export default function Payment() {
 
         const options = {
             key: orderData.keyId,
-            amount: REGISTRATION_AMOUNT * 100,
+            amount: orderData.amount, // amount in PAISE from backend
             currency: "INR",
             name: "ROS Registration",
             description: "Store Registration Fee",
@@ -129,7 +141,7 @@ export default function Payment() {
         paymentObject.on("payment.failed", function (response: any) {
             toast.error("Payment Failed: " + response.error.description)
             navigate(
-                `/payment-status/${vendorId}/${storeId}?status=failed&orderId=${orderData.orderId}`,
+                `/payment-status/${vendorId}/${storeId}?status=failed&orderId=${orderData.orderId}${typeParam}`,
             )
         })
         paymentObject.open()
@@ -138,8 +150,22 @@ export default function Payment() {
     const handleCashConfirm = () => {
         toast.success("Cash payment recorded")
         navigate(
-            `/payment-status/${vendorId}/${storeId}?status=success&method=cash&orderId=${orderData?.orderId || ""}`,
+            `/payment-status/${vendorId}/${storeId}?status=success&method=cash&orderId=${orderData?.orderId || ""}${typeParam}`,
         )
+    }
+
+    const handleSkipConfirm = () => {
+        if (!skipNote.trim()) {
+            toast.error("Please enter a reason for skipping payment")
+            return
+        }
+        if (!vendorId || !storeId) return
+        skipMutation.mutate({
+            storeId,
+            vendorId,
+            vendorType: vendorType ?? "market_vendor",
+            note: skipNote.trim(),
+        })
     }
 
     return (
@@ -169,74 +195,122 @@ export default function Payment() {
 
             {/* Content Card */}
             <div className="mx-5 mt-2 flex flex-col items-center gap-4 rounded-[20px] bg-white p-6 shadow-sm">
-                <div className="flex flex-col items-center">
-                    <p className="text-sm font-medium text-gray-400">Total Amount</p>
-                    <p className="text-[32px] font-bold tracking-tight text-gray-900">
-                        ₹ {REGISTRATION_AMOUNT.toLocaleString("en-IN")}
-                    </p>
-                </div>
-
                 {creating && !orderData ? (
                     <div className="py-10 text-sm text-gray-400">Creating payment order…</div>
-                ) : mode === "online" ? (
-                    <div className="flex w-full flex-col items-center gap-4 py-6">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#E8F3F0]">
-                            <svg
-                                width="32"
-                                height="32"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="#135B47"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                            </svg>
-                        </div>
-                        <p className="text-center text-sm text-gray-500">
-                            Proceed to pay ₹{REGISTRATION_AMOUNT.toLocaleString("en-IN")} securely
-                            via Razorpay
-                        </p>
-                        <button
-                            onClick={handleRazorpayPayment}
-                            disabled={!orderData || verifyMutation.isPending}
-                            className="w-full rounded-[14px] bg-[#135B47] py-4 text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-[#0f4d3c] disabled:opacity-50"
-                        >
-                            {verifyMutation.isPending ? "Verifying..." : "Pay via Razorpay"}
-                        </button>
-                    </div>
                 ) : (
-                    <div className="flex w-full flex-col items-center gap-4 py-6">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#E8F3F0]">
-                            <svg
-                                width="32"
-                                height="32"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="#135B47"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <rect x="2" y="6" width="20" height="12" rx="2" />
-                                <circle cx="12" cy="12" r="2" />
-                            </svg>
+                    <>
+                        <div className="flex flex-col items-center">
+                            <p className="text-sm font-medium text-gray-400">Total Amount</p>
+                            <p className="text-[32px] font-bold tracking-tight text-gray-900">
+                                ₹ {amountInRupees.toLocaleString("en-IN")}
+                            </p>
                         </div>
-                        <p className="text-center text-sm text-gray-500">
-                            Collect ₹{REGISTRATION_AMOUNT.toLocaleString("en-IN")} in cash
-                            <br />
-                            and confirm below
-                        </p>
-                        <button
-                            onClick={handleCashConfirm}
-                            disabled={!orderData}
-                            className="w-full rounded-[14px] bg-[black] py-4 text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-gray-800 disabled:opacity-50"
-                        >
-                            Confirm Cash Received
-                        </button>
-                    </div>
+
+                        {mode === "online" ? (
+                            <div className="flex w-full flex-col items-center gap-4 py-6">
+                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#E8F3F0]">
+                                    <svg
+                                        width="32"
+                                        height="32"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="#135B47"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    >
+                                        <rect
+                                            x="3"
+                                            y="11"
+                                            width="18"
+                                            height="11"
+                                            rx="2"
+                                            ry="2"
+                                        ></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                </div>
+                                <p className="text-center text-sm text-gray-500">
+                                    Proceed to pay ₹{amountInRupees.toLocaleString("en-IN")}{" "}
+                                    securely via Razorpay
+                                </p>
+                                <button
+                                    onClick={handleRazorpayPayment}
+                                    disabled={!orderData || verifyMutation.isPending}
+                                    className="w-full rounded-[14px] bg-[#135B47] py-4 text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-[#0f4d3c] disabled:opacity-50"
+                                >
+                                    {verifyMutation.isPending ? "Verifying..." : "Pay via Razorpay"}
+                                </button>
+                            </div>
+                        ) : mode === "cash" ? (
+                            <div className="flex w-full flex-col items-center gap-4 py-6">
+                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#E8F3F0]">
+                                    <svg
+                                        width="32"
+                                        height="32"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="#135B47"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    >
+                                        <rect x="2" y="6" width="20" height="12" rx="2" />
+                                        <circle cx="12" cy="12" r="2" />
+                                    </svg>
+                                </div>
+                                <p className="text-center text-sm text-gray-500">
+                                    Collect ₹{amountInRupees.toLocaleString("en-IN")} in cash
+                                    <br />
+                                    and confirm below
+                                </p>
+                                <button
+                                    onClick={handleCashConfirm}
+                                    disabled={!orderData}
+                                    className="w-full rounded-[14px] bg-[black] py-4 text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-gray-800 disabled:opacity-50"
+                                >
+                                    Confirm Cash Received
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex w-full flex-col items-center gap-4 py-4">
+                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FEF3C7]">
+                                    <svg
+                                        width="32"
+                                        height="32"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="#D97706"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    >
+                                        <circle cx="12" cy="12" r="10" />
+                                        <polyline points="12 6 12 12 16 14" />
+                                    </svg>
+                                </div>
+                                <p className="text-center text-sm text-gray-500">
+                                    Mark subscription charge as pending and state the reason below
+                                </p>
+                                <textarea
+                                    rows={3}
+                                    placeholder="Reason for skipping payment (e.g. Approved by Super Admin, Deferred payment)"
+                                    value={skipNote}
+                                    onChange={(e) => setSkipNote(e.target.value)}
+                                    className="w-full rounded-[14px] border border-gray-200 p-3 text-sm text-gray-800 focus:border-[#135B47] focus:outline-none"
+                                />
+                                <button
+                                    onClick={handleSkipConfirm}
+                                    disabled={skipMutation.isPending || !skipNote.trim()}
+                                    className="w-full rounded-[14px] bg-[#D97706] py-4 text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-[#b46305] disabled:opacity-50"
+                                >
+                                    {skipMutation.isPending
+                                        ? "Saving..."
+                                        : "Confirm Skip Payment (Mark Pending)"}
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 
@@ -246,7 +320,7 @@ export default function Payment() {
                 <div className="flex flex-col gap-3">
                     <button
                         onClick={() => setMode("online")}
-                        className={`flex items-center gap-3 rounded-[16px] border-2 bg-white px-4 py-4 transition-all ${mode === "online" ? "border-[#135B47] shadow-sm" : "border-transparent shadow-sm"}`}
+                        className={`flex items-center gap-3 rounded-2xl border-2 bg-white px-4 py-4 transition-all ${mode === "online" ? "border-[#135B47] shadow-sm" : "border-transparent shadow-sm"}`}
                     >
                         <div
                             className={`flex h-9 w-9 items-center justify-center rounded-full ${mode === "online" ? "bg-[#E8F3F0]" : "bg-gray-100"}`}
@@ -274,7 +348,7 @@ export default function Payment() {
 
                     <button
                         onClick={() => setMode("cash")}
-                        className={`flex items-center gap-3 rounded-[16px] border-2 bg-white px-4 py-4 transition-all ${mode === "cash" ? "border-[#135B47] shadow-sm" : "border-transparent shadow-sm"}`}
+                        className={`flex items-center gap-3 rounded-2xl border-2 bg-white px-4 py-4 transition-all ${mode === "cash" ? "border-[#135B47]" : "border-transparent shadow-sm"}`}
                     >
                         <div
                             className={`flex h-9 w-9 items-center justify-center rounded-full ${mode === "cash" ? "bg-[#E8F3F0]" : "bg-gray-100"}`}
@@ -297,6 +371,34 @@ export default function Payment() {
                             className={`text-[15px] font-semibold ${mode === "cash" ? "text-[#135B47]" : "text-gray-700"}`}
                         >
                             Cash
+                        </span>
+                    </button>
+
+                    <button
+                        onClick={() => setMode("skip")}
+                        className={`flex items-center gap-3 rounded-2xl border-2 bg-white px-4 py-4 transition-all ${mode === "skip" ? "border-[#D97706] shadow-sm" : "border-transparent shadow-sm"}`}
+                    >
+                        <div
+                            className={`flex h-9 w-9 items-center justify-center rounded-full ${mode === "skip" ? "bg-[#FEF3C7]" : "bg-gray-100"}`}
+                        >
+                            <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke={mode === "skip" ? "#D97706" : "#888"}
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                        </div>
+                        <span
+                            className={`text-[15px] font-semibold ${mode === "skip" ? "text-[#D97706]" : "text-gray-700"}`}
+                        >
+                            Skip Payment (Mark Pending)
                         </span>
                     </button>
                 </div>

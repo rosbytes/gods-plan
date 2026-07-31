@@ -1,5 +1,6 @@
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { trpc } from "../lib/trpc"
+import { parseVendorType } from "../constants/vendor"
 
 type Status = "success" | "pending" | "failed"
 
@@ -70,10 +71,24 @@ export default function PaymentStatus() {
     const { vendorId, storeId } = useParams<{ vendorId: string; storeId: string }>()
     const [searchParams] = useSearchParams()
 
+    const vendorType = parseVendorType(searchParams.get("type"))
+    const typeParam = vendorType ? `?type=${vendorType}` : ""
+
     const status = (searchParams.get("status") ?? "pending") as Status
     const orderId = searchParams.get("orderId") ?? ""
     const paymentId = searchParams.get("paymentId") ?? ""
     const method = searchParams.get("method") ?? "UPI QR"
+
+    // Fetch single source of truth payment status & amount (in PAISE) from backend
+    // Pass both IDs so backend can find the record regardless of whether
+    // verifyPayment has already overwritten transactionId from order_xxx to pay_xxx
+    const { data: paymentData } = trpc.payment.getPaymentStatus.useQuery(
+        { orderId, paymentId: paymentId || undefined },
+        { enabled: !!orderId || !!paymentId },
+    )
+
+    // Convert amount in PAISE from backend to RUPEES for display
+    const amountInRupees = paymentData?.amount ? paymentData.amount / 100 : 0
 
     const now = new Date()
     const formattedDate =
@@ -94,7 +109,9 @@ export default function PaymentStatus() {
             {/* Status Section */}
             <div className="flex flex-col items-center px-6 pt-20 pb-8 text-center">
                 {config.icon}
-                <p className="mt-5 text-[28px] font-bold tracking-tight text-gray-900">₹ 5,000</p>
+                <p className="mt-5 text-[28px] font-bold tracking-tight text-gray-900">
+                    {amountInRupees > 0 ? `₹ ${amountInRupees.toLocaleString("en-IN")}` : "..."}
+                </p>
                 <p className="mt-1 text-[17px] font-semibold text-gray-700">{config.label}</p>
             </div>
 
@@ -150,15 +167,15 @@ export default function PaymentStatus() {
             <div className="fixed bottom-0 left-0 w-full bg-linear-to-t from-[#F5F6F8] via-[#F5F6F8] to-transparent px-5 py-6">
                 {status === "failed" ? (
                     <button
-                        onClick={() => navigate(`/payment/${vendorId}/${storeId}`)}
-                        className="w-full rounded-[18px] bg-[#135B47] py-[18px] text-[16px] font-semibold text-white shadow-md transition-colors hover:bg-[#0f4d3c]"
+                        onClick={() => navigate(`/payment/${vendorId}/${storeId}${typeParam}`)}
+                        className="w-full rounded-[18px] bg-[#135B47] py-4.5 text-[16px] font-semibold text-white shadow-md transition-colors hover:bg-[#0f4d3c]"
                     >
                         Back to payment
                     </button>
                 ) : (
                     <button
-                        onClick={() => navigate(`/agreement/${vendorId}/${storeId}`)}
-                        className="w-full rounded-[18px] bg-[#135B47] py-[18px] text-[16px] font-semibold text-white shadow-md transition-colors hover:bg-[#0f4d3c]"
+                        onClick={() => navigate(`/agreement/${vendorId}/${storeId}${typeParam}`)}
+                        className="w-full rounded-[18px] bg-[#135B47] py-4.5 text-[16px] font-semibold text-white shadow-md transition-colors hover:bg-[#0f4d3c]"
                     >
                         Continue to Agreement
                     </button>

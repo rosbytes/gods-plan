@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { trpc } from "../lib/trpc"
 import { customFetch } from "../lib/customFetch"
 import { parseVendorType } from "../constants/vendor"
@@ -10,6 +10,8 @@ type IdType = "aadhar" | "pan"
 export default function KycDocuments() {
     const navigate = useNavigate()
     const { vendorId, storeId } = useParams<{ vendorId: string; storeId: string }>()
+    const [searchParams] = useSearchParams()
+    const vendorType = parseVendorType(searchParams.get("type"))
 
     const [idType, setIdType] = useState<IdType>("aadhar")
     const [idNumber, setIdNumber] = useState("")
@@ -20,10 +22,13 @@ export default function KycDocuments() {
 
     const [uploading, setUploading] = useState<{ [key: string]: boolean }>({})
 
-    const saveKyc = trpc.store.saveKyc.useMutation({
-        onSuccess: () => navigate(`/success/${vendorId}/${storeId}`),
-        onError: (e) => alert(e.message),
-    })
+    const typeParam = vendorType ? `?type=${vendorType}` : ""
+
+    const saveMarketKyc = trpc.store.saveMarketKyc.useMutation()
+    const updateMarketStore = trpc.store.updateMarketStore.useMutation()
+
+    const saveMandiKyc = trpc.store.saveMandiKyc.useMutation()
+    const updateMandiStore = trpc.store.updateMandiStore.useMutation()
 
     const isFormValid =
         idNumber.trim().length >= 10 &&
@@ -323,10 +328,20 @@ export default function KycDocuments() {
                 <div className="fixed bottom-0 left-0 z-30 w-full bg-linear-to-t from-[#F5F6F8] via-[#F5F6F8] to-transparent px-5 py-6">
                     <button
                         onClick={handleContinue}
-                        disabled={saveKyc.isPending}
-                        className="flex w-full items-center justify-center rounded-[18px] bg-[#135B47] py-[18px] text-[16px] font-semibold text-white shadow-md transition-colors hover:bg-[#0f4d3c] disabled:opacity-60"
+                        disabled={
+                            vendorType === "market_vendor"
+                                ? saveMarketKyc.isPending || updateMarketStore.isPending
+                                : saveMandiKyc.isPending || updateMandiStore.isPending
+                        }
+                        className="flex w-full items-center justify-center rounded-[18px] bg-[#135B47] py-4.5 text-[16px] font-semibold text-white shadow-md transition-colors hover:bg-[#0f4d3c] disabled:opacity-60"
                     >
-                        {saveKyc.isPending ? "Saving..." : "Continue"}
+                        {vendorType === "market_vendor"
+                            ? saveMarketKyc.isPending || updateMarketStore.isPending
+                                ? "Saving..."
+                                : "Continue"
+                            : saveMandiKyc.isPending || updateMandiStore.isPending
+                              ? "Saving..."
+                              : "Continue"}
                     </button>
                 </div>
             )}

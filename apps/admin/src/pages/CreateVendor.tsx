@@ -7,7 +7,7 @@ import { VendorType } from "../constants/vendor"
 export default function CreateVendor() {
     const navigate = useNavigate()
 
-    const [vendorType, setVendorType] = useState<VendorType>("market_vendor")
+    const [vendorType, setVendorType] = useState<VendorType>(VendorType.MARKET_VENDOR)
     const [fullName, setFullName] = useState("")
     const [mobileNumber, setMobileNumber] = useState("")
     const [alternateNumber, setAlternateNumber] = useState("")
@@ -29,14 +29,20 @@ export default function CreateVendor() {
     })
 
     const isFormValid = fullName.trim() !== "" && mobileNumber.trim() !== ""
+    const isPending = createMarketMutation.isPending || createMandiMutation.isPending
 
     const handleContinue = () => {
-        createMutation.mutate({
+        const payload = {
             fullName,
             primaryPhone: mobileNumber,
             alternatePhone: alternateNumber || undefined,
-            type: vendorType,
-        })
+        }
+
+        if (vendorType === VendorType.MARKET_VENDOR) {
+            createMarketMutation.mutate(payload)
+        } else {
+            createMandiMutation.mutate(payload)
+        }
     }
 
     return (
@@ -71,15 +77,15 @@ export default function CreateVendor() {
                     <div className="grid grid-cols-2 gap-3">
                         {/* Market */}
                         <button
-                            onClick={() => setVendorType("market_vendor")}
-                            className={`flex items-center gap-3 rounded-[16px] border-2 px-4 py-4 text-left text-[15px] font-semibold transition-all ${
-                                vendorType === "market_vendor"
+                            onClick={() => setVendorType(VendorType.MARKET_VENDOR)}
+                            className={`flex items-center gap-3 rounded-2xl border-2 px-4 py-4 text-left text-[15px] font-semibold transition-all ${
+                                vendorType === VendorType.MARKET_VENDOR
                                     ? "border-[#135B47] bg-white text-[#135B47]"
                                     : "border-gray-200 bg-white text-gray-600"
                             }`}
                         >
                             <span
-                                className={`flex h-8 w-8 items-center justify-center rounded-lg text-2xl ${vendorType === "market_vendor" ? "bg-[#E8F3F0]" : "bg-gray-100"}`}
+                                className={`flex h-8 w-8 items-center justify-center rounded-lg text-2xl ${vendorType === VendorType.MARKET_VENDOR ? "bg-[#E8F3F0]" : "bg-gray-100"}`}
                             >
                                 🏪
                             </span>
@@ -88,15 +94,15 @@ export default function CreateVendor() {
 
                         {/* Mandi */}
                         <button
-                            onClick={() => setVendorType("mandi_vendor")}
-                            className={`flex items-center gap-3 rounded-[16px] border-2 px-4 py-4 text-left text-[15px] font-semibold transition-all ${
-                                vendorType === "mandi_vendor"
+                            onClick={() => setVendorType(VendorType.MANDI_VENDOR)}
+                            className={`flex items-center gap-3 rounded-2xl border-2 px-4 py-4 text-left text-[15px] font-semibold transition-all ${
+                                vendorType === VendorType.MANDI_VENDOR
                                     ? "border-[#135B47] bg-white text-[#135B47]"
                                     : "border-gray-200 bg-white text-gray-600"
                             }`}
                         >
                             <span
-                                className={`flex h-8 w-8 items-center justify-center rounded-lg text-2xl ${vendorType === "mandi_vendor" ? "bg-[#E8F3F0]" : "bg-gray-100"}`}
+                                className={`flex h-8 w-8 items-center justify-center rounded-lg text-2xl ${vendorType === VendorType.MANDI_VENDOR ? "bg-[#E8F3F0]" : "bg-gray-100"}`}
                             >
                                 🚜
                             </span>
@@ -162,10 +168,10 @@ export default function CreateVendor() {
                 <div className="fixed bottom-0 left-0 z-30 w-full bg-linear-to-t from-[#F5F6F8] via-[#F5F6F8] to-transparent px-5 py-6">
                     <button
                         onClick={handleContinue}
-                        disabled={createMutation.isPending}
-                        className="flex w-full items-center justify-center rounded-[18px] bg-[#135B47] py-[18px] text-[16px] font-semibold text-white shadow-md transition-colors hover:bg-[#0f4d3c] disabled:opacity-60"
+                        disabled={isPending}
+                        className="flex w-full items-center justify-center rounded-[18px] bg-[#135B47] py-4.5 text-[16px] font-semibold text-white shadow-md transition-colors hover:bg-[#0f4d3c] disabled:opacity-60"
                     >
-                        {createMutation.isPending ? "Saving..." : "Continue"}
+                        {isPending ? "Saving..." : "Continue"}
                     </button>
                 </div>
             )}
