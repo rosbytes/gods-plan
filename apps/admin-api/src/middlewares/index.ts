@@ -7,5 +7,5 @@
 // export type { VendorContext } from "./vendor.middleware"
 
 // admin middleware and admin context exports
-export { isAdmin } from "./admin.middleware"
-export type { AdminContext } from "./admin.middleware"
+export { isAdmin, expressIsAdmin } from "./admin.middleware"
+export type { AdminContext, AuthenticatedAdminRequest } from "./admin.middleware"
