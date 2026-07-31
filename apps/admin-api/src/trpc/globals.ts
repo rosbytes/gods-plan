@@ -1,3 +1,4 @@
+import { isAdmin } from "../middlewares"
 import { t } from "./trpc"
 // import { tokenBucket } from "../utils"
 // import { logger } from "../configs"
@@ -21,6 +22,7 @@ const globalRateLimit = t.middleware(async ({ ctx, next }) => {
 
 export const router = t.router
 export const publicProcedure = t.procedure.use(trpcLogger).use(globalRateLimit)
+export const adminProcedure = publicProcedure.use(isAdmin)
 // export const userProcedure = publicProcedure.use(isUser)
 // export const vendorProcedure = publicProcedure.use(isVendor)
 // export const boardProcedure = publicProcedure.use(isBoard)

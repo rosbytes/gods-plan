@@ -6,13 +6,13 @@ import { env } from "../configs"
  *   Admin Access & Refresh Token
  *
  * */
-export const generateAdminAccessToken = ({ id }: { id: string }) => {
+export const generateAdminAccessToken = (id: string) => {
     return jwt.sign({ id }, env.ADMIN_JWT_ACCESS_TOKEN_SECRET, {
         expiresIn: env.ADMIN_JWT_ACCESS_TOKEN_EXPIRY as any,
     })
 }
 
-export const generateAdminRefreshToken = ({ id }: { id: string }) => {
+export const generateAdminRefreshToken = (id: string) => {
     return jwt.sign({ id }, env.ADMIN_JWT_REFRESH_TOKEN_SECRET, {
         expiresIn: env.ADMIN_JWT_REFRESH_TOKEN_EXPIRY as any,
     })
