@@ -21,10 +21,10 @@ app.set("trust proxy", false)
 app.use(express.json())
 
 app.get("/", (req, res) => {
-    res.send("Server is working")
+    res.json({ message: "Server is working" })
 })
 app.get("/api", (req, res) => {
-    res.send("Server is working at api")
+    res.json({ message: "Server is working at api" })
 })
 // media upload endpoint
 // app.use("/api/media", mediaRouter)

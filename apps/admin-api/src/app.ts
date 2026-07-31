@@ -17,7 +17,7 @@ app.use(cors({ origin: [env.FRONTEND_URL], credentials: true }))
 app.use(express.json())
 
 app.get("/", (req, res) => {
-    res.send("Server is working")
+    res.json({ message: "Server is working" })
 })
 
 // media upload endpoint
