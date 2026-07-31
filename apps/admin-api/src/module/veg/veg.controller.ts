@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import type { TCreateVegSchema, TUpdateVegSchema, TListVegsSchema } from "./veg.schema"
 import { db, veg, ilike, desc, eq } from "@ros/db"
-import { AdminContext } from "../../middlewares"
+import type { AdminContext } from "../../middlewares"
 
 export async function createVeg({ input, ctx }: { input: TCreateVegSchema; ctx: AdminContext }) {
     try {

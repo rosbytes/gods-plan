@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import type { TCreateMandiSchema, TUpdateMandiSchema, TListMandisSchema } from "./mandi.schema"
 import { db, mandi, ilike, desc, eq, and } from "@ros/db"
-import { AdminContext } from "../../middlewares"
+import type { AdminContext } from "../../middlewares"
 
 export async function createMandi({
     input,
