@@ -1,6 +1,6 @@
 {
     "name": "@ros/test-api",
-    "main": "api/index.js",
+    "main": "dist/app.cjs",
     "type": "module",
     "private": true,
     "scripts": {
