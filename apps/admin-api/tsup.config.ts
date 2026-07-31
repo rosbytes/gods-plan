@@ -2,10 +2,10 @@ import { defineConfig } from "tsup"
 
 export default defineConfig({
     entry: ["src/app.ts"],
-    outDir: "dist",
+    outDir: "api",
     format: ["cjs"],
     splitting: false,
-    clean: true,
+    clean: false,
     bundle: true,
     noExternal: [/.*/],
     outExtension: () => ({ js: ".cjs" }),

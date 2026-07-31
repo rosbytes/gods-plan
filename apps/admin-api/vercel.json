@@ -1,4 +1,9 @@
 {
+    "functions": {
+        "api/index.js": {
+            "includeFiles": "api/app.cjs"
+        }
+    },
     "rewrites": [
         {
             "source": "/(.*)",
