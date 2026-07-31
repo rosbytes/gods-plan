@@ -22,7 +22,10 @@ export const mandiSubcriptionCharges = pgTable("mandi_subcription_charges", {
     paymentStatus: paymentStatus("payment_status").notNull(),
     paymentMethod: paymentMethod("payment_method").notNull(),
 
-    cashCollectedBy: uuid("cash_collected_by").references(() => admin.id),
+    paymentCollectedBy: uuid("payment_collected_by")
+        .references(() => admin.id)
+        .notNull(),
+    note: varchar("note", { length: 500 }),
 
     ...timestamps,
 })
@@ -32,8 +35,8 @@ export const mandiSubcriptionChargesRelations = relations(mandiSubcriptionCharge
         fields: [mandiSubcriptionCharges.vendorId],
         references: [mandiVendor.id],
     }),
-    cashCollectedBy: one(admin, {
-        fields: [mandiSubcriptionCharges.cashCollectedBy],
+    paymentCollectedBy: one(admin, {
+        fields: [mandiSubcriptionCharges.paymentCollectedBy],
         references: [admin.id],
     }),
 }))

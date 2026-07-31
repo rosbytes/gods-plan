@@ -22,7 +22,10 @@ export const marketSubcriptionCharges = pgTable("market_subcription_charges", {
     paymentStatus: paymentStatus("payment_status").notNull(),
     paymentMethod: paymentMethod("payment_method").notNull(),
 
-    cashCollectedBy: uuid("cash_collected_by").references(() => admin.id),
+    paymentCollectedBy: uuid("payment_collected_by")
+        .references(() => admin.id)
+        .notNull(),
+    note: varchar("note", { length: 500 }),
 
     ...timestamps,
 })
@@ -32,8 +35,8 @@ export const marketSubcriptionChargesRelations = relations(marketSubcriptionChar
         fields: [marketSubcriptionCharges.vendorId],
         references: [marketVendor.id],
     }),
-    cashCollectedBy: one(admin, {
-        fields: [marketSubcriptionCharges.cashCollectedBy],
+    paymentCollectedBy: one(admin, {
+        fields: [marketSubcriptionCharges.paymentCollectedBy],
         references: [admin.id],
     }),
 }))
