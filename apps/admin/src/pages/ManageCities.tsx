@@ -1,6 +1,15 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { trpc } from "../lib/trpc"
+import { customFetch } from "../lib/customFetch"
+
+type CityItem = {
+    id: string
+    name: string
+    state: string
+    pincode: string | null
+    cityImage: string | null
+}
 
 export default function ManageCities() {
     const navigate = useNavigate()
@@ -26,6 +35,32 @@ export default function ManageCities() {
         },
         onError: (e) => alert(e.message),
     })
+
+    const updateMutation = trpc.city.update.useMutation({
+        onSuccess: () => {
+            setEditingCity(null)
+            setEditImageFile(null)
+            refetch()
+        },
+        onError: (e) => alert(e.message),
+    })
+
+    const uploadImage = async (file: File): Promise<string | undefined> => {
+        try {
+            const formData = new FormData()
+            formData.append("file", file)
+            const res = await customFetch(`${import.meta.env.VITE_API_URL}/api/media/upload`, {
+                method: "POST",
+                body: formData,
+            })
+            const data = await res.json()
+            if (data.success) return data.url
+            alert(`Upload failed: ${data.message || "Unknown error"}`)
+        } catch {
+            alert("Image upload failed — network error")
+        }
+        return undefined
+    }
 
     const handleSubmit = async () => {
         let cityImage: string | undefined

@@ -45,10 +45,11 @@ export default function KycDocuments() {
         formData.append("file", file)
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/media/upload`, {
+            const response = await customFetch(`${import.meta.env.VITE_API_URL}/api/media/upload`, {
                 method: "POST",
                 body: formData,
             })
+
             const data = await response.json()
             if (data.success) {
                 if (field === "front") setFrontUrl(data.url)

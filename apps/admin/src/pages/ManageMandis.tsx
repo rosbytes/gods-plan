@@ -1,6 +1,18 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { trpc } from "../lib/trpc"
+import { customFetch } from "../lib/customFetch"
+
+type MandiItem = {
+    id: string
+    name: string
+    cityId: string
+    lat: number
+    lng: number
+    fullAddress: string | null
+    mandiImage: string | null
+    city?: { id: string; name: string; state: string } | null
+}
 
 export default function ManageMandis() {
     const navigate = useNavigate()
@@ -33,7 +45,33 @@ export default function ManageMandis() {
         onError: (e) => alert(e.message),
     })
 
-    const handleGetLocation = () => {
+    const updateMutation = trpc.mandi.update.useMutation({
+        onSuccess: () => {
+            setEditingMandi(null)
+            setEditImageFile(null)
+            refetch()
+        },
+        onError: (e) => alert(e.message),
+    })
+
+    const uploadImage = async (file: File): Promise<string | undefined> => {
+        try {
+            const formData = new FormData()
+            formData.append("file", file)
+            const res = await customFetch(`${import.meta.env.VITE_API_URL}/api/media/upload`, {
+                method: "POST",
+                body: formData,
+            })
+            const data = await res.json()
+            if (data.success) return data.url
+            alert(`Upload failed: ${data.message || "Unknown error"}`)
+        } catch {
+            alert("Image upload failed — network error")
+        }
+        return undefined
+    }
+
+    const handleGetLocation = (isEdit = false) => {
         if (!navigator.geolocation) {
             alert("Geolocation is not supported by your browser")
             return
