@@ -12,10 +12,6 @@
         "noEmit": false,
         "outDir": "dist",
         "rootDir": "src",
-        "baseUrl": ".",
-        "paths": {
-            "cookie": ["node_modules/cookie/dist/index.d.ts"]
-        },
 
         // Best practices
         "strict": true,
