@@ -5,7 +5,7 @@
     "private": true,
     "scripts": {
         "dev": "tsx watch src/app.ts",
-        "build": "tsup && (if [ \"$VERCEL\" = \"1\" ]; then rm -rf src; fi)",
+        "build": "pnpm typecheck && tsup && (if [ \"$VERCEL\" = \"1\" ]; then rm -rf src; fi)",
         "prod:build": "turbo run build",
         "start": "node dist/bundle.cjs",
         "typecheck": "tsc --noEmit"
