@@ -1,7 +1,0 @@
-/node_modules/
-/drizzle/
-/log/
-/images/
-/.env
-/.env.local
-/.env.*.local
