@@ -1,14 +1,14 @@
 {
     "name": "@ros/admin-api",
-    "main": "api/index.js",
+    "main": "api/index.cjs",
     "type": "module",
     "private": true,
     "scripts": {
         "dev": "tsx watch src/app.ts",
-        "build": "pnpm typecheck && tsc -b && tsc-alias -f",
+        "build": "pnpm typecheck && tsup",
         "dev:build": "tsc -b && tsc-alias -f",
         "prod:build": "turbo run build",
-        "start": "node api/index.js",
+        "start": "node api/index.cjs",
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
