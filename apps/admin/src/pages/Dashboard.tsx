@@ -7,7 +7,11 @@ export default function Dashboard() {
     const [searchQuery, setSearchQuery] = useState("")
 
     // We will query the vendors list using the backend tRPC route
-    const { data: vendors, isLoading } = trpc.vendor.list.useQuery({ search: searchQuery })
+    // const { data: marketVendors, isMarketLoading } = trpc.vendor.listMarket.useQuery({ search: searchQuery })
+    // const { data: mandiVendors, isMandiLoading } = trpc.vendor.listMandi.useQuery({ search: searchQuery })
+    const { data: vendors, isLoading } = trpc.vendor.listAllVendors.useQuery({
+        search: searchQuery ? searchQuery : undefined,
+    })
 
     return (
         <div className="flex min-h-screen flex-col bg-[#F5F6F8] pb-24 font-sans text-gray-900">
@@ -44,8 +48,42 @@ export default function Dashboard() {
                 </div>
             </div>
 
+            {/* Manage Section */}
+            <div className="mt-1 px-5">
+                <p className="mb-3 text-[14px] font-semibold text-gray-500">Manage</p>
+                <div className="grid grid-cols-3 gap-3">
+                    <button
+                        onClick={() => navigate("/manage/cities")}
+                        className="flex flex-col items-center gap-2 rounded-2xl bg-white p-4 shadow-sm transition-colors active:bg-gray-50"
+                    >
+                        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E8F3F0] text-xl">
+                            🏙️
+                        </span>
+                        <span className="text-[13px] font-semibold text-gray-700">Cities</span>
+                    </button>
+                    <button
+                        onClick={() => navigate("/manage/mandis")}
+                        className="flex flex-col items-center gap-2 rounded-2xl bg-white p-4 shadow-sm transition-colors active:bg-gray-50"
+                    >
+                        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E8F3F0] text-xl">
+                            🏪
+                        </span>
+                        <span className="text-[13px] font-semibold text-gray-700">Mandis</span>
+                    </button>
+                    <button
+                        onClick={() => navigate("/manage/vegetables")}
+                        className="flex flex-col items-center gap-2 rounded-2xl bg-white p-4 shadow-sm transition-colors active:bg-gray-50"
+                    >
+                        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E8F3F0] text-xl">
+                            🥬
+                        </span>
+                        <span className="text-[13px] font-semibold text-gray-700">Vegetables</span>
+                    </button>
+                </div>
+            </div>
+
             {/* List Section */}
-            <div className="mt-2 flex-1 px-5">
+            <div className="mt-4 flex-1 px-5">
                 <h2 className="mb-4 text-[15px] font-semibold text-gray-600">
                     Recent Registrations
                 </h2>
@@ -59,43 +97,38 @@ export default function Dashboard() {
                                 No vendors found.
                             </div>
                         ) : (
-                            vendors?.items?.map((vendor: any) => (
+                            vendors?.items?.map((vendor) => (
                                 <div
                                     key={vendor.id}
                                     onClick={() => navigate(`/vendor/${vendor.id}`)}
-                                    className="flex cursor-pointer items-center gap-4 rounded-[16px] border border-gray-50 bg-white p-[18px] shadow-sm transition-colors active:bg-gray-50"
+                                    className="flex cursor-pointer items-center gap-4 rounded-2xl border border-gray-50 bg-white p-4.5 shadow-sm transition-colors active:bg-gray-50"
                                 >
+                                    {/* Avatar */}
                                     <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-gray-200 shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]">
-                                        {vendor.kycDocs?.[0]?.storefrontUrl ? (
-                                            <img
-                                                src={vendor.kycDocs[0].storefrontUrl}
-                                                alt="Storefront avatar"
-                                                className="h-full w-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="flex h-full w-full items-center justify-center bg-gray-100">
-                                                <svg
-                                                    width="20"
-                                                    height="20"
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="#9ca3af"
-                                                    strokeWidth="2"
-                                                >
-                                                    <circle cx="12" cy="12" r="10"></circle>
-                                                    <path d="M12 8v4l3 3"></path>
-                                                </svg>
-                                            </div>
-                                        )}
+                                        <div
+                                            className={`flex h-full w-full items-center justify-center ${vendor.type === "mandi" ? "bg-[#FFF3E0]" : "bg-[#E8F3F0]"}`}
+                                        >
+                                            <span className="text-lg">
+                                                {vendor.type === "mandi" ? "🥬" : "🏪"}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="flex flex-col">
+                                    <div className="flex flex-1 flex-col">
                                         <span className="text-[16px] font-bold tracking-tight text-gray-800">
-                                            {vendor.stores?.[0]?.storeName || vendor.fullName}
+                                            {vendor.fullName}
                                         </span>
-                                        <span className="mt-0.5 text-[14px] font-medium text-gray-400 capitalize">
-                                            {vendor.type.replace("_", " ")}
+                                        <span className="mt-0.5 text-[13px] font-medium text-gray-400 capitalize">
+                                            {vendor.type === "mandi"
+                                                ? "Mandi Vendor"
+                                                : "Market Vendor"}
                                         </span>
                                     </div>
+                                    {/* Type badge */}
+                                    <span
+                                        className={`shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase ${vendor.type === "mandi" ? "bg-[#FFF3E0] text-[#E65100]" : "bg-[#E8F3F0] text-[#135B47]"}`}
+                                    >
+                                        {vendor.type}
+                                    </span>
                                 </div>
                             ))
                         )}
@@ -107,7 +140,7 @@ export default function Dashboard() {
             <div className="fixed bottom-0 left-0 z-30 w-full bg-linear-to-t from-[#F5F6F8] via-[#F5F6F8] to-transparent px-5 py-6">
                 <button
                     onClick={() => navigate("/create-vendor")}
-                    className="flex w-full items-center justify-center gap-3 rounded-[18px] bg-[#135B47] py-[18px] text-[16px] font-semibold text-white shadow-md transition-colors hover:bg-[#0f4d3c]"
+                    className="flex w-full items-center justify-center gap-3 rounded-[18px] bg-[#135B47] py-4.5 text-[16px] font-semibold text-white shadow-md transition-colors hover:bg-[#0f4d3c]"
                 >
                     <svg
                         width="22"
