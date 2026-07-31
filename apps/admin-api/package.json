@@ -1,6 +1,6 @@
 {
     "name": "@ros/admin-api",
-    "module": "index.ts",
+    "main": "src/app.ts",
     "type": "module",
     "private": true,
     "scripts": {
