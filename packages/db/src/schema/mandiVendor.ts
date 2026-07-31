@@ -14,6 +14,7 @@ export const mandiVendor = pgTable("mandi_vendor", {
     alternatePhone: varchar("alternate_phone", { length: 20 }),
 
     // 4 digit pin (stored as bcrypt hash)
+    // TODO: default is null and that is predictable, we need to setup some random password by default
     pin: varchar({ length: 255 }),
 
     createdBy: uuid("created_by")

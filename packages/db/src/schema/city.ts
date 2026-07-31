@@ -6,7 +6,7 @@ import { admin } from "./admin"
 
 export const city = pgTable("city", {
     id: uuid("id").primaryKey().defaultRandom(),
-    name: varchar({ length: 255 }).notNull(),
+    name: varchar({ length: 255 }).notNull().unique(),
     state: varchar({ length: 255 }).notNull(),
     pincode: varchar({ length: 10 }),
 

@@ -17,19 +17,9 @@ import * as marketKycDocSchema from "./schema/marketKycDoc"
 import * as mandiKycDocSchema from "./schema/mandiKycDoc"
 import * as marketSubscriptionChargesSchema from "./schema/marketSubscriptionCharges"
 import * as mandiSubscriptionChargesSchema from "./schema/mandiSubscriptionCharges"
+import { sql } from "drizzle-orm"
 
 const client = postgres(env.DATABASE_URL)
-
-/** Call once at app startup to verify DB connectivity */
-export async function testConnection() {
-    try {
-        await client`SELECT 1`
-        console.log("DB connected")
-    } catch (error) {
-        console.error("DB connection failed:", error)
-        throw error
-    }
-}
 
 export const db = drizzle(client, {
     schema: {
@@ -52,3 +42,14 @@ export const db = drizzle(client, {
     },
     casing: "snake_case",
 })
+
+/** Call once at app startup to verify DB connectivity */
+export async function testDBConnection() {
+    try {
+        await db.execute(sql`SELECT 1`)
+        console.log("DB connected")
+    } catch (error) {
+        console.error("DB connection failed:", error)
+        throw error
+    }
+}

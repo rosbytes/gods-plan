@@ -1,4 +1,4 @@
-import { db, testConnection } from "./src/db"
+import { db, testDBConnection } from "./src/db"
 import bcrypt from "bcryptjs"
 import {
     admin,
@@ -13,6 +13,10 @@ import {
     marketMandiOrder,
     marketMandiOrderPayment,
     marketMandiOrderStatusHistory,
+    mandiKycDoc,
+    marketKycDoc,
+    mandiSubcriptionCharges,
+    marketSubcriptionCharges,
 } from "./src/index"
 
 async function main() {
@@ -23,7 +27,7 @@ async function main() {
 
     try {
         // 1. Verify DB Connection
-        await testConnection()
+        await testDBConnection()
         console.log("📡 Connected to database successfully.")
 
         // 2. Perform Seeding inside a Single Transaction for Atomicity
@@ -34,6 +38,10 @@ async function main() {
             await tx.delete(marketMandiOrderStatusHistory)
             await tx.delete(marketMandiOrder)
             await tx.delete(mandiPrice)
+            await tx.delete(marketKycDoc)
+            await tx.delete(mandiKycDoc)
+            await tx.delete(marketSubcriptionCharges)
+            await tx.delete(mandiSubcriptionCharges)
             await tx.delete(marketStore)
             await tx.delete(marketVendor)
             await tx.delete(mandiStore)
@@ -201,7 +209,7 @@ async function main() {
             console.log("✅ Mandis seeded.")
 
             // 2.6. Insert Mandi Vendors
-            console.log("👨‍🌾 Seeding Mandi Vendors...")
+            console.log("👨🌾 Seeding Mandi Vendors...")
 
             const [mandiVendor1] = await tx
                 .insert(mandiVendor)
@@ -286,13 +294,53 @@ async function main() {
             })
             console.log("✅ Mandi Prices seeded.")
 
-            // 2.9. Insert Market Vendors
+            // 2.9. Insert Mandi KYC Documents
+            console.log("📄 Seeding Mandi KYC Documents...")
+            await tx.insert(mandiKycDoc).values({
+                id: "b1b1b1b1-1111-1111-1111-111111111111",
+                vendorId: mandiVendor1.id,
+                storeId: tomatoMandiStore.id,
+                type: "aadhar",
+                docId: "9876-5432-1098",
+                frontUrl: "https://example.com/kyc/mandi/ramesh-aadhar-front.jpg",
+                backUrl: "https://example.com/kyc/mandi/ramesh-aadhar-back.jpg",
+                storefrontUrl: "https://example.com/kyc/mandi/ramesh-storefront.jpg",
+                signedKycDocUrl: null,
+            })
+
+            await tx.insert(mandiKycDoc).values({
+                id: "b2b2b2b2-2222-2222-2222-222222222222",
+                vendorId: mandiVendor1.id,
+                storeId: tomatoMandiStore.id,
+                type: "pan",
+                docId: "ABCDE1234F",
+                frontUrl: "https://example.com/kyc/mandi/ramesh-pan-front.jpg",
+                backUrl: null,
+                storefrontUrl: null,
+                signedKycDocUrl: null,
+            })
+
+            await tx.insert(mandiKycDoc).values({
+                id: "b3b3b3b3-3333-3333-3333-333333333333",
+                vendorId: mandiVendor2.id,
+                storeId: potatoMandiStore.id,
+                type: "aadhar",
+                docId: "1234-5678-9012",
+                frontUrl: "https://example.com/kyc/mandi/amit-aadhar-front.jpg",
+                backUrl: "https://example.com/kyc/mandi/amit-aadhar-back.jpg",
+                storefrontUrl: "https://example.com/kyc/mandi/amit-storefront.jpg",
+                signedKycDocUrl: "https://example.com/kyc/mandi/amit-signed-kyc.pdf",
+            })
+            console.log("✅ Mandi KYC Documents seeded.")
+
+            // 2.10. Insert Market Vendors
             console.log("🤝 Seeding Market Vendors...")
             const marketVendorsList = [
                 {
                     id: "cde1cde1-1111-1111-1111-111111111111",
                     fullName: "Suresh Patel",
                     primaryPhone: "+918888888801",
+                    alternatePhone: "+918800000001",
                     pin: hashedPin,
                     slot: 1,
                     createdBy: superAdminRecord.id,
@@ -301,6 +349,7 @@ async function main() {
                     id: "cde2cde2-2222-2222-2222-222222222222",
                     fullName: "Rajesh Verma",
                     primaryPhone: "+918888888802",
+                    alternatePhone: null,
                     pin: hashedPin,
                     slot: 2,
                     createdBy: superAdminRecord.id,
@@ -309,6 +358,7 @@ async function main() {
                     id: "cde3cde3-3333-3333-3333-333333333333",
                     fullName: "Sharma Vendor",
                     primaryPhone: "+918888888803",
+                    alternatePhone: "+918800000003",
                     pin: hashedPin,
                     slot: 1,
                     createdBy: superAdminRecord.id,
@@ -392,7 +442,7 @@ async function main() {
             }
             console.log("✅ Market Vendors seeded.")
 
-            // 2.10. Insert Market Stores
+            // 2.11. Insert Market Stores
             console.log("🛒 Seeding Market Stores...")
             const marketStoresList = [
                 {
@@ -546,7 +596,141 @@ async function main() {
             }
             console.log("✅ Market Stores seeded.")
 
-            // 2.11. Insert Market Mandi Orders (Associated with Dispatch Slots)
+            // 2.12. Insert Market KYC Documents
+            console.log("📄 Seeding Market KYC Documents...")
+            await tx.insert(marketKycDoc).values({
+                id: "e1e1e1e1-1111-1111-1111-111111111111",
+                vendorId: "cde1cde1-1111-1111-1111-111111111111", // Suresh Patel
+                storeId: "cab1cab1-1111-1111-1111-111111111111",
+                type: "aadhar",
+                docId: "5678-1234-9012",
+                frontUrl: "https://example.com/kyc/market/suresh-aadhar-front.jpg",
+                backUrl: "https://example.com/kyc/market/suresh-aadhar-back.jpg",
+                storefrontUrl: "https://example.com/kyc/market/suresh-storefront.jpg",
+                signedKycDocUrl: "https://example.com/kyc/market/suresh-signed-kyc.pdf",
+            })
+
+            await tx.insert(marketKycDoc).values({
+                id: "e2e2e2e2-2222-2222-2222-222222222222",
+                vendorId: "cde1cde1-1111-1111-1111-111111111111", // Suresh Patel — PAN
+                storeId: "cab1cab1-1111-1111-1111-111111111111",
+                type: "pan",
+                docId: "FGHIJ5678K",
+                frontUrl: "https://example.com/kyc/market/suresh-pan-front.jpg",
+                backUrl: null,
+                storefrontUrl: null,
+                signedKycDocUrl: null,
+            })
+
+            await tx.insert(marketKycDoc).values({
+                id: "e3e3e3e3-3333-3333-3333-333333333333",
+                vendorId: "cde2cde2-2222-2222-2222-222222222222", // Rajesh Verma
+                storeId: "cab2cab2-2222-2222-2222-222222222222",
+                type: "aadhar",
+                docId: "3456-7890-1234",
+                frontUrl: "https://example.com/kyc/market/rajesh-aadhar-front.jpg",
+                backUrl: "https://example.com/kyc/market/rajesh-aadhar-back.jpg",
+                storefrontUrl: "https://example.com/kyc/market/rajesh-storefront.jpg",
+                signedKycDocUrl: null,
+            })
+            console.log("✅ Market KYC Documents seeded.")
+
+            // 2.13. Insert Mandi Subscription Charges
+            console.log("💳 Seeding Mandi Subscription Charges...")
+            const mandiSubDate1 = new Date()
+            mandiSubDate1.setDate(mandiSubDate1.getDate() - 30) // 30 days ago
+
+            const mandiSubDate2 = new Date()
+            mandiSubDate2.setDate(mandiSubDate2.getDate() - 15) // 15 days ago
+
+            await tx.insert(mandiSubcriptionCharges).values({
+                id: "f1f1f1f1-1111-1111-1111-111111111111",
+                vendorId: mandiVendor1.id,
+                amount: 100000, // Rs 1000 in paise
+                transactionId: "TXN-MANDI-SUB-001",
+                paymentDate: mandiSubDate1,
+                paymentStatus: "success",
+                paymentMethod: "upi",
+                paymentCollectedBy: superAdminRecord.id,
+            })
+
+            await tx.insert(mandiSubcriptionCharges).values({
+                id: "f2f2f2f2-2222-2222-2222-222222222222",
+                vendorId: mandiVendor2.id,
+                amount: 100000, // Rs 1000 in paise
+                transactionId: "TXN-MANDI-SUB-002",
+                paymentDate: mandiSubDate2,
+                paymentStatus: "success",
+                paymentMethod: "cash",
+                paymentCollectedBy: superAdminRecord.id,
+            })
+
+            await tx.insert(mandiSubcriptionCharges).values({
+                id: "f3f3f3f3-3333-3333-3333-333333333333",
+                vendorId: mandiVendor1.id,
+                amount: 100000, // Rs 1000 in paise — renewal
+                transactionId: null,
+                paymentDate: new Date(),
+                paymentStatus: "pending",
+                paymentMethod: "upi",
+                paymentCollectedBy: superAdminRecord.id,
+            })
+            console.log("✅ Mandi Subscription Charges seeded.")
+
+            // 2.14. Insert Market Subscription Charges
+            console.log("💳 Seeding Market Subscription Charges...")
+            const marketSubDate1 = new Date()
+            marketSubDate1.setDate(marketSubDate1.getDate() - 25) // 25 days ago
+
+            const marketSubDate2 = new Date()
+            marketSubDate2.setDate(marketSubDate2.getDate() - 10) // 10 days ago
+
+            await tx.insert(marketSubcriptionCharges).values({
+                id: "a1f1a1f1-1111-1111-1111-111111111111",
+                vendorId: "cde1cde1-1111-1111-1111-111111111111", // Suresh Patel
+                amount: 150000, // Rs 1500 in paise
+                transactionId: "TXN-MARKET-SUB-001",
+                paymentDate: marketSubDate1,
+                paymentStatus: "success",
+                paymentMethod: "upi",
+                paymentCollectedBy: operatorRecord.id,
+            })
+
+            await tx.insert(marketSubcriptionCharges).values({
+                id: "a2f2a2f2-2222-2222-2222-222222222222",
+                vendorId: "cde2cde2-2222-2222-2222-222222222222", // Rajesh Verma
+                amount: 150000, // Rs 1500 in paise
+                transactionId: "TXN-MARKET-SUB-002",
+                paymentDate: marketSubDate2,
+                paymentStatus: "success",
+                paymentMethod: "cash",
+                paymentCollectedBy: operatorRecord.id,
+            })
+
+            await tx.insert(marketSubcriptionCharges).values({
+                id: "a3f3a3f3-3333-3333-3333-333333333333",
+                vendorId: "cde3cde3-3333-3333-3333-333333333333", // Sharma Vendor
+                amount: 150000, // Rs 1500 in paise
+                transactionId: null,
+                paymentDate: new Date(),
+                paymentStatus: "pending",
+                paymentMethod: "upi",
+                paymentCollectedBy: operatorRecord.id,
+            })
+
+            await tx.insert(marketSubcriptionCharges).values({
+                id: "a4f4a4f4-4444-4444-4444-444444444444",
+                vendorId: "cde5cde5-5555-5555-5555-555533333333", // Bhati Vendor
+                amount: 150000, // Rs 1500 in paise
+                transactionId: "TXN-MARKET-SUB-004",
+                paymentDate: marketSubDate1,
+                paymentStatus: "failed",
+                paymentMethod: "net_banking",
+                paymentCollectedBy: operatorRecord.id,
+            })
+            console.log("✅ Market Subscription Charges seeded.")
+
+            // 2.15. Insert Market Mandi Orders (Associated with Dispatch Slots)
             console.log("📦 Seeding Market Mandi Orders...")
             const today = new Date()
             const makeDate = (hour: number, minute: number) => {
@@ -733,8 +917,12 @@ async function main() {
             { Entity: "Mandi Vendors", Count: 2 },
             { Entity: "Mandi Stores", Count: 2 },
             { Entity: "Mandi Prices", Count: 2 },
+            { Entity: "Mandi KYC Docs", Count: 3 },
             { Entity: "Market Vendors", Count: 12 },
             { Entity: "Market Stores", Count: 12 },
+            { Entity: "Market KYC Docs", Count: 3 },
+            { Entity: "Mandi Subscription Charges", Count: 3 },
+            { Entity: "Market Subscription Charges", Count: 4 },
             { Entity: "Market Mandi Orders", Count: 12 },
             { Entity: "Market Status History", Count: 12 },
             { Entity: "Market Mandi Payments", Count: 12 },

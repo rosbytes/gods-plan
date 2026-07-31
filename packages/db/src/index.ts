@@ -1,5 +1,5 @@
 // db client
-export { db, testConnection } from "./db"
+export { db, testDBConnection } from "./db"
 
 // Models/Tables Schema
 export { admin } from "./schema/admin"
@@ -48,6 +48,7 @@ export type { VegInsert, VegSelect } from "./schema/veg"
 
 // DB Utils from drizzle-orm package
 export { eq, ne, and, or, gte, lte, gt, lt, ilike, desc, asc, sql } from "drizzle-orm"
+export { unionAll } from "drizzle-orm/pg-core"
 
 // Geo utility functions
 export { makePoint, distance, roundMeters, withinRadius, orderByNearest } from "./functions"

@@ -20,11 +20,11 @@ export const marketMandiOrder = pgTable("market_mandi_order", {
 
     // stores reference
     marketStoreId: uuid("market_store_id")
-        .references(() => marketStore.id, { onDelete: "restrict" })
+        .references(() => marketStore.id, { onDelete: "set null" })
         .notNull(),
 
     mandiStoreId: uuid("mandi_store_id")
-        .references(() => mandiStore.id, { onDelete: "restrict" })
+        .references(() => mandiStore.id, { onDelete: "set null" })
         .notNull(),
 
     // vegie reference

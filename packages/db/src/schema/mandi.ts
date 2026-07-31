@@ -2,7 +2,6 @@ import { doublePrecision, pgTable, uuid, varchar } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 import { timestamps } from "../common-utils/columnHelpers"
 import { city } from "./city"
-import { mandiVendor } from "./mandiVendor"
 import { mandiStore } from "./mandiStore"
 import { admin } from "./admin"
 
@@ -18,6 +17,7 @@ export const mandi = pgTable("mandi", {
         .references(() => admin.id, { onDelete: "restrict" })
         .notNull(),
 
+    // TODO: keep in a shared and common file, columns that are reusable across tables.
     // mandi's latitude and longitude
     lat: doublePrecision().notNull(),
     lng: doublePrecision().notNull(),
@@ -41,9 +41,6 @@ export const mandiRelations = relations(mandi, ({ one, many }) => ({
         fields: [mandi.createdBy],
         references: [admin.id],
     }),
-
-    // mandi vendors of this mandi
-    mandiVendors: many(mandiVendor),
 
     // stores in this mandi
     mandiStores: many(mandiStore),
