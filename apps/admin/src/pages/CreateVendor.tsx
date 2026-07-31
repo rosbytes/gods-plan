@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { trpc } from "../lib/trpc"
-
-type VendorType = "market_vendor" | "mandi_vendor"
+import { toast } from "sonner"
+import { VendorType } from "../constants/vendor"
 
 export default function CreateVendor() {
     const navigate = useNavigate()
@@ -12,12 +12,20 @@ export default function CreateVendor() {
     const [mobileNumber, setMobileNumber] = useState("")
     const [alternateNumber, setAlternateNumber] = useState("")
 
-    const createMutation = trpc.vendor.create.useMutation({
+    const createMarketMutation = trpc.vendor.createMarket.useMutation({
         onSuccess: (data) => {
-            // Redirect to create store for this specific vendor
-            navigate(`/create-store/${data.vendor.id}`)
+            toast.success("Vendor created successfully")
+            navigate(`/create-store/${data.vendor.id}?type=${vendorType}`)
         },
-        onError: (e) => alert(e.message),
+        onError: (e) => toast.error(e.message),
+    })
+
+    const createMandiMutation = trpc.vendor.createMandi.useMutation({
+        onSuccess: (data) => {
+            toast.success("Vendor created successfully")
+            navigate(`/create-store/${data.vendor.id}?type=${vendorType}`)
+        },
+        onError: (e) => toast.error(e.message),
     })
 
     const isFormValid = fullName.trim() !== "" && mobileNumber.trim() !== ""

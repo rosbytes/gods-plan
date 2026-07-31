@@ -1,6 +1,8 @@
 import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { trpc } from "../lib/trpc"
+import { toast } from "sonner"
+import { parseVendorType } from "../constants/vendor"
 
 export default function CreateStore() {
     const navigate = useNavigate()
@@ -14,14 +16,14 @@ export default function CreateStore() {
 
     const saveMutation = trpc.store.saveStore.useMutation({
         onSuccess: () => navigate("/dashboard"),
-        onError: (e) => alert(e.message),
+        onError: (e) => toast.error(e.message),
     })
 
     const isFormValid = storeName.trim() !== "" && fullAddress.trim() !== "" && location !== null
 
     const handleGetLocation = () => {
         if (!navigator.geolocation) {
-            alert("Geolocation is not supported by your browser")
+            toast.error("Geolocation is not supported by your browser")
             return
         }
         setIsFetchingLocation(true)

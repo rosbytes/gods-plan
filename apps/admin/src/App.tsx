@@ -23,6 +23,7 @@ function App() {
                 <Route path="/" element={<Navigate to="/login" replace />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                {/* Vendor Onboarding */}
                 <Route path="/vendor/:vendorId" element={<VendorProfile />} />
                 <Route path="/create-vendor" element={<CreateVendor />} />
                 <Route path="/create-store/:vendorId" element={<CreateStore />} />

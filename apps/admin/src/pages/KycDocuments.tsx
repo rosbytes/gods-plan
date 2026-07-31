@@ -1,6 +1,9 @@
 import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { trpc } from "../lib/trpc"
+import { customFetch } from "../lib/customFetch"
+import { parseVendorType } from "../constants/vendor"
+import { toast } from "sonner"
 
 type IdType = "aadhar" | "pan"
 
@@ -51,28 +54,67 @@ export default function KycDocuments() {
                 if (field === "front") setFrontUrl(data.url)
                 if (field === "back") setBackUrl(data.url)
                 if (field === "storefront") setStorefrontUrl(data.url)
+                toast.success("File uploaded successfully")
             } else {
-                alert(data.message || "Upload failed")
+                toast.error(data.message || "Upload failed")
             }
         } catch (error) {
             console.error("Upload error:", error)
-            alert("Upload failed. Please check server connection.")
+            toast.error("Upload failed. Please check server connection.")
         } finally {
             setUploading((prev) => ({ ...prev, [field]: false }))
         }
     }
 
-    const handleContinue = () => {
-        if (!vendorId || !storeId) return
-        saveKyc.mutate({
-            vendorId,
-            storeId,
-            docType: idType,
-            docId: idNumber,
-            frontUrl,
-            backUrl,
-            storefrontUrl,
-        })
+    const handleContinue = async () => {
+        if (!vendorId || !storeId || !vendorType) return
+
+        try {
+            if (vendorType === "market_vendor") {
+                const res = await Promise.all([
+                    saveMarketKyc.mutateAsync({
+                        vendorId,
+                        storeId,
+                        docType: idType,
+                        docId: idNumber,
+                        frontUrl,
+                        backUrl,
+                        storefrontUrl,
+                    }),
+                    updateMarketStore.mutateAsync({
+                        storeId,
+                        storeImage: storefrontUrl,
+                    }),
+                ])
+                if (res.every((item) => item.success)) {
+                    toast.success("KYC details saved successfully")
+                    navigate(`/success/${vendorId}/${storeId}${typeParam}`)
+                }
+            } else if (vendorType === "mandi_vendor") {
+                const res = await Promise.all([
+                    saveMandiKyc.mutateAsync({
+                        vendorId,
+                        storeId,
+                        docType: idType,
+                        docId: idNumber,
+                        frontUrl,
+                        backUrl,
+                        storefrontUrl,
+                    }),
+                    updateMandiStore.mutateAsync({
+                        storeId,
+                        storeImage: storefrontUrl,
+                    }),
+                ])
+                if (res.every((item) => item.success)) {
+                    toast.success("KYC details saved successfully")
+                    navigate(`/success/${vendorId}/${storeId}${typeParam}`)
+                }
+            }
+        } catch (e: any) {
+            console.error("KYC submission error:", e)
+            toast.error(e.message || "Failed to save KYC details")
+        }
     }
 
     return (

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { trpc } from "../lib/trpc"
+import { parseVendorType } from "../constants/vendor"
+import { toast } from "sonner"
 
 // Declare window interface for Razorpay
 declare global {
@@ -48,22 +50,35 @@ export default function Payment() {
             setCreating(false)
         },
         onError: (err) => {
-            alert("Failed to create payment order: " + err.message)
+            toast.error("Failed to create payment order: " + err.message)
             setCreating(false)
         },
     })
 
     const verifyMutation = trpc.payment.verifyPayment.useMutation({
         onSuccess: (data) => {
+            toast.success("Payment verified successfully")
             navigate(
                 `/payment-status/${vendorId}/${storeId}?status=success&orderId=${orderData?.orderId}&paymentId=${data.paymentId}`,
             )
         },
         onError: (err) => {
-            alert("Payment verification failed: " + err.message)
+            toast.error("Payment verification failed: " + err.message)
             navigate(
                 `/payment-status/${vendorId}/${storeId}?status=failed&orderId=${orderData?.orderId}`,
             )
+        },
+    })
+
+    const skipMutation = trpc.payment.skipPayment.useMutation({
+        onSuccess: (data) => {
+            toast.success("Payment skipped — subscription charge marked as pending")
+            navigate(
+                `/payment-status/${vendorId}/${storeId}?status=pending&method=cash&orderId=${data.transactionId}${typeParam}`,
+            )
+        },
+        onError: (err) => {
+            toast.error("Failed to skip payment: " + err.message)
         },
     })
 
@@ -80,7 +95,7 @@ export default function Payment() {
 
         const res = await loadRazorpayScript()
         if (!res) {
-            alert("Razorpay SDK failed to load. Are you online?")
+            toast.error("Razorpay SDK failed to load. Are you online?")
             return
         }
 
@@ -112,7 +127,7 @@ export default function Payment() {
 
         const paymentObject = new window.Razorpay(options)
         paymentObject.on("payment.failed", function (response: any) {
-            alert("Payment Failed: " + response.error.description)
+            toast.error("Payment Failed: " + response.error.description)
             navigate(
                 `/payment-status/${vendorId}/${storeId}?status=failed&orderId=${orderData.orderId}`,
             )
@@ -121,6 +136,7 @@ export default function Payment() {
     }
 
     const handleCashConfirm = () => {
+        toast.success("Cash payment recorded")
         navigate(
             `/payment-status/${vendorId}/${storeId}?status=success&method=cash&orderId=${orderData?.orderId || ""}`,
         )
