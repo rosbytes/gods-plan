@@ -18,7 +18,7 @@ export default function ManageMandis() {
     const navigate = useNavigate()
     const [showForm, setShowForm] = useState(false)
 
-    // Form state
+    // Create form state
     const [name, setName] = useState("")
     const [cityId, setCityId] = useState("")
     const [lat, setLat] = useState("")
@@ -29,6 +29,15 @@ export default function ManageMandis() {
     const [isFetchingLocation, setIsFetchingLocation] = useState(false)
 
     const { data: mandis, isLoading, refetch } = trpc.mandi.list.useQuery({})
+    // Edit state
+    const [editingMandi, setEditingMandi] = useState<MandiItem | null>(null)
+    const [editName, setEditName] = useState("")
+    const [editCityId, setEditCityId] = useState("")
+    const [editLat, setEditLat] = useState("")
+    const [editLng, setEditLng] = useState("")
+    const [editFullAddress, setEditFullAddress] = useState("")
+    const [editImageFile, setEditImageFile] = useState<File | null>(null)
+
     const { data: cities } = trpc.city.list.useQuery({})
 
     const createMutation = trpc.mandi.create.useMutation({
@@ -79,14 +88,25 @@ export default function ManageMandis() {
         setIsFetchingLocation(true)
         navigator.geolocation.getCurrentPosition(
             (pos) => {
-                setLat(pos.coords.latitude.toFixed(6))
-                setLng(pos.coords.longitude.toFixed(6))
+                const latVal = pos.coords.latitude.toFixed(6)
+                const lngVal = pos.coords.longitude.toFixed(6)
+                if (isEdit) {
+                    setEditLat(latVal)
+                    setEditLng(lngVal)
+                } else {
+                    setLat(latVal)
+                    setLng(lngVal)
+                }
                 setIsFetchingLocation(false)
             },
             () => {
-                // fallback to Jaipur coords for dev
-                setLat("26.837300")
-                setLng("75.836000")
+                if (isEdit) {
+                    setEditLat("26.837300")
+                    setEditLng("75.836000")
+                } else {
+                    setLat("26.837300")
+                    setLng("75.836000")
+                }
                 setIsFetchingLocation(false)
             },
             { timeout: 8000 },
@@ -97,20 +117,10 @@ export default function ManageMandis() {
         let mandiImage: string | undefined
         if (imageFile) {
             setUploading(true)
-            try {
-                const formData = new FormData()
-                formData.append("file", imageFile)
-                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/media/upload`, {
-                    method: "POST",
-                    body: formData,
-                })
-                const data = await res.json()
-                if (data.success) mandiImage = data.url
-            } catch {
-                alert("Image upload failed")
-            }
+            mandiImage = await uploadImage(imageFile)
             setUploading(false)
         }
+        if (!mandiImage) return
 
         createMutation.mutate({
             name,
@@ -123,7 +133,44 @@ export default function ManageMandis() {
     }
 
     const isFormValid = name.trim() !== "" && cityId !== "" && lat !== "" && lng !== ""
-    const isPending = createMutation.isPending || uploading
+    const handleEdit = (m: MandiItem) => {
+        setEditingMandi(m)
+        setEditName(m.name)
+        setEditCityId(m.cityId)
+        setEditLat(String(m.lat))
+        setEditLng(String(m.lng))
+        setEditFullAddress(m.fullAddress || "")
+        setEditImageFile(null)
+    }
+
+    const handleUpdate = async () => {
+        if (!editingMandi) return
+
+        let mandiImage: string | undefined
+        if (editImageFile) {
+            setUploading(true)
+            mandiImage = await uploadImage(editImageFile)
+            setUploading(false)
+            if (!mandiImage) return
+        }
+
+        updateMutation.mutate({
+            id: editingMandi.id,
+            name: editName !== editingMandi.name ? editName : undefined,
+            cityId: editCityId !== editingMandi.cityId ? editCityId : undefined,
+            lat: parseFloat(editLat) !== editingMandi.lat ? parseFloat(editLat) : undefined,
+            lng: parseFloat(editLng) !== editingMandi.lng ? parseFloat(editLng) : undefined,
+            fullAddress:
+                editFullAddress !== (editingMandi.fullAddress || "")
+                    ? editFullAddress || undefined
+                    : undefined,
+            mandiImage,
+        })
+    }
+
+    const isEditValid =
+        editName.trim() !== "" && editCityId !== "" && editLat !== "" && editLng !== ""
+    const isPending = createMutation.isPending || updateMutation.isPending || uploading
 
     return (
         <div className="flex min-h-screen flex-col bg-[#F5F6F8] pb-28 font-sans text-gray-900">
@@ -151,7 +198,7 @@ export default function ManageMandis() {
             </div>
 
             <div className="mt-2 flex-1 space-y-5 px-5">
-                {/* Create Form Toggle */}
+                {/* Create Form */}
                 {!showForm ? (
                     <button
                         onClick={() => setShowForm(true)}
@@ -177,8 +224,6 @@ export default function ManageMandis() {
                         <div className="bg-[#135B47] px-5 py-3.5">
                             <h2 className="text-[15px] font-semibold text-white">New Mandi</h2>
                         </div>
-
-                        {/* Mandi Name */}
                         <div className="px-5 pt-4 pb-4">
                             <label className="mb-1.5 block text-xs font-medium text-gray-400">
                                 Mandi Name *
@@ -191,8 +236,6 @@ export default function ManageMandis() {
                                 className="w-full bg-transparent text-[16px] font-semibold text-gray-800 placeholder-gray-300 focus:outline-none"
                             />
                         </div>
-
-                        {/* City Select */}
                         <div className="px-5 pt-4 pb-4">
                             <label className="mb-1.5 block text-xs font-medium text-gray-400">
                                 City *
@@ -210,14 +253,12 @@ export default function ManageMandis() {
                                 ))}
                             </select>
                         </div>
-
-                        {/* Location */}
                         <div className="px-5 pt-4 pb-4">
                             <label className="mb-2 block text-xs font-medium text-gray-400">
                                 Location *
                             </label>
                             <button
-                                onClick={handleGetLocation}
+                                onClick={() => handleGetLocation(false)}
                                 disabled={isFetchingLocation}
                                 className="mb-3 flex w-full items-center gap-3 rounded-xl border-2 border-dashed border-gray-200 px-4 py-3 text-sm font-medium text-gray-500 transition-colors hover:border-[#135B47] hover:text-[#135B47] disabled:opacity-60"
                             >
@@ -269,8 +310,6 @@ export default function ManageMandis() {
                                 </div>
                             </div>
                         </div>
-
-                        {/* Full Address */}
                         <div className="px-5 pt-4 pb-4">
                             <div className="flex items-start justify-between">
                                 <label className="mb-1.5 block text-xs font-medium text-gray-400">
@@ -286,8 +325,6 @@ export default function ManageMandis() {
                                 className="w-full bg-transparent text-[16px] font-semibold text-gray-800 placeholder-gray-300 focus:outline-none"
                             />
                         </div>
-
-                        {/* Image Upload */}
                         <div className="px-5 pt-4 pb-4">
                             <div className="flex items-start justify-between">
                                 <label className="mb-1.5 block text-xs font-medium text-gray-400">
@@ -319,8 +356,6 @@ export default function ManageMandis() {
                                 />
                             </label>
                         </div>
-
-                        {/* Actions */}
                         <div className="flex gap-3 px-5 py-4">
                             <button
                                 onClick={() => setShowForm(false)}
@@ -353,36 +388,194 @@ export default function ManageMandis() {
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {mandis?.items?.map((m) => (
-                                <div
-                                    key={m.id}
-                                    className="flex items-center gap-4 rounded-2xl border border-gray-50 bg-white p-4.5 shadow-sm"
-                                >
-                                    {/* Mandi Image or Placeholder */}
-                                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-[#E8F3F0]">
-                                        {m.mandiImage ? (
-                                            <img
-                                                src={m.mandiImage}
-                                                alt={m.name}
-                                                className="h-full w-full object-cover"
+                            {mandis?.items?.map((m) =>
+                                editingMandi?.id === m.id ? (
+                                    /* ---- EDIT FORM ---- */
+                                    <div
+                                        key={m.id}
+                                        className="divide-y divide-gray-100 overflow-hidden rounded-2xl bg-white shadow-sm"
+                                    >
+                                        <div className="bg-[#0f4d3c] px-5 py-3">
+                                            <h3 className="text-[14px] font-semibold text-white">
+                                                Edit Mandi
+                                            </h3>
+                                        </div>
+                                        <div className="px-5 pt-3.5 pb-3.5">
+                                            <label className="mb-1 block text-xs font-medium text-gray-400">
+                                                Mandi Name *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={editName}
+                                                onChange={(e) => setEditName(e.target.value)}
+                                                className="w-full bg-transparent text-[15px] font-semibold text-gray-800 focus:outline-none"
                                             />
-                                        ) : (
-                                            <div className="flex h-full w-full items-center justify-center text-xl">
-                                                🏪
+                                        </div>
+                                        <div className="px-5 pt-3.5 pb-3.5">
+                                            <label className="mb-1 block text-xs font-medium text-gray-400">
+                                                City *
+                                            </label>
+                                            <select
+                                                value={editCityId}
+                                                onChange={(e) => setEditCityId(e.target.value)}
+                                                className="w-full appearance-none bg-transparent text-[15px] font-semibold text-gray-800 focus:outline-none"
+                                            >
+                                                <option value="">Select a city</option>
+                                                {cities?.items?.map((c) => (
+                                                    <option key={c.id} value={c.id}>
+                                                        {c.name}, {c.state}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="px-5 pt-3.5 pb-3.5">
+                                            <label className="mb-1 block text-xs font-medium text-gray-400">
+                                                Location *
+                                            </label>
+                                            <button
+                                                onClick={() => handleGetLocation(true)}
+                                                disabled={isFetchingLocation}
+                                                className="mb-2 flex w-full items-center gap-2 rounded-xl border-2 border-dashed border-gray-200 px-3 py-2.5 text-sm font-medium text-gray-500 transition-colors hover:border-[#135B47]"
+                                            >
+                                                📍{" "}
+                                                {isFetchingLocation
+                                                    ? "Fetching..."
+                                                    : "Use current location"}
+                                            </button>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <input
+                                                    type="number"
+                                                    step="any"
+                                                    value={editLat}
+                                                    onChange={(e) => setEditLat(e.target.value)}
+                                                    className="w-full rounded-lg border border-gray-200 bg-transparent px-3 py-2 text-[14px] font-semibold text-gray-800 focus:border-[#135B47] focus:outline-none"
+                                                />
+                                                <input
+                                                    type="number"
+                                                    step="any"
+                                                    value={editLng}
+                                                    onChange={(e) => setEditLng(e.target.value)}
+                                                    className="w-full rounded-lg border border-gray-200 bg-transparent px-3 py-2 text-[14px] font-semibold text-gray-800 focus:border-[#135B47] focus:outline-none"
+                                                />
                                             </div>
-                                        )}
+                                        </div>
+                                        <div className="px-5 pt-3.5 pb-3.5">
+                                            <label className="mb-1 block text-xs font-medium text-gray-400">
+                                                Full Address
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={editFullAddress}
+                                                onChange={(e) => setEditFullAddress(e.target.value)}
+                                                className="w-full bg-transparent text-[15px] font-semibold text-gray-800 focus:outline-none"
+                                            />
+                                        </div>
+                                        <div className="px-5 pt-3.5 pb-3.5">
+                                            <label className="mb-1 block text-xs font-medium text-gray-400">
+                                                Update Image
+                                            </label>
+                                            <label className="mt-1 flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-500 transition-colors hover:border-[#135B47] hover:text-[#135B47]">
+                                                <svg
+                                                    width="16"
+                                                    height="16"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                >
+                                                    <rect
+                                                        x="3"
+                                                        y="3"
+                                                        width="18"
+                                                        height="18"
+                                                        rx="2"
+                                                        ry="2"
+                                                    ></rect>
+                                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                                </svg>
+                                                {editImageFile
+                                                    ? editImageFile.name
+                                                    : "Choose new image"}
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={(e) =>
+                                                        setEditImageFile(
+                                                            e.target.files?.[0] ?? null,
+                                                        )
+                                                    }
+                                                />
+                                            </label>
+                                        </div>
+                                        <div className="flex gap-3 px-5 py-3.5">
+                                            <button
+                                                onClick={() => setEditingMandi(null)}
+                                                className="flex-1 rounded-xl bg-gray-100 py-2.5 text-[13px] font-semibold text-gray-600 transition-colors hover:bg-gray-200"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={handleUpdate}
+                                                disabled={!isEditValid || isPending}
+                                                className="flex-1 rounded-xl bg-[#135B47] py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-[#0f4d3c] disabled:opacity-60"
+                                            >
+                                                {isPending ? "Saving..." : "Save Changes"}
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-[16px] font-bold tracking-tight text-gray-800">
-                                            {m.name}
-                                        </span>
-                                        <span className="mt-0.5 text-[13px] font-medium text-gray-400">
-                                            {m.city?.name}, {m.city?.state}
-                                            {m.fullAddress ? ` • ${m.fullAddress}` : ""}
-                                        </span>
+                                ) : (
+                                    /* ---- DISPLAY CARD ---- */
+                                    <div
+                                        key={m.id}
+                                        className="flex items-center gap-4 rounded-2xl border border-gray-50 bg-white p-4.5 shadow-sm"
+                                    >
+                                        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-[#E8F3F0]">
+                                            {m.mandiImage ? (
+                                                <img
+                                                    src={m.mandiImage}
+                                                    alt={m.name}
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="flex h-full w-full items-center justify-center text-xl">
+                                                    🏪
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-1 flex-col">
+                                            <span className="text-[16px] font-bold tracking-tight text-gray-800">
+                                                {m.name}
+                                            </span>
+                                            <span className="mt-0.5 text-[13px] font-medium text-gray-400">
+                                                {m.city?.name}, {m.city?.state}
+                                                {m.fullAddress ? ` • ${m.fullAddress}` : ""}
+                                            </span>
+                                        </div>
+                                        <button
+                                            onClick={() => handleEdit(m as MandiItem)}
+                                            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-[#135B47]"
+                                        >
+                                            <svg
+                                                width="18"
+                                                height="18"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            >
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </button>
                                     </div>
-                                </div>
-                            ))}
+                                ),
+                            )}
                         </div>
                     )}
                 </div>
