@@ -1,5 +1,5 @@
 {
-    "name": "@ros/admin-api",
+    "name": "@ros/test-api",
     "main": "api/index.js",
     "type": "module",
     "private": true,
