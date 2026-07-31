@@ -123,6 +123,9 @@ importers:
       '@ros/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@trpc/server':
+        specifier: ^11.14.1
+        version: 11.18.0(typescript@5.9.3)
       cookie:
         specifier: ^2.0.1
         version: 2.0.1
@@ -153,6 +156,9 @@ importers:
       redis:
         specifier: ^5.11.0
         version: 5.11.0
+      tsc-alias:
+        specifier: ^1.8.16
+        version: 1.8.16
       tsdown:
         specifier: ^0.22.3
         version: 0.22.3(tsx@4.22.4)(typescript@5.9.3)
@@ -172,9 +178,6 @@ importers:
         specifier: ^4.3.6
         version: 4.4.3
     devDependencies:
-      '@trpc/server':
-        specifier: ^11.14.1
-        version: 11.18.0(typescript@5.9.3)
       '@types/cors':
         specifier: ^2.8.19
         version: 2.8.19
@@ -190,9 +193,6 @@ importers:
       '@types/node':
         specifier: ^25.5.0
         version: 25.9.4
-      tsc-alias:
-        specifier: ^1.8.16
-        version: 1.8.16
 
   apps/info:
     dependencies:
