@@ -23,7 +23,9 @@ app.use(express.json())
 app.get("/", (req, res) => {
     res.send("Server is working")
 })
-
+app.get("/api", (req, res) => {
+    res.send("Server is working at api")
+})
 // media upload endpoint
 // app.use("/api/media", mediaRouter)
 
