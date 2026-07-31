@@ -1,9 +1,15 @@
 {
     "version": 2,
-    "rewrites": [
+    "builds": [
         {
-            "source": "/(.*)",
-            "destination": "/index.js"
+            "src": "dist/bundle.cjs",
+            "use": "@vercel/node"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/(.*)",
+            "dest": "dist/bundle.cjs"
         }
     ]
 }
