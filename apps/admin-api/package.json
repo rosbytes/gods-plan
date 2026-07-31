@@ -1,11 +1,11 @@
 {
     "name": "@ros/admin-api",
-    "main": "src/app.ts",
+    "module": "index.ts",
     "type": "module",
     "private": true,
     "scripts": {
         "dev": "tsx watch src/app.ts",
-        "build": "pnpm typecheck",
+        "build": "pnpm typecheck && tsup",
         "prod:build": "turbo run build",
         "start": "node dist/bundle.cjs",
         "typecheck": "tsc --noEmit"
