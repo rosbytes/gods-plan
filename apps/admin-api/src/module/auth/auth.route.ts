@@ -7,4 +7,8 @@ export const authRouter = router({
         const { login } = await import("./auth.controller")
         return login({ input, ctx })
     }),
+    refresh: publicProcedure.mutation(async ({ ctx }) => {
+        const { refresh } = await import("./auth.controller")
+        return refresh(ctx)
+    }),
 })
