@@ -8,14 +8,13 @@
         "build": "pnpm typecheck && tsup",
         "dev:build": "tsc -b && tsc-alias -f",
         "prod:build": "turbo run build",
-        "start": "node dist/app.cjs",
+        "start": "node api/index.cjs",
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.1092.0",
         "@ros/commons": "workspace:*",
         "@ros/db": "workspace:*",
-        "cloudinary": "^2.9.0",
         "cookie": "^2.0.1",
         "cors": "^2.8.6",
         "dotenv": "^17.3.1",
