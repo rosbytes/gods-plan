@@ -26,7 +26,7 @@ app.use("/api/media", mediaRouter)
 // tRPC endpoint
 app.use("/trpc", createExpressMiddleware({ router: appRouter, createContext }))
 
-if (env.NODE_ENV !== "production") {
+if (env.NODE_ENV !== "development") {
     app.listen(env.SERVER_PORT, () => {
         logger.info(`Server is running on port: ${env.SERVER_PORT}`)
         testDBConnection()
