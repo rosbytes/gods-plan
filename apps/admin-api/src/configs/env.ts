@@ -65,8 +65,9 @@ const createEnv = (env: NodeJS.ProcessEnv) => {
     // Parse Env
     const result = envSchema.safeParse(env)
     if (!result.success) {
-        console.error("Failed to validate Env:", result.error)
-        process.exit(1)
+        const errorMessage = `Failed to validate Env: ${JSON.stringify(result.error.issues, null, 2)}`
+        console.error(errorMessage)
+        throw new Error(errorMessage)
     }
     return result.data
 }
