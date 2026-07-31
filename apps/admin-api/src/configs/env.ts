@@ -2,7 +2,7 @@ import "dotenv/config"
 import * as z from "zod"
 // Schema to parse Env Variable
 const envSchema = z.object({
-    SERVER_PORT: z.coerce.number<number>(),
+    SERVER_PORT: z.coerce.number<number>().default(3000),
     NODE_ENV: z.enum(["development", "production"], {
         error: (issue) => `NODE_ENV has to specified ${issue.values.join(" | ")}`,
     }),
@@ -32,7 +32,10 @@ const envSchema = z.object({
     // MSG91 OTP
     MSG91_AUTH_KEY: z.string().nonempty(),
 
-    VERCEL: z.enum(["true", "false"]).transform((value) => value === "true"),
+    VERCEL: z
+        .string()
+        .optional()
+        .transform((value) => value === "1" || value === "true"),
 
     // AWS S3
     AWS_REGION: z.string().nonempty(),
