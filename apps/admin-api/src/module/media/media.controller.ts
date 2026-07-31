@@ -1,7 +1,8 @@
 import { Request, Response } from "express"
 import multer from "multer"
-import { cloudinary } from "../../configs"
-import { logger } from "../../configs"
+import { PutObjectCommand } from "@aws-sdk/client-s3"
+import { s3, S3_BUCKET_NAME, logger, env } from "../../configs"
+import crypto from "crypto"
 
 // Multer storage in memory
 const storage = multer.memoryStorage()
@@ -16,18 +17,27 @@ export const uploadMedia = async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, message: "No file uploaded" })
         }
 
-        // Convert buffer to base64 data URI
-        const b64 = Buffer.from(req.file.buffer).toString("base64")
-        const dataURI = "data:" + req.file.mimetype + ";base64," + b64
+        // Generate unique file key
+        const ext = req.file.originalname.split(".").pop() || "jpg"
+        const key = `ros/admin/${Date.now()}-${crypto.randomBytes(8).toString("hex")}.${ext}`
 
-        // Upload to Cloudinary
-        const result = await cloudinary.v2.uploader.upload(dataURI, {
-            folder: "ros/kyc",
-            resource_type: "auto",
-        })
+        logger.info(`Uploading to S3: bucket=${S3_BUCKET_NAME}, key=${key}, size=${req.file.size}`)
 
-        logger.info(`Cloudinary Upload Success: ${result.secure_url}`)
-        return res.status(200).json({ success: true, url: result.secure_url })
+        // Upload to S3
+        await s3.send(
+            new PutObjectCommand({
+                Bucket: S3_BUCKET_NAME,
+                Key: key,
+                Body: req.file.buffer,
+                ContentType: req.file.mimetype,
+            }),
+        )
+
+        // Construct the public URL (regional endpoint for non-us-east-1 buckets)
+        const url = `https://${S3_BUCKET_NAME}.s3.${env.AWS_REGION}.amazonaws.com/${key}`
+
+        logger.info(`S3 Upload Success: ${url}`)
+        return res.status(200).json({ success: true, url })
     } catch (error) {
         logger.error("Media Upload Error:", error)
         return res.status(500).json({
