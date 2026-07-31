@@ -16,7 +16,7 @@
         "@trpc/server": "^11.14.1",
         "@ros/commons": "workspace:*",
         "@ros/db": "workspace:*",
-        "cookie": "^0.6.0",
+        "cookie": "^2.0.1",
         "cors": "^2.8.6",
         "dotenv": "^17.3.1",
         "express": "^5.2.1",
