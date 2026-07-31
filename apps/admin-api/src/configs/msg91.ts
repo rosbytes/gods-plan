@@ -18,7 +18,7 @@ export const msg91VerifyAccessToken = async (accessToken: string) => {
         }),
     })
 
-    const data: any = await res.json()
+    const data: any = await (res as any).json()
     if (data.type === "error" || data.status === "error") {
         throw new Error(data.message || "MSG91: Access token verification failed")
     }
