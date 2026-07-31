@@ -2,6 +2,8 @@
     "name": "@ros/commons",
     "version": "0.0.0",
     "private": true,
+    "main": "./dist/index.mjs",
+    "types": "./dist/index.d.mts",
     "scripts": {
         "dev": "echo 'Add dev script here'",
         "build": "pnpm typecheck && tsdown",
@@ -18,9 +20,10 @@
     },
     "dependencies": {
         "bcryptjs": "^3.0.3",
-        "tsdown": "^0.22.3"
+        "tsdown": "^0.22.14"
     },
     "devDependencies": {
-        "@types/node": "^26.1.0"
+        "@types/node": "^26.1.2",
+        "typescript": "^7.0.2"
     }
 }

@@ -65,7 +65,7 @@ export async function getSlotOrders({ vendorId, slotId }: { vendorId: string; sl
             .innerJoin(marketStore, eq(marketMandiOrder.marketStoreId, marketStore.id))
             .innerJoin(marketVendor, eq(marketStore.vendorId, marketVendor.id))
             .where(
-                and(eq(marketMandiOrder.mandiStoreId, store.id), eq(marketVendor.slot, slotNumber)),
+                and(eq(marketMandiOrder.mandiStoreId, store.id), eq(marketStore.slot, slotNumber)),
             )
 
         // 3. Map database orders to Vendor interface
@@ -167,7 +167,7 @@ export async function getGroupedOrders({ vendorId, date }: { vendorId: string; d
                 status: marketMandiOrder.status,
                 totalAmountInPaise: marketMandiOrder.totalAmountInPaise,
                 createdAt: marketMandiOrder.createdAt,
-                slot: marketVendor.slot,
+                slot: marketStore.slot,
             })
             .from(marketMandiOrder)
             .innerJoin(marketStore, eq(marketMandiOrder.marketStoreId, marketStore.id))
@@ -270,7 +270,7 @@ export async function getSlots(vendorId: string, date: string) {
         // 3. Query all orders for the store within bounds
         const orders = await db
             .selectDistinct({
-                slot: marketVendor.slot,
+                slot: marketStore.slot,
             })
             .from(marketMandiOrder)
             .innerJoin(marketStore, eq(marketMandiOrder.marketStoreId, marketStore.id))
