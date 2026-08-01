@@ -21,3 +21,8 @@ export const ZListCitiesSchema = z.object({
     search: z.string().optional(),
 })
 export type TListCitiesSchema = z.infer<typeof ZListCitiesSchema>
+
+export const ZDeleteCitySchema = z.object({
+    id: z.uuid("Invalid city ID"),
+})
+export type TDeleteCitySchema = z.infer<typeof ZDeleteCitySchema>

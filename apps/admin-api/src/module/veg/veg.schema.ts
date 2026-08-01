@@ -19,3 +19,8 @@ export const ZListVegsSchema = z.object({
     search: z.string().optional(),
 })
 export type TListVegsSchema = z.infer<typeof ZListVegsSchema>
+
+export const ZDeleteVegSchema = z.object({
+    id: z.uuid("Invalid vegetable ID"),
+})
+export type TDeleteVegSchema = z.infer<typeof ZDeleteVegSchema>

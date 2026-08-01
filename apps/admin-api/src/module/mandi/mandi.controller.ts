@@ -106,3 +106,19 @@ export async function updateMandi({ input }: { input: TUpdateMandiSchema; ctx: A
         })
     }
 }
+
+export async function deleteMandi({ input }: { input: { id: string }; ctx: AdminContext }) {
+    try {
+        const [deleted] = await db.delete(mandi).where(eq(mandi.id, input.id)).returning()
+
+        if (!deleted) throw new TRPCError({ message: "Mandi not found", code: "NOT_FOUND" })
+
+        return { success: true, mandi: deleted }
+    } catch (error) {
+        if (error instanceof TRPCError) throw error
+        throw new TRPCError({
+            message: error instanceof Error ? error.message : "Database Error",
+            code: "INTERNAL_SERVER_ERROR",
+        })
+    }
+}

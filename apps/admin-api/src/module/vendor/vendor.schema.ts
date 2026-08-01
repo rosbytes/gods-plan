@@ -24,3 +24,8 @@ export const ZGetVendorSchema = z.object({
     vendorId: z.uuid("Invalid vendor ID"),
 })
 export type TGetVendorSchema = z.infer<typeof ZGetVendorSchema>
+
+export const ZDeleteVendorSchema = z.object({
+    id: z.uuid("Invalid vendor ID"),
+})
+export type TDeleteVendorSchema = z.infer<typeof ZDeleteVendorSchema>

@@ -26,3 +26,8 @@ export const ZListMandisSchema = z.object({
     cityId: z.uuid().optional(),
 })
 export type TListMandisSchema = z.infer<typeof ZListMandisSchema>
+
+export const ZDeleteMandiSchema = z.object({
+    id: z.uuid("Invalid mandi ID"),
+})
+export type TDeleteMandiSchema = z.infer<typeof ZDeleteMandiSchema>

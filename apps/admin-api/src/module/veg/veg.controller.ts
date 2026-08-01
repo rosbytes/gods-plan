@@ -90,3 +90,19 @@ export async function updateVeg({ input }: { input: TUpdateVegSchema; ctx: Admin
         })
     }
 }
+
+export async function deleteVeg({ input }: { input: { id: string }; ctx: AdminContext }) {
+    try {
+        const [deleted] = await db.delete(veg).where(eq(veg.id, input.id)).returning()
+
+        if (!deleted) throw new TRPCError({ message: "Vegetable not found", code: "NOT_FOUND" })
+
+        return { success: true, veg: deleted }
+    } catch (error) {
+        if (error instanceof TRPCError) throw error
+        throw new TRPCError({
+            message: error instanceof Error ? error.message : "Database Error",
+            code: "INTERNAL_SERVER_ERROR",
+        })
+    }
+}

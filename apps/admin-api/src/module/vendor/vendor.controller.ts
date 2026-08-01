@@ -232,3 +232,27 @@ export async function getMandiVendor({ input }: { input: TGetVendorSchema }) {
         })
     }
 }
+
+export async function deleteVendor({ input }: { input: { id: string }; ctx: AdminContext }) {
+    try {
+        const [deletedMarket] = await db
+            .delete(marketVendor)
+            .where(eq(marketVendor.id, input.id))
+            .returning()
+        if (deletedMarket) return { success: true, vendor: deletedMarket }
+
+        const [deletedMandi] = await db
+            .delete(mandiVendor)
+            .where(eq(mandiVendor.id, input.id))
+            .returning()
+        if (deletedMandi) return { success: true, vendor: deletedMandi }
+
+        throw new TRPCError({ message: "Vendor not found", code: "NOT_FOUND" })
+    } catch (error) {
+        if (error instanceof TRPCError) throw error
+        throw new TRPCError({
+            message: error instanceof Error ? error.message : "Database Error",
+            code: "INTERNAL_SERVER_ERROR",
+        })
+    }
+}
