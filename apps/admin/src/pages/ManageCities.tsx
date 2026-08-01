@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { trpc } from "../lib/trpc"
 import { uploadImage } from "../lib/upload"
 import type { CityItem } from "../types"
+import { toast } from "sonner"
 import { AdminLayout } from "../components/layout"
 import {
     Button,
@@ -50,26 +51,29 @@ export default function ManageCities() {
             setPincode("")
             setImageFile(null)
             setShowForm(false)
+            toast.success("City created successfully")
             refetch()
         },
-        onError: (e) => alert(e.message),
+        onError: (e) => toast.error(e.message),
     })
 
     const updateMutation = trpc.city.update.useMutation({
         onSuccess: () => {
             setEditingCity(null)
             setEditImageFile(null)
+            toast.success("City updated successfully")
             refetch()
         },
-        onError: (e) => alert(e.message),
+        onError: (e) => toast.error(e.message),
     })
 
     const deleteMutation = trpc.city.delete.useMutation({
         onSuccess: () => {
             setDeletingCity(null)
+            toast.success("City deleted successfully")
             refetch()
         },
-        onError: (e) => alert(e.message),
+        onError: (e) => toast.error(e.message),
     })
 
     const filteredCities = useMemo(() => {

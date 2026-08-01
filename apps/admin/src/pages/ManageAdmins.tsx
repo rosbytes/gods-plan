@@ -2,6 +2,7 @@ import { useState, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { trpc } from "../lib/trpc"
 import type { AdminUserItem } from "../types"
+import { toast } from "sonner"
 import { AdminLayout } from "../components/layout"
 import {
     Button,
@@ -57,25 +58,28 @@ export default function ManageAdmins() {
             setPin("")
             setRole("admin")
             setShowForm(false)
+            toast.success("Team member added successfully")
             refetch()
         },
-        onError: (e) => alert(e.message),
+        onError: (e) => toast.error(e.message),
     })
 
     const updateMutation = trpc.adminUser.update.useMutation({
         onSuccess: () => {
             setEditingUser(null)
+            toast.success("Team member updated successfully")
             refetch()
         },
-        onError: (e) => alert(e.message),
+        onError: (e) => toast.error(e.message),
     })
 
     const deleteMutation = trpc.adminUser.delete.useMutation({
         onSuccess: () => {
             setDeletingUser(null)
+            toast.success("Team member removed successfully")
             refetch()
         },
-        onError: (e) => alert(e.message),
+        onError: (e) => toast.error(e.message),
     })
 
     const filteredUsers = useMemo(() => {

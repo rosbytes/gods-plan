@@ -2,6 +2,7 @@ import { useState, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { trpc } from "../lib/trpc"
 import type { VendorItem } from "../types"
+import { toast } from "sonner"
 import { AdminLayout } from "../components/layout"
 import {
     Badge,
@@ -41,9 +42,10 @@ export default function Dashboard() {
     const deleteVendorMutation = trpc.vendor.delete.useMutation({
         onSuccess: () => {
             setDeletingVendor(null)
+            toast.success("Vendor deleted successfully")
             refetch()
         },
-        onError: (e) => alert(e.message),
+        onError: (e) => toast.error(e.message),
     })
 
     // Filtered items based on selected tab

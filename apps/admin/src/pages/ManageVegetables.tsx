@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { trpc } from "../lib/trpc"
 import { uploadImage } from "../lib/upload"
 import type { VegetableItem } from "../types"
+import { toast } from "sonner"
 import { AdminLayout } from "../components/layout"
 import {
     Button,
@@ -47,26 +48,29 @@ export default function ManageVegetables() {
             setHindiName("")
             setImageFile(null)
             setShowForm(false)
+            toast.success("Vegetable added to catalog")
             refetch()
         },
-        onError: (e) => alert(e.message),
+        onError: (e) => toast.error(e.message),
     })
 
     const updateMutation = trpc.veg.update.useMutation({
         onSuccess: () => {
             setEditingVeg(null)
             setEditImageFile(null)
+            toast.success("Vegetable updated successfully")
             refetch()
         },
-        onError: (e) => alert(e.message),
+        onError: (e) => toast.error(e.message),
     })
 
     const deleteMutation = trpc.veg.delete.useMutation({
         onSuccess: () => {
             setDeletingVeg(null)
+            toast.success("Vegetable deleted successfully")
             refetch()
         },
-        onError: (e) => alert(e.message),
+        onError: (e) => toast.error(e.message),
     })
 
     const filteredVegetables = useMemo(() => {

@@ -1,4 +1,5 @@
 import { customFetch } from "./customFetch"
+import { toast } from "sonner"
 
 /**
  * Uploads an image file to the media API endpoint and returns the image URL.
@@ -18,10 +19,10 @@ export async function uploadImage(file: File): Promise<string | undefined> {
         if (data.success) {
             return data.url as string
         }
-        alert(`Upload failed: ${data.message || "Unknown error"}`)
+        toast.error(`Upload failed: ${data.message || "Unknown error"}`)
     } catch (err) {
         console.error("Image upload error:", err)
-        alert("Image upload failed — network error")
+        toast.error("Image upload failed — network error")
     }
     return undefined
 }

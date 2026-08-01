@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { trpc } from "../lib/trpc"
 import { uploadImage } from "../lib/upload"
 import type { MandiItem } from "../types"
+import { toast } from "sonner"
 import { AdminLayout } from "../components/layout"
 import {
     Button,
@@ -59,26 +60,29 @@ export default function ManageMandis() {
             setFullAddress("")
             setImageFile(null)
             setShowForm(false)
+            toast.success("Mandi created successfully")
             refetch()
         },
-        onError: (e) => alert(e.message),
+        onError: (e) => toast.error(e.message),
     })
 
     const updateMutation = trpc.mandi.update.useMutation({
         onSuccess: () => {
             setEditingMandi(null)
             setEditImageFile(null)
+            toast.success("Mandi updated successfully")
             refetch()
         },
-        onError: (e) => alert(e.message),
+        onError: (e) => toast.error(e.message),
     })
 
     const deleteMutation = trpc.mandi.delete.useMutation({
         onSuccess: () => {
             setDeletingMandi(null)
+            toast.success("Mandi deleted successfully")
             refetch()
         },
-        onError: (e) => alert(e.message),
+        onError: (e) => toast.error(e.message),
     })
 
     const filteredMandis = useMemo(() => {
@@ -95,7 +99,7 @@ export default function ManageMandis() {
 
     const handleGetLocation = (isEdit = false) => {
         if (!navigator.geolocation) {
-            alert("Geolocation is not supported by your browser")
+            toast.error("Geolocation is not supported by your browser")
             return
         }
         setIsFetchingLocation(true)
