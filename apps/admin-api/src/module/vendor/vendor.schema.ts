@@ -29,3 +29,13 @@ export const ZDeleteVendorSchema = z.object({
     id: z.uuid("Invalid vendor ID"),
 })
 export type TDeleteVendorSchema = z.infer<typeof ZDeleteVendorSchema>
+
+export const ZUpdateVendorSchema = z.object({
+    vendorId: z.uuid("Invalid vendor ID"),
+    fullName: z.string().min(1, "Full name is required").optional(),
+    primaryPhone: z.string().min(10, "Valid mobile number required").optional(),
+    alternatePhone: z.string().optional().nullable(),
+    storeName: z.string().optional(),
+    fullAddress: z.string().optional(),
+})
+export type TUpdateVendorSchema = z.infer<typeof ZUpdateVendorSchema>

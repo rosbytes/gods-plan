@@ -1,5 +1,8 @@
+import React, { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { trpc } from "../lib/trpc"
+import { toast } from "sonner"
+import { Button, Input, Modal } from "../components/ui"
 
 type KycDoc = {
     storefrontUrl?: string
@@ -12,10 +15,30 @@ export default function VendorProfile() {
     const navigate = useNavigate()
     const { vendorId } = useParams<{ vendorId: string }>()
 
-    const { data, isLoading, error } = trpc.vendor.getById.useQuery(
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+    const [formData, setFormData] = useState({
+        fullName: "",
+        primaryPhone: "",
+        alternatePhone: "",
+        storeName: "",
+        fullAddress: "",
+    })
+
+    const { data, isLoading, error, refetch } = trpc.vendor.getById.useQuery(
         { vendorId: vendorId! },
         { enabled: !!vendorId },
     )
+
+    const updateMutation = trpc.vendor.update.useMutation({
+        onSuccess: () => {
+            toast.success("Vendor profile updated successfully")
+            setIsEditModalOpen(false)
+            refetch()
+        },
+        onError: (err) => {
+            toast.error(err.message || "Failed to update vendor profile")
+        },
+    })
 
     if (isLoading) {
         return (
@@ -45,6 +68,30 @@ export default function VendorProfile() {
     const store = (vendor as any).marketStores?.[0] ?? (vendor as any).mandiStores?.[0]
     const kyc: KycDoc | null = (vendor as any).kycDocs?.[0] ?? null
 
+    const handleOpenEdit = () => {
+        setFormData({
+            fullName: vendor.fullName || "",
+            primaryPhone: vendor.primaryPhone || "",
+            alternatePhone: vendor.alternatePhone || "",
+            storeName: store?.storeName || "",
+            fullAddress: store?.fullAddress || "",
+        })
+        setIsEditModalOpen(true)
+    }
+
+    const handleSave = (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!vendorId) return
+        updateMutation.mutate({
+            vendorId,
+            fullName: formData.fullName,
+            primaryPhone: formData.primaryPhone,
+            alternatePhone: formData.alternatePhone || null,
+            storeName: formData.storeName,
+            fullAddress: formData.fullAddress,
+        })
+    }
+
     const shortId = vendorId?.substring(0, 4).toUpperCase() || "0000"
 
     const formatDate = (dateString?: string | Date) => {
@@ -63,29 +110,50 @@ export default function VendorProfile() {
         <div className="flex min-h-screen flex-col bg-[#F5F6F8] pb-10 font-sans text-gray-900">
             <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col">
                 {/* Header */}
-                <div className="sticky top-0 z-20 flex items-center bg-[#F5F6F8] px-5 pt-12 pb-4 md:px-8 md:pt-8">
+                <div className="sticky top-0 z-20 flex items-center justify-between bg-[#F5F6F8] px-5 pt-12 pb-4 md:px-8 md:pt-8">
+                    <div className="flex items-center">
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="mr-3 cursor-pointer rounded-full p-1 transition-colors hover:bg-gray-200"
+                        >
+                            <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <line x1="19" y1="12" x2="5" y2="12"></line>
+                                <polyline points="12 19 5 12 12 5"></polyline>
+                            </svg>
+                        </button>
+                        <h1 className="text-[18px] font-bold tracking-tight md:text-xl">
+                            ROS ID: {type === "mandi" ? "M" : "V"}
+                            {shortId}
+                        </h1>
+                    </div>
                     <button
-                        onClick={() => navigate(-1)}
-                        className="mr-3 cursor-pointer rounded-full p-1 transition-colors hover:bg-gray-200"
+                        onClick={handleOpenEdit}
+                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#135B47] px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#0f4737]"
                     >
                         <svg
-                            width="24"
-                            height="24"
+                            width="14"
+                            height="14"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
-                            strokeWidth="2.5"
+                            strokeWidth="2"
                             strokeLinecap="round"
                             strokeLinejoin="round"
                         >
-                            <line x1="19" y1="12" x2="5" y2="12"></line>
-                            <polyline points="12 19 5 12 12 5"></polyline>
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                         </svg>
+                        Edit Profile
                     </button>
-                    <h1 className="text-[18px] font-bold tracking-tight md:text-xl">
-                        ROS ID: {type === "mandi" ? "M" : "V"}
-                        {shortId}
-                    </h1>
                 </div>
 
                 <div className="space-y-6 px-5 md:px-8">
@@ -364,6 +432,73 @@ export default function VendorProfile() {
                     </div>
                 </div>
             </div>
+
+            {/* Edit Vendor Profile Modal */}
+            <Modal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                title="Edit Vendor Profile"
+                subtitle={`Update details for ${vendor.fullName}`}
+            >
+                <form onSubmit={handleSave} className="space-y-4 pt-2">
+                    <Input
+                        label="Full Name"
+                        value={formData.fullName}
+                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                        required
+                    />
+                    <Input
+                        label="Mobile Number (Primary)"
+                        value={formData.primaryPhone}
+                        onChange={(e) => setFormData({ ...formData, primaryPhone: e.target.value })}
+                        required
+                    />
+                    <Input
+                        label="Alternate Mobile Number"
+                        value={formData.alternatePhone}
+                        onChange={(e) =>
+                            setFormData({ ...formData, alternatePhone: e.target.value })
+                        }
+                        placeholder="Optional"
+                    />
+                    {store && (
+                        <>
+                            <Input
+                                label="Store Name"
+                                value={formData.storeName}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, storeName: e.target.value })
+                                }
+                            />
+                            <Input
+                                label="Full Address"
+                                value={formData.fullAddress}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, fullAddress: e.target.value })
+                                }
+                            />
+                        </>
+                    )}
+                    <div className="flex gap-3 pt-3">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            fullWidth
+                            onClick={() => setIsEditModalOpen(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            variant="primary"
+                            fullWidth
+                            isLoading={updateMutation.isPending}
+                        >
+                            Save Changes
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     )
 }

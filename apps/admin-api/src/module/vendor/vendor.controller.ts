@@ -4,11 +4,14 @@ import type {
     TCreateMarketVendorSchema,
     TCreateMandiVendorSchema,
     TGetVendorSchema,
+    TUpdateVendorSchema,
 } from "./vendor.schema"
 import {
     db,
     marketVendor,
     mandiVendor,
+    marketStore,
+    mandiStore,
     marketSubcriptionCharges,
     eq,
     ilike,
@@ -300,6 +303,93 @@ export async function deleteVendor({ input }: { input: { id: string }; ctx: Admi
             .where(eq(mandiVendor.id, input.id))
             .returning()
         if (deletedMandi) return { success: true, vendor: deletedMandi }
+
+        throw new TRPCError({ message: "Vendor not found", code: "NOT_FOUND" })
+    } catch (error) {
+        if (error instanceof TRPCError) throw error
+        throw new TRPCError({
+            message: error instanceof Error ? error.message : "Database Error",
+            code: "INTERNAL_SERVER_ERROR",
+        })
+    }
+}
+
+export async function updateVendor({ input }: { input: TUpdateVendorSchema }) {
+    try {
+        const { vendorId, fullName, primaryPhone, alternatePhone, storeName, fullAddress } = input
+
+        // 1. Try updating marketVendor
+        const marketVendorData = await db.query.marketVendor.findFirst({
+            where: eq(marketVendor.id, vendorId),
+            with: { marketStores: true },
+        })
+
+        if (marketVendorData) {
+            const vendorUpdates: Record<string, any> = {}
+            if (fullName !== undefined) vendorUpdates.fullName = fullName
+            if (primaryPhone !== undefined) vendorUpdates.primaryPhone = primaryPhone
+            if (alternatePhone !== undefined) vendorUpdates.alternatePhone = alternatePhone || null
+
+            if (Object.keys(vendorUpdates).length > 0) {
+                await db
+                    .update(marketVendor)
+                    .set(vendorUpdates)
+                    .where(eq(marketVendor.id, vendorId))
+            }
+
+            if (
+                (storeName !== undefined || fullAddress !== undefined) &&
+                marketVendorData.marketStores?.[0]
+            ) {
+                const storeUpdates: Record<string, any> = {}
+                if (storeName !== undefined) storeUpdates.storeName = storeName
+                if (fullAddress !== undefined) storeUpdates.fullAddress = fullAddress
+
+                if (Object.keys(storeUpdates).length > 0) {
+                    await db
+                        .update(marketStore)
+                        .set(storeUpdates)
+                        .where(eq(marketStore.id, marketVendorData.marketStores[0].id))
+                }
+            }
+
+            return { success: true }
+        }
+
+        // 2. Try updating mandiVendor
+        const mandiVendorData = await db.query.mandiVendor.findFirst({
+            where: eq(mandiVendor.id, vendorId),
+            with: { mandiStores: true },
+        })
+
+        if (mandiVendorData) {
+            const vendorUpdates: Record<string, any> = {}
+            if (fullName !== undefined) vendorUpdates.fullName = fullName
+            if (primaryPhone !== undefined) vendorUpdates.primaryPhone = primaryPhone
+            if (alternatePhone !== undefined) vendorUpdates.alternatePhone = alternatePhone || null
+
+            if (Object.keys(vendorUpdates).length > 0) {
+                await db.update(mandiVendor).set(vendorUpdates).where(eq(mandiVendor.id, vendorId))
+            }
+
+            if (
+                (storeName !== undefined || fullAddress !== undefined) &&
+                mandiVendorData.mandiStores?.[0]
+            ) {
+                const storeUpdates: Record<string, any> = {}
+                if (storeName !== undefined) storeUpdates.storeName = storeName
+                if (fullAddress !== undefined) storeUpdates.fullAddress = fullAddress
+
+                if (Object.keys(storeUpdates).length > 0) {
+                    await db
+                        .update(mandiStore)
+                        .set(storeUpdates)
+                        .where(eq(mandiStore.id, mandiVendorData.mandiStores[0].id))
+                }
+            }
+
+            return { success: true }
+        }
 
         throw new TRPCError({ message: "Vendor not found", code: "NOT_FOUND" })
     } catch (error) {
