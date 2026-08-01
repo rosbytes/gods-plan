@@ -1,4 +1,4 @@
-import { router, publicProcedure } from "../../trpc"
+import { router, publicProcedure, adminProcedure } from "../../trpc"
 import { ZLoginSchema } from "./auth.schema"
 
 export const authRouter = router({
@@ -10,5 +10,13 @@ export const authRouter = router({
     refresh: publicProcedure.mutation(async ({ ctx }) => {
         const { refresh } = await import("./auth.controller")
         return refresh(ctx)
+    }),
+    me: adminProcedure.query(async ({ ctx }) => {
+        const { getMe } = await import("./auth.controller")
+        return getMe(ctx)
+    }),
+    logout: publicProcedure.mutation(async ({ ctx }) => {
+        const { logout } = await import("./auth.controller")
+        return logout({ ctx })
     }),
 })

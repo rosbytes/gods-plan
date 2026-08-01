@@ -16,6 +16,7 @@ import {
 } from "../../utils/tokens"
 import { env, logger } from "../../configs"
 import { compareAdminPassword } from "@ros/commons"
+import type { AdminContext } from "../../middlewares"
 
 export async function login({ input, ctx }: { input: TLoginSchema; ctx: Context }) {
     try {
@@ -158,5 +159,27 @@ export async function logout({ ctx }: { ctx: Context }) {
 
     return {
         success: true,
+    }
+}
+
+export async function getMe(ctx: AdminContext) {
+    if (!ctx.admin.id) {
+        throw new TRPCError({
+            message: "Unauthorized access",
+            code: "UNAUTHORIZED",
+        })
+    }
+    const adminRecord = await findAdminById({ id: ctx.admin.id })
+    if (!adminRecord) {
+        throw new TRPCError({
+            message: "Admin profile not found",
+            code: "UNAUTHORIZED",
+        })
+    }
+    return {
+        id: adminRecord.id,
+        fullName: adminRecord.name,
+        phone: adminRecord.phone,
+        email: adminRecord.email ?? null,
     }
 }
