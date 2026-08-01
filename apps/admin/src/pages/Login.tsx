@@ -43,66 +43,57 @@ export default function Login() {
             </div>
 
             {/* Main Content Container */}
-            <div className="flex flex-1 flex-col items-center justify-center px-6">
-                {/* Logo */}
-                {/* <div
-                    className="mb-12 flex h-20 w-20 flex-col items-center justify-center bg-black leading-none text-white"
-                    style={{
-                        clipPath: "polygon(28% 0%, 72% 0%, 100% 50%, 72% 100%, 28% 100%, 0% 50%)",
-                    }}
-                >
-                    <div className="mt-1 mb-0.5 text-[1.4rem] font-bold tracking-wider">R</div>
-                    <div className="flex items-center text-[1.3rem] font-bold tracking-widest">
-                        <span className="mr-[1px] tracking-tighter">()</span>S
-                    </div>
-                </div> */}
-                <img
-                    src={ROSLogo}
-                    className="mb-12 flex h-20 w-20 flex-col items-center justify-center bg-transparent leading-none text-white"
-                />
+            <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
+                <div className="flex w-full max-w-90 flex-col items-center sm:max-w-md md:rounded-3xl md:border md:border-gray-100 md:bg-white md:p-10 md:shadow-xl">
+                    {/* Logo */}
+                    <img
+                        src={ROSLogo}
+                        className="mb-8 flex h-20 w-20 flex-col items-center justify-center bg-transparent leading-none text-white md:mb-10 md:h-24 md:w-24"
+                    />
 
-                {/* Login Form */}
-                <form className="flex w-full max-w-[320px] flex-col gap-4" onSubmit={handleLogin}>
-                    <div>
-                        <input
-                            type="text"
-                            placeholder="ROS ID or mobile number"
-                            value={rosId}
-                            onChange={(e) => setRosId(e.target.value)}
-                            className="w-full rounded-[14px] border border-gray-100 bg-white px-4 py-3.5 text-gray-800 placeholder-gray-400 shadow-sm transition-all focus:ring-2 focus:ring-[#135B47] focus:outline-none"
-                        />
-                    </div>
+                    {/* Login Form */}
+                    <form className="flex w-full flex-col gap-4" onSubmit={handleLogin}>
+                        <div>
+                            <input
+                                type="text"
+                                placeholder="ROS ID or mobile number"
+                                value={rosId}
+                                onChange={(e) => setRosId(e.target.value)}
+                                className="w-full rounded-[14px] border border-gray-100 bg-white px-4 py-3.5 text-gray-800 placeholder-gray-400 shadow-sm transition-all focus:ring-2 focus:ring-[#135B47] focus:outline-none md:bg-gray-50/50"
+                            />
+                        </div>
 
-                    <div>
-                        <input
-                            type={isError ? "text" : "password"}
-                            placeholder="Password"
-                            value={password}
-                            onChange={handlePasswordChange}
-                            className={`w-full rounded-[14px] border bg-white px-4 py-3.5 shadow-sm transition-all focus:outline-none ${
-                                isError
-                                    ? "border-[#b93246] text-[#b93246] focus:ring-2 focus:ring-[#b93246]"
-                                    : "border-gray-100 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-[#135B47]"
-                            }`}
-                        />
-                    </div>
+                        <div>
+                            <input
+                                type={isError ? "text" : "password"}
+                                placeholder="Password"
+                                value={password}
+                                onChange={handlePasswordChange}
+                                className={`w-full rounded-[14px] border px-4 py-3.5 shadow-sm transition-all focus:outline-none ${
+                                    isError
+                                        ? "border-[#b93246] bg-white text-[#b93246] focus:ring-2 focus:ring-[#b93246]"
+                                        : "border-gray-100 bg-white text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-[#135B47] md:bg-gray-50/50"
+                                }`}
+                            />
+                        </div>
 
-                    <button
-                        type="submit"
-                        className="mt-1 w-full rounded-[14px] bg-[#135B47] py-3.5 text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-[#0f4d3c] active:bg-[#0a3f31]"
-                    >
-                        Log in
-                    </button>
-
-                    <div className="mt-3 text-center">
                         <button
-                            type="button"
-                            className="text-[15px] font-medium text-gray-500 transition-colors hover:text-gray-800"
+                            type="submit"
+                            className="mt-1 w-full cursor-pointer rounded-[14px] bg-[#135B47] py-3.5 text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-[#0f4d3c] active:bg-[#0a3f31]"
                         >
-                            Forgot Password?
+                            Log in
                         </button>
-                    </div>
-                </form>
+
+                        <div className="mt-3 text-center">
+                            <button
+                                type="button"
+                                className="cursor-pointer text-[15px] font-medium text-gray-500 transition-colors hover:text-gray-800"
+                            >
+                                Forgot Password?
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     )
