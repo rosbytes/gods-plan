@@ -10,7 +10,7 @@ export default function Success() {
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-[#F5F6F8] px-6">
-            <div className="flex flex-col items-center space-y-6 text-center">
+            <div className="mx-auto flex w-full max-w-xl flex-1 flex-col items-center justify-center space-y-6 text-center">
                 {/* Success Checkmark */}
                 <div className="flex h-20 w-20 transform items-center justify-center rounded-full bg-[#6CC091] shadow-lg transition-transform hover:scale-110">
                     <svg
@@ -29,20 +29,17 @@ export default function Success() {
 
                 {/* Message */}
                 <div className="space-y-2">
-                    <h1 className="text-[24px] font-bold tracking-tight text-gray-900">
-                        Details Saved
-                    </h1>
-                    <h1 className="text-[24px] font-bold tracking-tight text-gray-900">
-                        Successfully
+                    <h1 className="text-[24px] font-bold tracking-tight text-gray-900 md:text-3xl">
+                        Details Saved Successfully
                     </h1>
                 </div>
             </div>
 
             {/* Bottom Button */}
-            <div className="fixed bottom-0 left-0 w-full px-5 py-6">
+            <div className="fixed bottom-0 left-0 w-full px-5 py-6 md:left-1/2 md:max-w-xl md:-translate-x-1/2 md:px-8">
                 <button
                     onClick={() => navigate(`/payment/${vendorId}/${storeId}${typeParam}`)}
-                    className="w-full rounded-[18px] bg-[#135B47] py-4.5 text-[16px] font-semibold text-white shadow-md transition-colors hover:bg-[#0f4d3c]"
+                    className="w-full cursor-pointer rounded-[18px] bg-[#135B47] py-4.5 text-[16px] font-semibold text-white shadow-md transition-colors hover:bg-[#0f4d3c]"
                 >
                     Proceed to payment
                 </button>
