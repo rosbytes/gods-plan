@@ -13,6 +13,7 @@ import {
     createMandiVendor,
     getMarketVendor,
     getMandiVendor,
+    getVendor,
     listVendors,
     deleteVendor,
 } from "./vendor.controller"
@@ -25,5 +26,7 @@ export const vendorRouter = router({
     createMandi: adminProcedure.input(ZCreateMandiVendorSchema).mutation(createMandiVendor),
     getMarket: adminProcedure.input(ZGetVendorSchema).query(getMarketVendor),
     getMandi: adminProcedure.input(ZGetVendorSchema).query(getMandiVendor),
+    getVendor: adminProcedure.input(ZGetVendorSchema).query(getVendor),
+    getById: adminProcedure.input(ZGetVendorSchema).query(getVendor),
     delete: adminProcedure.input(ZDeleteVendorSchema).mutation(deleteVendor),
 })

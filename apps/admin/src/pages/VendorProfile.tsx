@@ -12,7 +12,7 @@ export default function VendorProfile() {
     const navigate = useNavigate()
     const { vendorId } = useParams<{ vendorId: string }>()
 
-    const { data, isLoading, error } = trpc.vendor.getMarket.useQuery(
+    const { data, isLoading, error } = trpc.vendor.getById.useQuery(
         { vendorId: vendorId! },
         { enabled: !!vendorId },
     )
@@ -27,14 +27,22 @@ export default function VendorProfile() {
 
     if (error || !data) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-[#F5F6F8]">
-                <span className="font-medium text-red-400">Could not load profile.</span>
+            <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#F5F6F8] p-4 text-center">
+                <span className="font-medium text-red-500">
+                    {error?.message || "Could not load profile."}
+                </span>
+                <button
+                    onClick={() => navigate(-1)}
+                    className="cursor-pointer rounded-xl bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-300"
+                >
+                    Go Back
+                </button>
             </div>
         )
     }
 
-    const { vendor, charge } = data
-    const store = vendor.marketStores?.[0]
+    const { vendor, charge, type } = data
+    const store = (vendor as any).marketStores?.[0] ?? (vendor as any).mandiStores?.[0]
     const kyc: KycDoc | null = (vendor as any).kycDocs?.[0] ?? null
 
     const shortId = vendorId?.substring(0, 4).toUpperCase() || "0000"
@@ -75,7 +83,8 @@ export default function VendorProfile() {
                         </svg>
                     </button>
                     <h1 className="text-[18px] font-bold tracking-tight md:text-xl">
-                        ROS ID: V{shortId}
+                        ROS ID: {type === "mandi" ? "M" : "V"}
+                        {shortId}
                     </h1>
                 </div>
 
@@ -84,17 +93,21 @@ export default function VendorProfile() {
                     <div className="flex items-center gap-4 rounded-2xl bg-white p-4.5 shadow-sm">
                         <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-gray-200 shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]">
                             <div className="flex h-full w-full items-center justify-center bg-gray-100">
-                                <svg
-                                    width="24"
-                                    height="24"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="#9ca3af"
-                                    strokeWidth="2"
-                                >
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <path d="M12 8v4l3 3"></path>
-                                </svg>
+                                {type === "mandi" ? (
+                                    <span className="text-2xl">🥬</span>
+                                ) : (
+                                    <svg
+                                        width="24"
+                                        height="24"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="#9ca3af"
+                                        strokeWidth="2"
+                                    >
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <path d="M12 8v4l3 3"></path>
+                                    </svg>
+                                )}
                             </div>
                         </div>
                         <div className="flex flex-col">
@@ -102,7 +115,7 @@ export default function VendorProfile() {
                                 {store?.storeName || vendor.fullName}
                             </span>
                             <span className="text-[14px] font-medium text-gray-400 capitalize">
-                                Market Vendor
+                                {type === "mandi" ? "Mandi Vendor" : "Market Vendor"}
                             </span>
                         </div>
                     </div>

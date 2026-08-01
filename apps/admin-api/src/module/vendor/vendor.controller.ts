@@ -194,6 +194,7 @@ export async function getMarketVendor({ input }: { input: TGetVendorSchema }) {
             where: eq(marketVendor.id, input.vendorId),
             with: {
                 marketStores: true,
+                kycDocs: true,
             },
         })
         if (!vendor) throw new TRPCError({ message: "Vendor not found", code: "NOT_FOUND" })
@@ -207,6 +208,7 @@ export async function getMarketVendor({ input }: { input: TGetVendorSchema }) {
 
         return { vendor, charge: charge || null }
     } catch (error) {
+        if (error instanceof TRPCError) throw error
         throw new TRPCError({
             message: error instanceof Error ? error.message : "Database Error",
             code: "INTERNAL_SERVER_ERROR",
@@ -220,12 +222,64 @@ export async function getMandiVendor({ input }: { input: TGetVendorSchema }) {
             where: eq(mandiVendor.id, input.vendorId),
             with: {
                 mandiStores: true,
+                kycDocs: true,
             },
         })
         if (!vendor) throw new TRPCError({ message: "Vendor not found", code: "NOT_FOUND" })
 
         return { vendor, charge: null }
     } catch (error) {
+        if (error instanceof TRPCError) throw error
+        throw new TRPCError({
+            message: error instanceof Error ? error.message : "Database Error",
+            code: "INTERNAL_SERVER_ERROR",
+        })
+    }
+}
+
+export async function getVendor({ input }: { input: TGetVendorSchema }) {
+    try {
+        const marketVendorData = await db.query.marketVendor.findFirst({
+            where: eq(marketVendor.id, input.vendorId),
+            with: {
+                marketStores: true,
+                kycDocs: true,
+            },
+        })
+
+        if (marketVendorData) {
+            const [charge] = await db
+                .select()
+                .from(marketSubcriptionCharges)
+                .where(eq(marketSubcriptionCharges.vendorId, marketVendorData.id))
+                .limit(1)
+
+            return {
+                type: "market" as const,
+                vendor: marketVendorData,
+                charge: charge || null,
+            }
+        }
+
+        const mandiVendorData = await db.query.mandiVendor.findFirst({
+            where: eq(mandiVendor.id, input.vendorId),
+            with: {
+                mandiStores: true,
+                kycDocs: true,
+            },
+        })
+
+        if (mandiVendorData) {
+            return {
+                type: "mandi" as const,
+                vendor: mandiVendorData,
+                charge: null,
+            }
+        }
+
+        throw new TRPCError({ message: "Vendor not found", code: "NOT_FOUND" })
+    } catch (error) {
+        if (error instanceof TRPCError) throw error
         throw new TRPCError({
             message: error instanceof Error ? error.message : "Database Error",
             code: "INTERNAL_SERVER_ERROR",

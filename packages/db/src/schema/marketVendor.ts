@@ -2,6 +2,7 @@ import { integer, pgTable, uuid, varchar } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 import { timestamps } from "../common-utils/columnHelpers"
 import { marketStore } from "./marketStore"
+import { marketKycDoc } from "./marketKycDoc"
 import { admin } from "./admin"
 
 export const marketVendor = pgTable("market_vendor", {
@@ -25,6 +26,7 @@ export const marketVendor = pgTable("market_vendor", {
 
 export const marketVendorRelations = relations(marketVendor, ({ one, many }) => ({
     marketStores: many(marketStore),
+    kycDocs: many(marketKycDoc),
 
     // admin who created this vendor
     admin: one(admin, {

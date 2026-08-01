@@ -3,6 +3,7 @@ import { relations } from "drizzle-orm"
 import { timestamps } from "../common-utils/columnHelpers"
 import { admin } from "./admin"
 import { mandiStore } from "./mandiStore"
+import { mandiKycDoc } from "./mandiKycDoc"
 
 export const mandiVendor = pgTable("mandi_vendor", {
     id: uuid("id").primaryKey().defaultRandom(),
@@ -27,6 +28,7 @@ export const mandiVendor = pgTable("mandi_vendor", {
 export const mandiVendorRelations = relations(mandiVendor, ({ one, many }) => ({
     // stores of this vendor
     mandiStores: many(mandiStore),
+    kycDocs: many(mandiKycDoc),
 
     // admin who created this vendor
     admin: one(admin, {
