@@ -9,7 +9,7 @@
         "prod:build": "vite build",
         "lint": "eslint .",
         "preview": "vite preview --host",
-        "typecheck": "tsc --noEmit"
+        "typecheck": "tsc -p tsconfig.app.json --noEmit"
     },
     "dependencies": {
         "@ros/commons": "workspace:*",
@@ -28,6 +28,7 @@
     },
     "devDependencies": {
         "@eslint/js": "^9.39.4",
+        "@trpc/server": "^11.16.0",
         "@types/jspdf": "^2.0.0",
         "@types/node": "^24.12.0",
         "@types/qrcode.react": "^3.0.0",
