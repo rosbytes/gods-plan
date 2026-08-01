@@ -67,6 +67,12 @@ export function Sidebar({
             badge: null,
         },
         {
+            name: "Team & Admins",
+            path: "/manage/admins",
+            icon: UserPlusIcon,
+            badge: null,
+        },
+        {
             name: "New Vendor",
             path: "/create-vendor",
             icon: UserPlusIcon,

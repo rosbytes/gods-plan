@@ -14,6 +14,7 @@ import VendorProfile from "./pages/VendorProfile"
 import ManageCities from "./pages/ManageCities"
 import ManageMandis from "./pages/ManageMandis"
 import ManageVegetables from "./pages/ManageVegetables"
+import ManageAdmins from "./pages/ManageAdmins"
 import { ProtectedRoute } from "./components/auth/ProtectedRoute"
 
 function App() {
@@ -53,6 +54,14 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <ManageVegetables />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/manage/admins"
+                    element={
+                        <ProtectedRoute>
+                            <ManageAdmins />
                         </ProtectedRoute>
                     }
                 />
