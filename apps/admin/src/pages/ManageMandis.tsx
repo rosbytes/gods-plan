@@ -12,6 +12,7 @@ import {
     EmptyState,
     PlusIcon,
     EditIcon,
+    TrashIcon,
     SearchIcon,
     LocationIcon,
     SpinnerIcon,
@@ -46,6 +47,9 @@ export default function ManageMandis() {
     const [editFullAddress, setEditFullAddress] = useState("")
     const [editImageFile, setEditImageFile] = useState<File | null>(null)
 
+    // Delete state
+    const [deletingMandi, setDeletingMandi] = useState<MandiItem | null>(null)
+
     const createMutation = trpc.mandi.create.useMutation({
         onSuccess: () => {
             setName("")
@@ -64,6 +68,14 @@ export default function ManageMandis() {
         onSuccess: () => {
             setEditingMandi(null)
             setEditImageFile(null)
+            refetch()
+        },
+        onError: (e) => alert(e.message),
+    })
+
+    const deleteMutation = trpc.mandi.delete.useMutation({
+        onSuccess: () => {
+            setDeletingMandi(null)
             refetch()
         },
         onError: (e) => alert(e.message),
@@ -170,6 +182,12 @@ export default function ManageMandis() {
         })
     }
 
+    const handleDeleteConfirm = () => {
+        if (deletingMandi) {
+            deleteMutation.mutate({ id: deletingMandi.id })
+        }
+    }
+
     const isFormValid = name.trim() !== "" && cityId !== "" && lat !== "" && lng !== ""
     const isEditValid =
         editName.trim() !== "" && editCityId !== "" && editLat !== "" && editLng !== ""
@@ -177,6 +195,35 @@ export default function ManageMandis() {
 
     return (
         <>
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={Boolean(deletingMandi)}
+                onClose={() => setDeletingMandi(null)}
+                title="Confirm Deletion"
+                subtitle="Are you sure you want to delete this mandi?"
+            >
+                <div className="space-y-4">
+                    <p className="text-xs font-semibold text-gray-600">
+                        This action will remove{" "}
+                        <strong className="text-gray-900">{deletingMandi?.name}</strong>{" "}
+                        permanently.
+                    </p>
+                    <div className="flex gap-3 pt-2">
+                        <Button variant="outline" fullWidth onClick={() => setDeletingMandi(null)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="danger"
+                            fullWidth
+                            isLoading={deleteMutation.isPending}
+                            onClick={handleDeleteConfirm}
+                        >
+                            Delete Mandi
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
             {/* ========================================================================= */}
             {/* MOBILE VIEW (< 1024px) — 100% PRESERVED ORIGINAL MOBILE DESIGN            */}
             {/* ========================================================================= */}
@@ -474,12 +521,22 @@ export default function ManageMandis() {
                                                         {m.fullAddress ? ` • ${m.fullAddress}` : ""}
                                                     </span>
                                                 </div>
-                                                <button
-                                                    onClick={() => handleEdit(m as MandiItem)}
-                                                    className="cursor-pointer rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-[#135B47]"
-                                                >
-                                                    <EditIcon size={18} />
-                                                </button>
+                                                <div className="flex items-center gap-1">
+                                                    <button
+                                                        onClick={() => handleEdit(m as MandiItem)}
+                                                        className="cursor-pointer rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-[#135B47]"
+                                                    >
+                                                        <EditIcon size={18} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() =>
+                                                            setDeletingMandi(m as MandiItem)
+                                                        }
+                                                        className="cursor-pointer rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                                                    >
+                                                        <TrashIcon size={18} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         ),
                                     )}
@@ -788,13 +845,22 @@ export default function ManageMandis() {
                                             {m.fullAddress ? ` • ${m.fullAddress}` : ""}
                                         </span>
                                     </div>
-                                    <button
-                                        onClick={() => handleEdit(m as MandiItem)}
-                                        className="cursor-pointer rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-[#135B47]"
-                                        aria-label={`Edit ${m.name}`}
-                                    >
-                                        <EditIcon size={18} />
-                                    </button>
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={() => handleEdit(m as MandiItem)}
+                                            className="cursor-pointer rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-[#135B47]"
+                                            aria-label={`Edit ${m.name}`}
+                                        >
+                                            <EditIcon size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => setDeletingMandi(m as MandiItem)}
+                                            className="cursor-pointer rounded-xl p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                                            aria-label={`Delete ${m.name}`}
+                                        >
+                                            <TrashIcon size={18} />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>

@@ -12,6 +12,7 @@ import {
     EmptyState,
     PlusIcon,
     EditIcon,
+    TrashIcon,
     SearchIcon,
     SpinnerIcon,
     VegIcon,
@@ -37,6 +38,9 @@ export default function ManageVegetables() {
     const [editHindiName, setEditHindiName] = useState("")
     const [editImageFile, setEditImageFile] = useState<File | null>(null)
 
+    // Delete state
+    const [deletingVeg, setDeletingVeg] = useState<VegetableItem | null>(null)
+
     const createMutation = trpc.veg.create.useMutation({
         onSuccess: () => {
             setName("")
@@ -52,6 +56,14 @@ export default function ManageVegetables() {
         onSuccess: () => {
             setEditingVeg(null)
             setEditImageFile(null)
+            refetch()
+        },
+        onError: (e) => alert(e.message),
+    })
+
+    const deleteMutation = trpc.veg.delete.useMutation({
+        onSuccess: () => {
+            setDeletingVeg(null)
             refetch()
         },
         onError: (e) => alert(e.message),
@@ -113,12 +125,47 @@ export default function ManageVegetables() {
         })
     }
 
+    const handleDeleteConfirm = () => {
+        if (deletingVeg) {
+            deleteMutation.mutate({ id: deletingVeg.id })
+        }
+    }
+
     const isFormValid = name.trim() !== ""
     const isEditValid = editName.trim() !== ""
     const isPending = createMutation.isPending || updateMutation.isPending || uploading
 
     return (
         <>
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={Boolean(deletingVeg)}
+                onClose={() => setDeletingVeg(null)}
+                title="Confirm Deletion"
+                subtitle="Are you sure you want to delete this vegetable?"
+            >
+                <div className="space-y-4">
+                    <p className="text-xs font-semibold text-gray-600">
+                        This action will remove{" "}
+                        <strong className="text-gray-900">{deletingVeg?.name}</strong> from catalog
+                        permanently.
+                    </p>
+                    <div className="flex gap-3 pt-2">
+                        <Button variant="outline" fullWidth onClick={() => setDeletingVeg(null)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="danger"
+                            fullWidth
+                            isLoading={deleteMutation.isPending}
+                            onClick={handleDeleteConfirm}
+                        >
+                            Delete Item
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
             {/* ========================================================================= */}
             {/* MOBILE VIEW (< 1024px) — 100% PRESERVED ORIGINAL MOBILE DESIGN            */}
             {/* ========================================================================= */}
@@ -309,12 +356,24 @@ export default function ManageVegetables() {
                                                             : "No Hindi name"}
                                                     </span>
                                                 </div>
-                                                <button
-                                                    onClick={() => handleEdit(v as VegetableItem)}
-                                                    className="cursor-pointer rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-[#135B47]"
-                                                >
-                                                    <EditIcon size={18} />
-                                                </button>
+                                                <div className="flex items-center gap-1">
+                                                    <button
+                                                        onClick={() =>
+                                                            handleEdit(v as VegetableItem)
+                                                        }
+                                                        className="cursor-pointer rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-[#135B47]"
+                                                    >
+                                                        <EditIcon size={18} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() =>
+                                                            setDeletingVeg(v as VegetableItem)
+                                                        }
+                                                        className="cursor-pointer rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                                                    >
+                                                        <TrashIcon size={18} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         ),
                                     )}
@@ -520,13 +579,22 @@ export default function ManageVegetables() {
                                             {v.nameInHindi ? `${v.nameInHindi}` : "No Hindi name"}
                                         </span>
                                     </div>
-                                    <button
-                                        onClick={() => handleEdit(v as VegetableItem)}
-                                        className="cursor-pointer rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-[#135B47]"
-                                        aria-label={`Edit ${v.name}`}
-                                    >
-                                        <EditIcon size={18} />
-                                    </button>
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={() => handleEdit(v as VegetableItem)}
+                                            className="cursor-pointer rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-[#135B47]"
+                                            aria-label={`Edit ${v.name}`}
+                                        >
+                                            <EditIcon size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => setDeletingVeg(v as VegetableItem)}
+                                            className="cursor-pointer rounded-xl p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                                            aria-label={`Delete ${v.name}`}
+                                        >
+                                            <TrashIcon size={18} />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>

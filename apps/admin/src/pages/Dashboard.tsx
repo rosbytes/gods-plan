@@ -1,13 +1,16 @@
 import { useState, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { trpc } from "../lib/trpc"
+import type { VendorItem } from "../types"
 import { AdminLayout } from "../components/layout"
 import {
     Badge,
     Button,
+    Modal,
     EmptyState,
     SearchIcon,
     PlusIcon,
+    TrashIcon,
     SpinnerIcon,
     BuildingIcon,
     StoreIcon,
@@ -20,13 +23,28 @@ export default function Dashboard() {
     const [selectedType, setSelectedType] = useState<"all" | "market" | "mandi">("all")
     const [viewMode, setViewMode] = useState<"table" | "grid">("table")
 
-    const { data: vendors, isLoading } = trpc.vendor.listAllVendors.useQuery({
+    // Delete state
+    const [deletingVendor, setDeletingVendor] = useState<VendorItem | null>(null)
+
+    const {
+        data: vendors,
+        isLoading,
+        refetch,
+    } = trpc.vendor.listAllVendors.useQuery({
         search: searchQuery ? searchQuery : undefined,
     })
 
     const { data: cities } = trpc.city.list.useQuery({})
     const { data: mandis } = trpc.mandi.list.useQuery({})
     const { data: vegetables } = trpc.veg.list.useQuery({})
+
+    const deleteVendorMutation = trpc.vendor.delete.useMutation({
+        onSuccess: () => {
+            setDeletingVendor(null)
+            refetch()
+        },
+        onError: (e) => alert(e.message),
+    })
 
     // Filtered items based on selected tab
     const filteredVendors = useMemo(() => {
@@ -41,8 +59,43 @@ export default function Dashboard() {
     const marketCount = vendors?.items?.filter((v) => v.type === "market").length ?? 0
     const cityCount = cities?.items?.length ?? 0
 
+    const handleDeleteVendorConfirm = () => {
+        if (deletingVendor) {
+            deleteVendorMutation.mutate({ id: deletingVendor.id })
+        }
+    }
+
     return (
         <>
+            {/* Vendor Delete Confirmation Modal */}
+            <Modal
+                isOpen={Boolean(deletingVendor)}
+                onClose={() => setDeletingVendor(null)}
+                title="Confirm Vendor Deletion"
+                subtitle="Are you sure you want to delete this vendor?"
+            >
+                <div className="space-y-4">
+                    <p className="text-xs font-semibold text-gray-600">
+                        This action will permanently delete{" "}
+                        <strong className="text-gray-900">{deletingVendor?.fullName}</strong> (
+                        {deletingVendor?.type} vendor) and their associated records.
+                    </p>
+                    <div className="flex gap-3 pt-2">
+                        <Button variant="outline" fullWidth onClick={() => setDeletingVendor(null)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="danger"
+                            fullWidth
+                            isLoading={deleteVendorMutation.isPending}
+                            onClick={handleDeleteVendorConfirm}
+                        >
+                            Delete Vendor
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
             {/* ========================================================================= */}
             {/* MOBILE VIEW (< 1024px) — 100% PRESERVED ORIGINAL MOBILE DESIGN            */}
             {/* ========================================================================= */}
@@ -156,16 +209,26 @@ export default function Dashboard() {
                                                         : "Market Vendor"}
                                                 </span>
                                             </div>
-                                            {/* Type badge */}
-                                            <span
-                                                className={`shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase ${
-                                                    vendor.type === "mandi"
-                                                        ? "bg-[#FFF3E0] text-[#E65100]"
-                                                        : "bg-[#E8F3F0] text-[#135B47]"
-                                                }`}
-                                            >
-                                                {vendor.type}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span
+                                                    className={`shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase ${
+                                                        vendor.type === "mandi"
+                                                            ? "bg-[#FFF3E0] text-[#E65100]"
+                                                            : "bg-[#E8F3F0] text-[#135B47]"
+                                                    }`}
+                                                >
+                                                    {vendor.type}
+                                                </span>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        setDeletingVendor(vendor as VendorItem)
+                                                    }}
+                                                    className="cursor-pointer rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                                                >
+                                                    <TrashIcon size={16} />
+                                                </button>
+                                            </div>
                                         </div>
                                     ))
                                 )}
@@ -476,16 +539,28 @@ export default function Dashboard() {
                                                     {v.id.substring(0, 12)}...
                                                 </td>
                                                 <td className="px-4 py-3.5 text-right">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            navigate(`/vendor/${v.id}`)
-                                                        }}
-                                                    >
-                                                        View Profile →
-                                                    </Button>
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                navigate(`/vendor/${v.id}`)
+                                                            }}
+                                                        >
+                                                            View Profile →
+                                                        </Button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                setDeletingVendor(v as VendorItem)
+                                                            }}
+                                                            className="cursor-pointer rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                                                            title="Delete vendor"
+                                                        >
+                                                            <TrashIcon size={16} />
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -524,13 +599,25 @@ export default function Dashboard() {
                                                     : "Market Vendor"}
                                             </span>
                                         </div>
-                                        <Badge
-                                            variant={
-                                                vendor.type === "mandi" ? "warning" : "success"
-                                            }
-                                        >
-                                            {vendor.type}
-                                        </Badge>
+                                        <div className="flex items-center gap-2">
+                                            <Badge
+                                                variant={
+                                                    vendor.type === "mandi" ? "warning" : "success"
+                                                }
+                                            >
+                                                {vendor.type}
+                                            </Badge>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    setDeletingVendor(vendor as VendorItem)
+                                                }}
+                                                className="cursor-pointer rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                                                title="Delete vendor"
+                                            >
+                                                <TrashIcon size={16} />
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
