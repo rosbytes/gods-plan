@@ -9,6 +9,7 @@ import { mandiRouter } from "../module/mandi/mandi.route"
 import { vegRouter } from "../module/veg/veg.route"
 import { otpRouter } from "../module/otp/otp.route"
 import { adminUserRouter } from "../module/adminUser/adminUser.route"
+import { assetRouter } from "../module/asset/asset.route"
 
 // Define a simple router
 export const appRouter = router({
@@ -25,6 +26,7 @@ export const appRouter = router({
     veg: vegRouter,
     otp: otpRouter,
     adminUser: adminUserRouter,
+    asset: assetRouter,
 })
 
 // Export type definition of API
