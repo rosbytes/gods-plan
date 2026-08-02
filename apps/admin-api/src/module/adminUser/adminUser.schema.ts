@@ -16,7 +16,7 @@ export const ZUpdateAdminUserSchema = z.object({
     id: z.uuid("Invalid admin ID"),
     name: z.string().min(1).optional(),
     phone: z.string().min(10).optional(),
-    email: z.string().email().optional().or(z.literal("")),
+    email: z.email().optional().or(z.literal("")),
     pin: z.string().length(4).optional(),
     role: ZAdminRoleSchema.optional(),
     isActive: z.boolean().optional(),
