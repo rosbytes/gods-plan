@@ -1,3 +1,9 @@
-export { compareMandiVendorPassword, hashAdminPassword, compareAdminPassword } from "./hashFunc"
+export {
+    compareMandiVendorPassword,
+    hashAdminPassword,
+    compareAdminPassword,
+    hashMarketVendorPassword,
+    compareMarketVendorPassword,
+} from "./hashFunc"
 
 export { generateOrderCode } from "./generateOrderCode"

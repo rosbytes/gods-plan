@@ -12,6 +12,16 @@ export const compareMandiVendorPassword = (plainPassword: string, hashPassword: 
     return res
 }
 
+export const hashMarketVendorPassword = (password: string) => {
+    const hash = bcrypt.hashSync(password, SALT_ROUNDS)
+    return hash
+}
+
+export const compareMarketVendorPassword = (plainPassword: string, hashPassword: string) => {
+    const res = bcrypt.compareSync(plainPassword, hashPassword)
+    return res
+}
+
 export const hashAdminPassword = (password: string) => {
     const hash = bcrypt.hashSync(password, SALT_ROUNDS)
     return hash
