@@ -1,6 +1,9 @@
 import { publicProcedure, router } from "./globals"
 import { z } from "zod"
 import { authRouter } from "../modules/auth/auth.route"
+import { catalogRouter } from "../modules/catalog/catalog.route"
+import { cartRouter } from "../modules/cart/cart.route"
+import { orderRouter } from "../modules/order/order.route"
 
 // Define a simple router
 export const appRouter = router({
@@ -12,6 +15,9 @@ export const appRouter = router({
         return `Hello, Welcome to tRPC`
     }),
     auth: authRouter,
+    catalog: catalogRouter,
+    cart: cartRouter,
+    order: orderRouter,
     // payment: paymentRouter,
 })
 

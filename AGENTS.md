@@ -6,17 +6,19 @@ Welcome to the **ROS Monorepo (**`gods-plan`**)**. This is the **root entry poin
 
 ## Quick Navigation
 
-| Path               | Package          | Role                                | Agent Guide                                              |
-| ------------------ | ---------------- | ----------------------------------- | -------------------------------------------------------- |
-| `apps/admin`       | `@ros/admin`     | Internal admin dashboard (Vite SPA) | [apps/admin/AGENTS.md](apps/admin/AGENTS.md)             |
-| `apps/admin-api`   | `@ros/admin-api` | Admin backend (Express + tRPC)      | [apps/admin-api/AGENTS.md](apps/admin-api/AGENTS.md)     |
-| `apps/mandi`       | `@ros/mandi`     | Vendor portal (Vite SPA)            | [apps/mandi/AGENTS.md](apps/mandi/AGENTS.md)             |
-| `apps/mandi-api`   | `@ros/mandi-api` | Vendor backend (Express + tRPC)     | [apps/mandi-api/AGENTS.md](apps/mandi-api/AGENTS.md)     |
-| `apps/www`         | `@ros/www`       | Consumer marketing site (Next.js)   | [apps/www/AGENTS.md](apps/www/AGENTS.md)                 |
-| `apps/info`        | `@ros/info`      | Coming-soon microsite (Next.js)     | [apps/info/AGENTS.md](apps/info/AGENTS.md)               |
-| `packages/db`      | `@ros/db`        | PostgreSQL schemas & migrations     | [packages/db/AGENTS.md](packages/db/AGENTS.md)           |
-| `packages/commons` | `@ros/commons`   | Shared pure utilities               | [packages/commons/AGENTS.md](packages/commons/AGENTS.md) |
-| `packages/ui`      | `@ros/ui`        | Shared UI component library         | [packages/ui/AGENTS.md](packages/ui/AGENTS.md)           |
+| Path               | Package           | Role                                 | Agent Guide                                              |
+| ------------------ | ----------------- | ------------------------------------ | -------------------------------------------------------- |
+| `apps/admin`       | `@ros/admin`      | Internal admin dashboard (Vite SPA)  | [apps/admin/AGENTS.md](apps/admin/AGENTS.md)             |
+| `apps/admin-api`   | `@ros/admin-api`  | Admin backend (Express + tRPC)       | [apps/admin-api/AGENTS.md](apps/admin-api/AGENTS.md)     |
+| `apps/mandi`       | `@ros/mandi`      | Vendor portal (Vite SPA)             | [apps/mandi/AGENTS.md](apps/mandi/AGENTS.md)             |
+| `apps/mandi-api`   | `@ros/mandi-api`  | Vendor backend (Express + tRPC)      | [apps/mandi-api/AGENTS.md](apps/mandi-api/AGENTS.md)     |
+| `apps/vendor`      | `@ros/vendor`     | Market vendor portal (Vite SPA)      | [apps/vendor/AGENTS.md](apps/vendor/AGENTS.md)           |
+| `apps/vendor-api`  | `@ros/vendor-api` | Market vendor backend (Express/tRPC) | [apps/vendor-api/AGENTS.md](apps/vendor-api/AGENTS.md)   |
+| `apps/www`         | `@ros/www`        | Consumer marketing site (Next.js)    | [apps/www/AGENTS.md](apps/www/AGENTS.md)                 |
+| `apps/info`        | `@ros/info`       | Coming-soon microsite (Next.js)      | [apps/info/AGENTS.md](apps/info/AGENTS.md)               |
+| `packages/db`      | `@ros/db`         | PostgreSQL schemas & migrations      | [packages/db/AGENTS.md](packages/db/AGENTS.md)           |
+| `packages/commons` | `@ros/commons`    | Shared pure utilities                | [packages/commons/AGENTS.md](packages/commons/AGENTS.md) |
+| `packages/ui`      | `@ros/ui`         | Shared UI component library          | [packages/ui/AGENTS.md](packages/ui/AGENTS.md)           |
 
 **Design system reference:** [DESIGN.md](DESIGN.md)
 
@@ -134,10 +136,11 @@ lib/customFetch.ts            # Auth fetch wrapper (do not duplicate)
 
 Frontends import `AppRouter` directly from the backend source (monorepo type sharing):
 
-| Frontend                      | Backend          | Import                                  |
-| ----------------------------- | ---------------- | --------------------------------------- |
-| `apps/admin/src/lib/trpc.ts`  | `apps/admin-api` | `../../../admin-api/src/trpc/appRouter` |
-| `apps/mandi/src/libs/trpc.ts` | `apps/mandi-api` | `../../../mandi-api/src/trpc/appRouter` |
+| Frontend                      | Backend           | Import                                   |
+| ----------------------------- | ----------------- | ---------------------------------------- |
+| `apps/admin/src/lib/trpc.ts`  | `apps/admin-api`  | `../../../admin-api/src/trpc/appRouter`  |
+| `apps/mandi/src/libs/trpc.ts` | `apps/mandi-api`  | `../../../mandi-api/src/trpc/appRouter`  |
+| `apps/vendor/src/lib/trpc.ts` | `apps/vendor-api` | `../../../vendor-api/src/trpc/appRouter` |
 
 Both use `httpBatchLink`, `credentials: "include"`, and a shared `customFetch` that auto-refreshes JWT on 401.
 

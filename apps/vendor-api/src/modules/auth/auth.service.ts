@@ -1,13 +1,14 @@
 import { db, eq, marketVendor } from "@ros/db"
 
 export const findMarketVendorByPhone = async ({ phone }: { phone: string }) => {
-    return await db.query.marketVendor.findFirst({
-        where: eq(marketVendor.primaryPhone, phone),
-    })
+    const [marketVendorRecord] = await db
+        .select()
+        .from(marketVendor)
+        .where(eq(marketVendor.primaryPhone, phone))
+    return marketVendorRecord
 }
 
 export const getMarketVendorById = async (id: string) => {
-    return await db.query.marketVendor.findFirst({
-        where: eq(marketVendor.id, id),
-    })
+    const [marketVendorRecord] = await db.select().from(marketVendor).where(eq(marketVendor.id, id))
+    return marketVendorRecord
 }

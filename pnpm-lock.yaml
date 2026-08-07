@@ -382,16 +382,49 @@ importers:
 
   apps/vendor:
     dependencies:
+      '@iconify/react':
+        specifier: ^6.0.2
+        version: 6.0.2(react@19.2.8)
+      '@ros/commons':
+        specifier: workspace:*
+        version: link:../../packages/commons
+      '@ros/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@tanstack/react-query':
+        specifier: ^5.96.2
+        version: 5.96.2(react@19.2.8)
+      '@trpc/client':
+        specifier: ^11.16.0
+        version: 11.16.0(@trpc/server@11.16.0(typescript@6.0.3))(typescript@6.0.3)
+      '@trpc/react-query':
+        specifier: ^11.16.0
+        version: 11.16.0(@tanstack/react-query@5.96.2(react@19.2.8))(@trpc/client@11.16.0(@trpc/server@11.16.0(typescript@6.0.3))(typescript@6.0.3))(@trpc/server@11.16.0(typescript@6.0.3))(react@19.2.8)(typescript@6.0.3)
       react:
         specifier: ^19.2.8
         version: 19.2.8
       react-dom:
         specifier: ^19.2.8
         version: 19.2.8(react@19.2.8)
+      react-router-dom:
+        specifier: ^7.14.0
+        version: 7.14.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      sonner:
+        specifier: ^2.0.7
+        version: 2.0.7(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      zustand:
+        specifier: ^5.0.14
+        version: 5.0.14(@types/react@19.2.17)(react@19.2.8)
     devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.8.0(jiti@2.7.0)(supports-color@7.2.0))
+      '@ros/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@tailwindcss/vite':
+        specifier: ^4.2.2
+        version: 4.2.2(vite@8.2.0(@types/node@24.13.3)(esbuild@0.25.12)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       '@types/node':
         specifier: ^24.13.3
         version: 24.13.3
@@ -416,6 +449,9 @@ importers:
       globals:
         specifier: ^17.7.0
         version: 17.7.0
+      tailwindcss:
+        specifier: ^4.3.2
+        version: 4.3.2
       typescript:
         specifier: ~6.0.2
         version: 6.0.3
@@ -458,6 +494,9 @@ importers:
       libphonenumber-js:
         specifier: ^1.12.40
         version: 1.12.40
+      razorpay:
+        specifier: ^2.9.6
+        version: 2.9.6(debug@4.4.3(supports-color@7.2.0))
       winston:
         specifier: ^3.19.0
         version: 3.19.0
@@ -6153,6 +6192,11 @@ snapshots:
       '@iconify/types': 2.0.0
       react: 19.2.7
 
+  '@iconify/react@6.0.2(react@19.2.8)':
+    dependencies:
+      '@iconify/types': 2.0.0
+      react: 19.2.8
+
   '@iconify/types@2.0.0': {}
 
   '@img/colour@1.1.0':
@@ -6761,6 +6805,13 @@ snapshots:
       tailwindcss: 4.2.2
       vite: 8.1.3(@types/node@24.13.2)(esbuild@0.25.12)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0)
 
+  '@tailwindcss/vite@4.2.2(vite@8.2.0(@types/node@24.13.3)(esbuild@0.25.12)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))':
+    dependencies:
+      '@tailwindcss/node': 4.2.2
+      '@tailwindcss/oxide': 4.2.2
+      tailwindcss: 4.2.2
+      vite: 8.2.0(@types/node@24.13.3)(esbuild@0.25.12)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0)
+
   '@tanstack/query-core@5.96.2': {}
 
   '@tanstack/react-query@5.96.2(react@19.2.7)':
@@ -6768,10 +6819,20 @@ snapshots:
       '@tanstack/query-core': 5.96.2
       react: 19.2.7
 
+  '@tanstack/react-query@5.96.2(react@19.2.8)':
+    dependencies:
+      '@tanstack/query-core': 5.96.2
+      react: 19.2.8
+
   '@trpc/client@11.16.0(@trpc/server@11.16.0(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
       '@trpc/server': 11.16.0(typescript@5.9.3)
       typescript: 5.9.3
+
+  '@trpc/client@11.16.0(@trpc/server@11.16.0(typescript@6.0.3))(typescript@6.0.3)':
+    dependencies:
+      '@trpc/server': 11.16.0(typescript@6.0.3)
+      typescript: 6.0.3
 
   '@trpc/client@11.16.0(@trpc/server@11.18.0(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
@@ -6794,6 +6855,14 @@ snapshots:
       react: 19.2.7
       typescript: 5.9.3
 
+  '@trpc/react-query@11.16.0(@tanstack/react-query@5.96.2(react@19.2.8))(@trpc/client@11.16.0(@trpc/server@11.16.0(typescript@6.0.3))(typescript@6.0.3))(@trpc/server@11.16.0(typescript@6.0.3))(react@19.2.8)(typescript@6.0.3)':
+    dependencies:
+      '@tanstack/react-query': 5.96.2(react@19.2.8)
+      '@trpc/client': 11.16.0(@trpc/server@11.16.0(typescript@6.0.3))(typescript@6.0.3)
+      '@trpc/server': 11.16.0(typescript@6.0.3)
+      react: 19.2.8
+      typescript: 6.0.3
+
   '@trpc/server@11.14.1(typescript@6.0.3)':
     dependencies:
       typescript: 6.0.3
@@ -6801,6 +6870,10 @@ snapshots:
   '@trpc/server@11.16.0(typescript@5.9.3)':
     dependencies:
       typescript: 5.9.3
+
+  '@trpc/server@11.16.0(typescript@6.0.3)':
+    dependencies:
+      typescript: 6.0.3
 
   '@trpc/server@11.18.0(typescript@5.9.3)':
     dependencies:
@@ -9755,6 +9828,12 @@ snapshots:
       react-dom: 19.2.7(react@19.2.7)
       react-router: 7.14.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
 
+  react-router-dom@7.14.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+    dependencies:
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+      react-router: 7.14.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+
   react-router@7.14.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
     dependencies:
       cookie: 1.1.1
@@ -9762,6 +9841,14 @@ snapshots:
       set-cookie-parser: 2.7.2
     optionalDependencies:
       react-dom: 19.2.7(react@19.2.7)
+
+  react-router@7.14.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+    dependencies:
+      cookie: 1.1.1
+      react: 19.2.8
+      set-cookie-parser: 2.7.2
+    optionalDependencies:
+      react-dom: 19.2.8(react@19.2.8)
 
   react@19.2.4: {}
 
@@ -10162,6 +10249,11 @@ snapshots:
     dependencies:
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
+
+  sonner@2.0.7(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+    dependencies:
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
 
   source-map-js@1.2.1: {}
 
@@ -10925,3 +11017,8 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.17
       react: 19.2.7
+
+  zustand@5.0.14(@types/react@19.2.17)(react@19.2.8):
+    optionalDependencies:
+      '@types/react': 19.2.17
+      react: 19.2.8

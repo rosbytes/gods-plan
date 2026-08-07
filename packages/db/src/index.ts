@@ -93,7 +93,7 @@ export type {
 export type { VegInsert, VegSelect } from "./schema/veg"
 
 // DB Utils from drizzle-orm package
-export { eq, ne, and, or, gte, lte, gt, lt, ilike, desc, asc, sql } from "drizzle-orm"
+export { eq, ne, and, or, gte, lte, gt, lt, ilike, desc, asc, sql, inArray } from "drizzle-orm"
 export { unionAll } from "drizzle-orm/pg-core"
 
 // Geo utility functions
