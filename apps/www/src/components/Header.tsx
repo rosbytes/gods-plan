@@ -20,11 +20,14 @@ const navLinks = [
   },
 ];
 
+import CountdownBanner from "./CountdownBanner";
+
 const Header = () => {
   const pathname = usePathname();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white">
+      <CountdownBanner />
       <nav className="flex items-center justify-center py-4">
         <div className="flex items-center gap-20">
           {navLinks.slice(0, 2).map((nav) => (
