@@ -1,12 +1,9 @@
 import { relations } from "drizzle-orm"
-import { pgTable, uuid, integer, varchar, pgEnum, timestamp } from "drizzle-orm/pg-core"
+import { pgTable, uuid, integer, varchar, timestamp } from "drizzle-orm/pg-core"
 import { timestamps } from "../common-utils/columnHelpers"
 import { marketVendor } from "./marketVendor"
 import { admin } from "./admin"
-import { paymentMethodEnum, paymentStatusEnum } from "../common-utils/enums"
-
-export const paymentStatus = pgEnum("payment_status", paymentStatusEnum)
-export const paymentMethod = pgEnum("payment_method", paymentMethodEnum)
+import { paymentMethod, paymentStatus } from "./enums"
 
 export const marketSubcriptionCharges = pgTable("market_subcription_charges", {
     id: uuid("id").primaryKey().defaultRandom(),
@@ -16,7 +13,9 @@ export const marketSubcriptionCharges = pgTable("market_subcription_charges", {
         .references(() => marketVendor.id),
 
     amount: integer("amount").notNull(),
-    transactionId: varchar("transaction_id", { length: 255 }),
+    // gateway-specific data (e.g., Razorpay order_id, payment_id)
+    gatewayOrderId: varchar("gateway_order_id", { length: 255 }),
+    gatewayPaymentId: varchar("gateway_payment_id", { length: 255 }),
 
     paymentDate: timestamp("payment_date").notNull(),
     paymentStatus: paymentStatus("payment_status").notNull(),

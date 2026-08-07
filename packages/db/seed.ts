@@ -1,22 +1,31 @@
 import { db, testDBConnection } from "./src/db"
 import bcrypt from "bcryptjs"
+import crypto from "crypto"
 import {
     admin,
     city,
     veg,
     mandi,
+    mandiCounter,
     mandiVendor,
     mandiStore,
     mandiPrice,
     marketVendor,
+    marketVendorWallet,
+    marketVendorWalletTransaction,
     marketStore,
     marketMandiOrder,
-    marketMandiOrderPayment,
+    marketMandiOrderItem,
+    marketMandiPayment,
     marketMandiOrderStatusHistory,
     mandiKycDoc,
     marketKycDoc,
     mandiSubcriptionCharges,
     marketSubcriptionCharges,
+    marketVendorCart,
+    marketMandiPaymentSplit,
+    marketMandiPaymentStatusHistory,
+    marketMandiPaymentWebhookEvent,
 } from "./src/index"
 
 async function main() {
@@ -34,8 +43,15 @@ async function main() {
         await db.transaction(async (tx) => {
             // 2.1. Clean existing records in reverse dependency order
             console.log("🧹 Cleaning old database records...")
-            await tx.delete(marketMandiOrderPayment)
+            await tx.delete(marketVendorWalletTransaction)
+            await tx.delete(marketVendorWallet)
+            await tx.delete(marketVendorCart)
+            await tx.delete(marketMandiPaymentWebhookEvent)
+            await tx.delete(marketMandiPaymentSplit)
+            await tx.delete(marketMandiPaymentStatusHistory)
+            await tx.delete(marketMandiPayment)
             await tx.delete(marketMandiOrderStatusHistory)
+            await tx.delete(marketMandiOrderItem)
             await tx.delete(marketMandiOrder)
             await tx.delete(mandiPrice)
             await tx.delete(marketKycDoc)
@@ -46,6 +62,7 @@ async function main() {
             await tx.delete(marketVendor)
             await tx.delete(mandiStore)
             await tx.delete(mandiVendor)
+            await tx.delete(mandiCounter)
             await tx.delete(mandi)
             await tx.delete(veg)
             await tx.delete(city)
@@ -57,7 +74,7 @@ async function main() {
             const [superAdminRecord] = await tx
                 .insert(admin)
                 .values({
-                    id: "f3b3b4f6-8c43-4c91-9e2c-29b1f7ebf74c",
+                    id: crypto.randomUUID(),
                     name: "Super Admin",
                     email: "admin@example.com",
                     phone: "+919876543210",
@@ -70,7 +87,7 @@ async function main() {
             const [operatorRecord] = await tx
                 .insert(admin)
                 .values({
-                    id: "a1a1a1a1-1111-1111-1111-111111111111",
+                    id: crypto.randomUUID(),
                     name: "Operator User",
                     email: "operator@example.com",
                     phone: "+919876543219",
@@ -90,7 +107,7 @@ async function main() {
             const [mumbaiCity] = await tx
                 .insert(city)
                 .values({
-                    id: "c1c1c1c1-1111-1111-1111-111111111111",
+                    id: crypto.randomUUID(),
                     name: "Mumbai",
                     state: "Maharashtra",
                     pincode: "400001",
@@ -102,7 +119,7 @@ async function main() {
             const [delhiCity] = await tx
                 .insert(city)
                 .values({
-                    id: "c2c2c2c2-2222-2222-2222-222222222222",
+                    id: crypto.randomUUID(),
                     name: "Delhi",
                     state: "Delhi",
                     pincode: "110001",
@@ -120,7 +137,7 @@ async function main() {
             console.log("🥦 Seeding Vegetables...")
             const vegetablesList = [
                 {
-                    id: "11111111-1111-1111-1111-111111111111",
+                    id: crypto.randomUUID(),
                     name: "Tomato",
                     nameInHindi: "टमाटर",
                     vegPrimaryImage: "https://images.unsplash.com/photo-1518977676601-b53f82aba655",
@@ -131,7 +148,7 @@ async function main() {
                     createdBy: superAdminRecord.id,
                 },
                 {
-                    id: "22222222-2222-2222-2222-222222222222",
+                    id: crypto.randomUUID(),
                     name: "Potato",
                     nameInHindi: "आलू",
                     vegPrimaryImage: "https://images.unsplash.com/photo-1518977676601-b53f82aba655",
@@ -141,7 +158,7 @@ async function main() {
                     createdBy: superAdminRecord.id,
                 },
                 {
-                    id: "33333333-3333-3333-3333-333333333333",
+                    id: crypto.randomUUID(),
                     name: "Onion",
                     nameInHindi: "प्याज़",
                     vegPrimaryImage: "https://images.unsplash.com/photo-1508747703725-719ae25db29f",
@@ -149,7 +166,7 @@ async function main() {
                     createdBy: superAdminRecord.id,
                 },
                 {
-                    id: "44444444-4444-4444-4444-444444444444",
+                    id: crypto.randomUUID(),
                     name: "Spinach",
                     nameInHindi: "पालक",
                     vegPrimaryImage: "https://images.unsplash.com/photo-1576045057995-568f588f82fb",
@@ -157,7 +174,7 @@ async function main() {
                     createdBy: superAdminRecord.id,
                 },
                 {
-                    id: "55555555-5555-5555-5555-555555555555",
+                    id: crypto.randomUUID(),
                     name: "Carrot",
                     nameInHindi: "गाजर",
                     vegPrimaryImage: "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37",
@@ -178,7 +195,7 @@ async function main() {
             const [vashiMandi] = await tx
                 .insert(mandi)
                 .values({
-                    id: "d1d1d1d1-1111-1111-1111-111111111111",
+                    id: crypto.randomUUID(),
                     name: "Vashi Mandi",
                     cityId: mumbaiCity.id,
                     createdBy: superAdminRecord.id,
@@ -192,7 +209,7 @@ async function main() {
             const [azadpurMandi] = await tx
                 .insert(mandi)
                 .values({
-                    id: "d2d2d2d2-2222-2222-2222-222222222222",
+                    id: crypto.randomUUID(),
                     name: "Azadpur Mandi",
                     cityId: delhiCity.id,
                     createdBy: superAdminRecord.id,
@@ -208,13 +225,48 @@ async function main() {
             }
             console.log("✅ Mandis seeded.")
 
+            // 2.5b. Insert Mandi ROS Counters
+            console.log("🎰 Seeding Mandi ROS Counters...")
+            const [vashiCounter] = await tx
+                .insert(mandiCounter)
+                .values({
+                    id: crypto.randomUUID(),
+                    mandiId: vashiMandi.id,
+                    counterName: "Vashi Gate 1 ROS Counter",
+                    counterCode: "CNT-VASHI-01",
+                    operatorId: operatorRecord.id,
+                    lat: 19.0762,
+                    lng: 72.8779,
+                    isActive: true,
+                })
+                .returning()
+
+            const [azadpurCounter] = await tx
+                .insert(mandiCounter)
+                .values({
+                    id: crypto.randomUUID(),
+                    mandiId: azadpurMandi.id,
+                    counterName: "Azadpur Gate 2 ROS Counter",
+                    counterCode: "CNT-AZADPUR-01",
+                    operatorId: operatorRecord.id,
+                    lat: 28.6139,
+                    lng: 77.209,
+                    isActive: true,
+                })
+                .returning()
+
+            if (!vashiCounter || !azadpurCounter) {
+                throw new Error("Failed to create mandi counters.")
+            }
+            console.log("✅ Mandi ROS Counters seeded.")
+
             // 2.6. Insert Mandi Vendors
             console.log("👨🌾 Seeding Mandi Vendors...")
 
             const [mandiVendor1] = await tx
                 .insert(mandiVendor)
                 .values({
-                    id: "de11de11-1111-1111-1111-111111111111",
+                    id: crypto.randomUUID(),
                     fullName: "Ramesh Kumar",
                     primaryPhone: "+919999999901",
                     alternatePhone: "+919999999911",
@@ -226,7 +278,7 @@ async function main() {
             const [mandiVendor2] = await tx
                 .insert(mandiVendor)
                 .values({
-                    id: "de22de22-2222-2222-2222-222222222222",
+                    id: crypto.randomUUID(),
                     fullName: "Amit Sharma",
                     primaryPhone: "+919999999902",
                     alternatePhone: null,
@@ -245,7 +297,7 @@ async function main() {
             const [tomatoMandiStore] = await tx
                 .insert(mandiStore)
                 .values({
-                    id: "da11da11-1111-1111-1111-111111111111",
+                    id: crypto.randomUUID(),
                     mandiId: vashiMandi.id,
                     vendorId: mandiVendor1.id,
                     vegId: seededVegetables[0]!.id, // Tomato
@@ -260,7 +312,7 @@ async function main() {
             const [potatoMandiStore] = await tx
                 .insert(mandiStore)
                 .values({
-                    id: "da22da22-2222-2222-2222-222222222222",
+                    id: crypto.randomUUID(),
                     mandiId: azadpurMandi.id,
                     vendorId: mandiVendor2.id,
                     vegId: seededVegetables[1]!.id, // Potato
@@ -280,14 +332,14 @@ async function main() {
             // 2.8. Insert Mandi Prices
             console.log("💰 Seeding Mandi Prices...")
             await tx.insert(mandiPrice).values({
-                id: "df11df11-1111-1111-1111-111111111111",
+                id: crypto.randomUUID(),
                 mandiStoreId: tomatoMandiStore.id,
                 vegId: seededVegetables[0]!.id, // Tomato
                 price: 2500, // 25.00 Rs/kg in paise
             })
 
             await tx.insert(mandiPrice).values({
-                id: "df22df22-2222-2222-2222-222222222222",
+                id: crypto.randomUUID(),
                 mandiStoreId: potatoMandiStore.id,
                 vegId: seededVegetables[1]!.id, // Potato
                 price: 1800, // 18.00 Rs/kg in paise
@@ -297,7 +349,7 @@ async function main() {
             // 2.9. Insert Mandi KYC Documents
             console.log("📄 Seeding Mandi KYC Documents...")
             await tx.insert(mandiKycDoc).values({
-                id: "b1b1b1b1-1111-1111-1111-111111111111",
+                id: crypto.randomUUID(),
                 vendorId: mandiVendor1.id,
                 storeId: tomatoMandiStore.id,
                 type: "aadhar",
@@ -309,7 +361,7 @@ async function main() {
             })
 
             await tx.insert(mandiKycDoc).values({
-                id: "b2b2b2b2-2222-2222-2222-222222222222",
+                id: crypto.randomUUID(),
                 vendorId: mandiVendor1.id,
                 storeId: tomatoMandiStore.id,
                 type: "pan",
@@ -321,7 +373,7 @@ async function main() {
             })
 
             await tx.insert(mandiKycDoc).values({
-                id: "b3b3b3b3-3333-3333-3333-333333333333",
+                id: crypto.randomUUID(),
                 vendorId: mandiVendor2.id,
                 storeId: potatoMandiStore.id,
                 type: "aadhar",
@@ -333,306 +385,333 @@ async function main() {
             })
             console.log("✅ Mandi KYC Documents seeded.")
 
-            // 2.10. Insert Market Vendors
-            console.log("🤝 Seeding Market Vendors...")
-            const marketVendorsList = [
+            // 2.10. Insert Market Vendors & Wallets
+            console.log("🤝 Seeding Market Vendors & Wallets...")
+            const marketVendorConfigs = [
                 {
-                    id: "cde1cde1-1111-1111-1111-111111111111",
                     fullName: "Suresh Patel",
                     primaryPhone: "+918888888801",
                     alternatePhone: "+918800000001",
-                    pin: hashedPin,
                     slot: 1,
-                    createdBy: superAdminRecord.id,
                 },
                 {
-                    id: "cde2cde2-2222-2222-2222-222222222222",
                     fullName: "Rajesh Verma",
                     primaryPhone: "+918888888802",
                     alternatePhone: null,
-                    pin: hashedPin,
                     slot: 2,
-                    createdBy: superAdminRecord.id,
                 },
                 {
-                    id: "cde3cde3-3333-3333-3333-333333333333",
                     fullName: "Sharma Vendor",
                     primaryPhone: "+918888888803",
                     alternatePhone: "+918800000003",
-                    pin: hashedPin,
                     slot: 1,
-                    createdBy: superAdminRecord.id,
                 },
                 {
-                    id: "cde4cde4-4444-4444-4444-444433333333",
                     fullName: "Aarya Vendor",
                     primaryPhone: "+918888888804",
-                    pin: hashedPin,
+                    alternatePhone: null,
                     slot: 2,
-                    createdBy: superAdminRecord.id,
                 },
                 {
-                    id: "cde5cde5-5555-5555-5555-555533333333",
                     fullName: "Bhati Vendor",
                     primaryPhone: "+918888888805",
-                    pin: hashedPin,
+                    alternatePhone: null,
                     slot: 3,
-                    createdBy: superAdminRecord.id,
                 },
                 {
-                    id: "cde6cde6-6666-6666-6666-666633333333",
                     fullName: "Bhawani Vendor",
                     primaryPhone: "+918888888806",
-                    pin: hashedPin,
+                    alternatePhone: null,
                     slot: 4,
-                    createdBy: superAdminRecord.id,
                 },
                 {
-                    id: "cde7cde7-7777-7777-7777-777733333333",
                     fullName: "Sid Vendor",
                     primaryPhone: "+918888888807",
-                    pin: hashedPin,
+                    alternatePhone: null,
                     slot: 5,
-                    createdBy: superAdminRecord.id,
                 },
                 {
-                    id: "cde8cde8-8888-8888-8888-888833333333",
                     fullName: "Rehman Vendor",
                     primaryPhone: "+918888888808",
-                    pin: hashedPin,
+                    alternatePhone: null,
                     slot: 1,
-                    createdBy: superAdminRecord.id,
                 },
                 {
-                    id: "cde9cde9-9999-9999-9999-999933333333",
                     fullName: "Hamza Vendor",
                     primaryPhone: "+918888888809",
-                    pin: hashedPin,
+                    alternatePhone: null,
                     slot: 2,
-                    createdBy: superAdminRecord.id,
                 },
                 {
-                    id: "cdea1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
                     fullName: "Maanvi Vendor",
                     primaryPhone: "+918888888810",
-                    pin: hashedPin,
+                    alternatePhone: null,
                     slot: 3,
-                    createdBy: superAdminRecord.id,
                 },
                 {
-                    id: "cdeb1111-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
                     fullName: "Mishra Vendor",
                     primaryPhone: "+918888888812",
-                    pin: hashedPin,
+                    alternatePhone: null,
                     slot: 4,
-                    createdBy: superAdminRecord.id,
                 },
                 {
-                    id: "cdec1111-cccc-cccc-cccc-cccccccccccc",
                     fullName: "Noor Vendor",
                     primaryPhone: "+918888888813",
-                    pin: hashedPin,
+                    alternatePhone: null,
                     slot: 5,
-                    createdBy: superAdminRecord.id,
                 },
             ]
 
-            for (const v of marketVendorsList) {
-                await tx.insert(marketVendor).values(v)
+            const seededMarketVendors = []
+            for (const cfg of marketVendorConfigs) {
+                const [v] = await tx
+                    .insert(marketVendor)
+                    .values({
+                        id: crypto.randomUUID(),
+                        fullName: cfg.fullName,
+                        primaryPhone: cfg.primaryPhone,
+                        alternatePhone: cfg.alternatePhone,
+                        pin: hashedPin,
+                        createdBy: superAdminRecord.id,
+                    })
+                    .returning()
+
+                if (!v) throw new Error(`Failed to create market vendor ${cfg.fullName}`)
+                seededMarketVendors.push({ ...v, slot: cfg.slot })
+
+                // Seed wallet & initial top-up transaction
+                const initialBalance = 500000 // ₹5,000 in paise
+                const [w] = await tx
+                    .insert(marketVendorWallet)
+                    .values({
+                        id: crypto.randomUUID(),
+                        vendorId: v.id,
+                        balance: initialBalance,
+                        currency: "INR",
+                        isActive: true,
+                    })
+                    .returning()
+
+                if (w) {
+                    await tx.insert(marketVendorWalletTransaction).values({
+                        id: crypto.randomUUID(),
+                        walletId: w.id,
+                        vendorId: v.id,
+                        amount: initialBalance,
+                        type: "credit",
+                        category: "topup",
+                        status: "success",
+                        referenceType: "gateway",
+                        referenceId: `TOPUP-INIT-${v.id.slice(0, 8)}`,
+                        balanceBefore: 0,
+                        balanceAfter: initialBalance,
+                        description: "Initial wallet top-up",
+                    })
+                }
             }
-            console.log("✅ Market Vendors seeded.")
+            console.log("✅ Market Vendors & Wallets seeded.")
 
             // 2.11. Insert Market Stores
             console.log("🛒 Seeding Market Stores...")
-            const marketStoresList = [
+            const marketStoreConfigs = [
                 {
-                    id: "cab1cab1-1111-1111-1111-111111111111",
-                    vendorId: "cde1cde1-1111-1111-1111-111111111111",
-                    mandiId: vashiMandi.id,
-                    cityId: mumbaiCity.id,
+                    storeName: "Suresh Patel Grocery",
+                    address: "Shop 12, Main Street, Kurla, Mumbai",
+                    mandi: vashiMandi,
+                    city: mumbaiCity,
                     lat: 19.082,
                     lng: 72.889,
-                    storeName: "Suresh Patel Grocery",
-                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
-                    fullAddress: "Shop 12, Main Street, Kurla, Mumbai",
                     radiusM: 4000,
                 },
                 {
-                    id: "cab2cab2-2222-2222-2222-222222222222",
-                    vendorId: "cde2cde2-2222-2222-2222-222222222222",
-                    mandiId: azadpurMandi.id,
-                    cityId: delhiCity.id,
+                    storeName: "Rajesh Supermarket",
+                    address: "Shop 4, Market Complex, Connaught Place, New Delhi",
+                    mandi: azadpurMandi,
+                    city: delhiCity,
                     lat: 28.625,
                     lng: 77.22,
-                    storeName: "Rajesh Supermarket",
-                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
-                    fullAddress: "Shop 4, Market Complex, Connaught Place, New Delhi",
                     radiusM: 5000,
                 },
                 {
-                    id: "cab3cab3-3333-3333-3333-333333333333",
-                    vendorId: "cde3cde3-3333-3333-3333-333333333333",
-                    mandiId: vashiMandi.id,
-                    cityId: mumbaiCity.id,
+                    storeName: "Sharma Vegetables",
+                    address: "Shop 14, Main Road, Vashi, Navi Mumbai",
+                    mandi: vashiMandi,
+                    city: mumbaiCity,
                     lat: 19.083,
                     lng: 72.89,
-                    storeName: "Sharma Vegetables",
-                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
-                    fullAddress: "Shop 14, Main Road, Vashi, Navi Mumbai",
                     radiusM: 3000,
                 },
                 {
-                    id: "cab4cab4-4444-4444-4444-444433333333",
-                    vendorId: "cde4cde4-4444-4444-4444-444433333333",
-                    mandiId: vashiMandi.id,
-                    cityId: mumbaiCity.id,
+                    storeName: "Aarya Vegetables",
+                    address: "Shop 15, Sector 17, Vashi, Navi Mumbai",
+                    mandi: vashiMandi,
+                    city: mumbaiCity,
                     lat: 19.084,
                     lng: 72.891,
-                    storeName: "Aarya Vegetables",
-                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
-                    fullAddress: "Shop 15, Sector 17, Vashi, Navi Mumbai",
                     radiusM: 3000,
                 },
                 {
-                    id: "cab5cab5-5555-5555-5555-555533333333",
-                    vendorId: "cde5cde5-5555-5555-5555-555533333333",
-                    mandiId: vashiMandi.id,
-                    cityId: mumbaiCity.id,
+                    storeName: "Bhati Vegetables",
+                    address: "Gala No 5, Market Yard, Vashi, Navi Mumbai",
+                    mandi: vashiMandi,
+                    city: mumbaiCity,
                     lat: 19.085,
                     lng: 72.892,
-                    storeName: "Bhati Vegetables",
-                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
-                    fullAddress: "Gala No 5, Market Yard, Vashi, Navi Mumbai",
                     radiusM: 3000,
                 },
                 {
-                    id: "cab6cab6-6666-6666-6666-666633333333",
-                    vendorId: "cde6cde6-6666-6666-6666-666633333333",
-                    mandiId: vashiMandi.id,
-                    cityId: mumbaiCity.id,
+                    storeName: "Bhawani Vegetables",
+                    address: "Shop 21, APMC Market, Vashi, Navi Mumbai",
+                    mandi: vashiMandi,
+                    city: mumbaiCity,
                     lat: 19.086,
                     lng: 72.893,
-                    storeName: "Bhawani Vegetables",
-                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
-                    fullAddress: "Shop 21, APMC Market, Vashi, Navi Mumbai",
                     radiusM: 3000,
                 },
                 {
-                    id: "cab7cab7-7777-7777-7777-777733333333",
-                    vendorId: "cde7cde7-7777-7777-7777-777733333333",
-                    mandiId: vashiMandi.id,
-                    cityId: mumbaiCity.id,
+                    storeName: "Sid Vegetables",
+                    address: "Shop 22, APMC Market, Vashi, Navi Mumbai",
+                    mandi: vashiMandi,
+                    city: mumbaiCity,
                     lat: 19.087,
                     lng: 72.894,
-                    storeName: "Sid Vegetables",
-                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
-                    fullAddress: "Shop 22, APMC Market, Vashi, Navi Mumbai",
                     radiusM: 3000,
                 },
                 {
-                    id: "cab8cab8-8888-8888-8888-888833333333",
-                    vendorId: "cde8cde8-8888-8888-8888-888833333333",
-                    mandiId: vashiMandi.id,
-                    cityId: mumbaiCity.id,
+                    storeName: "Rehman Vegetables",
+                    address: "Gala No 12, APMC Sector 19, Vashi, Navi Mumbai",
+                    mandi: vashiMandi,
+                    city: mumbaiCity,
                     lat: 19.088,
                     lng: 72.895,
-                    storeName: "Rehman Vegetables",
-                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
-                    fullAddress: "Gala No 12, APMC Sector 19, Vashi, Navi Mumbai",
                     radiusM: 3000,
                 },
                 {
-                    id: "cab9cab9-9999-9999-9999-999933333333",
-                    vendorId: "cde9cde9-9999-9999-9999-999933333333",
-                    mandiId: vashiMandi.id,
-                    cityId: mumbaiCity.id,
+                    storeName: "Hamza Vegetables",
+                    address: "Shop 8, APMC Gate 2, Vashi, Navi Mumbai",
+                    mandi: vashiMandi,
+                    city: mumbaiCity,
                     lat: 19.089,
                     lng: 72.896,
-                    storeName: "Hamza Vegetables",
-                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
-                    fullAddress: "Shop 8, APMC Gate 2, Vashi, Navi Mumbai",
                     radiusM: 3000,
                 },
                 {
-                    id: "caba1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-                    vendorId: "cdea1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-                    mandiId: vashiMandi.id,
-                    cityId: mumbaiCity.id,
+                    storeName: "Maanvi Vegetables",
+                    address: "Shop 9, APMC Gate 2, Vashi, Navi Mumbai",
+                    mandi: vashiMandi,
+                    city: mumbaiCity,
                     lat: 19.09,
                     lng: 72.897,
-                    storeName: "Maanvi Vegetables",
-                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
-                    fullAddress: "Shop 9, APMC Gate 2, Vashi, Navi Mumbai",
                     radiusM: 3000,
                 },
                 {
-                    id: "cabb1111-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-                    vendorId: "cdeb1111-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-                    mandiId: vashiMandi.id,
-                    cityId: mumbaiCity.id,
+                    storeName: "Mishra Vegetables",
+                    address: "Shop 10, APMC Gate 2, Vashi, Navi Mumbai",
+                    mandi: vashiMandi,
+                    city: mumbaiCity,
                     lat: 19.091,
                     lng: 72.898,
-                    storeName: "Mishra Vegetables",
-                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
-                    fullAddress: "Shop 10, APMC Gate 2, Vashi, Navi Mumbai",
                     radiusM: 3000,
                 },
                 {
-                    id: "cabc1111-cccc-cccc-cccc-cccccccccccc",
-                    vendorId: "cdec1111-cccc-cccc-cccc-cccccccccccc",
-                    mandiId: vashiMandi.id,
-                    cityId: mumbaiCity.id,
+                    storeName: "Noor Vegetables",
+                    address: "Shop 11, APMC Gate 2, Vashi, Navi Mumbai",
+                    mandi: vashiMandi,
+                    city: mumbaiCity,
                     lat: 19.092,
                     lng: 72.899,
-                    storeName: "Noor Vegetables",
-                    storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
-                    fullAddress: "Shop 11, APMC Gate 2, Vashi, Navi Mumbai",
                     radiusM: 3000,
                 },
             ]
 
-            for (const s of marketStoresList) {
-                await tx.insert(marketStore).values(s)
+            const seededMarketStores = []
+            for (let i = 0; i < seededMarketVendors.length; i++) {
+                const vendor = seededMarketVendors[i]!
+                const cfg = marketStoreConfigs[i]!
+
+                const [s] = await tx
+                    .insert(marketStore)
+                    .values({
+                        id: crypto.randomUUID(),
+                        vendorId: vendor.id,
+                        mandiId: cfg.mandi.id,
+                        lat: cfg.lat,
+                        lng: cfg.lng,
+                        storeName: cfg.storeName,
+                        storeImage: "https://images.unsplash.com/photo-1542838132-92c53300491e",
+                        fullAddress: cfg.address,
+                        radiusM: cfg.radiusM,
+                        slot: vendor.slot,
+                    })
+                    .returning()
+
+                if (s) seededMarketStores.push(s)
             }
             console.log("✅ Market Stores seeded.")
 
+            // 2.11b. Insert Market Vendor Carts
+            console.log("🛒 Seeding Market Vendor Carts...")
+            if (seededMarketStores[0] && tomatoMandiStore && potatoMandiStore) {
+                await tx.insert(marketVendorCart).values([
+                    {
+                        id: crypto.randomUUID(),
+                        marketStoreId: seededMarketStores[0].id,
+                        mandiStoreId: tomatoMandiStore.id,
+                        vegId: seededVegetables[0]!.id,
+                        quantityInGram: 100000, // 100kg
+                    },
+                    {
+                        id: crypto.randomUUID(),
+                        marketStoreId: seededMarketStores[0].id,
+                        mandiStoreId: potatoMandiStore.id,
+                        vegId: seededVegetables[1]!.id,
+                        quantityInGram: 50000, // 50kg
+                    },
+                ])
+            }
+            console.log("✅ Market Vendor Carts seeded.")
+
             // 2.12. Insert Market KYC Documents
             console.log("📄 Seeding Market KYC Documents...")
-            await tx.insert(marketKycDoc).values({
-                id: "e1e1e1e1-1111-1111-1111-111111111111",
-                vendorId: "cde1cde1-1111-1111-1111-111111111111", // Suresh Patel
-                storeId: "cab1cab1-1111-1111-1111-111111111111",
-                type: "aadhar",
-                docId: "5678-1234-9012",
-                frontUrl: "https://example.com/kyc/market/suresh-aadhar-front.jpg",
-                backUrl: "https://example.com/kyc/market/suresh-aadhar-back.jpg",
-                storefrontUrl: "https://example.com/kyc/market/suresh-storefront.jpg",
-                signedKycDocUrl: "https://example.com/kyc/market/suresh-signed-kyc.pdf",
-            })
+            if (seededMarketVendors[0] && seededMarketStores[0]) {
+                await tx.insert(marketKycDoc).values({
+                    id: crypto.randomUUID(),
+                    vendorId: seededMarketVendors[0].id,
+                    storeId: seededMarketStores[0].id,
+                    type: "aadhar",
+                    docId: "5678-1234-9012",
+                    frontUrl: "https://example.com/kyc/market/suresh-aadhar-front.jpg",
+                    backUrl: "https://example.com/kyc/market/suresh-aadhar-back.jpg",
+                    storefrontUrl: "https://example.com/kyc/market/suresh-storefront.jpg",
+                    signedKycDocUrl: "https://example.com/kyc/market/suresh-signed-kyc.pdf",
+                })
 
-            await tx.insert(marketKycDoc).values({
-                id: "e2e2e2e2-2222-2222-2222-222222222222",
-                vendorId: "cde1cde1-1111-1111-1111-111111111111", // Suresh Patel — PAN
-                storeId: "cab1cab1-1111-1111-1111-111111111111",
-                type: "pan",
-                docId: "FGHIJ5678K",
-                frontUrl: "https://example.com/kyc/market/suresh-pan-front.jpg",
-                backUrl: null,
-                storefrontUrl: null,
-                signedKycDocUrl: null,
-            })
+                await tx.insert(marketKycDoc).values({
+                    id: crypto.randomUUID(),
+                    vendorId: seededMarketVendors[0].id,
+                    storeId: seededMarketStores[0].id,
+                    type: "pan",
+                    docId: "FGHIJ5678K",
+                    frontUrl: "https://example.com/kyc/market/suresh-pan-front.jpg",
+                    backUrl: null,
+                    storefrontUrl: null,
+                    signedKycDocUrl: null,
+                })
+            }
 
-            await tx.insert(marketKycDoc).values({
-                id: "e3e3e3e3-3333-3333-3333-333333333333",
-                vendorId: "cde2cde2-2222-2222-2222-222222222222", // Rajesh Verma
-                storeId: "cab2cab2-2222-2222-2222-222222222222",
-                type: "aadhar",
-                docId: "3456-7890-1234",
-                frontUrl: "https://example.com/kyc/market/rajesh-aadhar-front.jpg",
-                backUrl: "https://example.com/kyc/market/rajesh-aadhar-back.jpg",
-                storefrontUrl: "https://example.com/kyc/market/rajesh-storefront.jpg",
-                signedKycDocUrl: null,
-            })
+            if (seededMarketVendors[1] && seededMarketStores[1]) {
+                await tx.insert(marketKycDoc).values({
+                    id: crypto.randomUUID(),
+                    vendorId: seededMarketVendors[1].id,
+                    storeId: seededMarketStores[1].id,
+                    type: "aadhar",
+                    docId: "3456-7890-1234",
+                    frontUrl: "https://example.com/kyc/market/rajesh-aadhar-front.jpg",
+                    backUrl: "https://example.com/kyc/market/rajesh-aadhar-back.jpg",
+                    storefrontUrl: "https://example.com/kyc/market/rajesh-storefront.jpg",
+                    signedKycDocUrl: null,
+                })
+            }
             console.log("✅ Market KYC Documents seeded.")
 
             // 2.13. Insert Mandi Subscription Charges
@@ -644,32 +723,32 @@ async function main() {
             mandiSubDate2.setDate(mandiSubDate2.getDate() - 15) // 15 days ago
 
             await tx.insert(mandiSubcriptionCharges).values({
-                id: "f1f1f1f1-1111-1111-1111-111111111111",
+                id: crypto.randomUUID(),
                 vendorId: mandiVendor1.id,
                 amount: 100000, // Rs 1000 in paise
-                transactionId: "TXN-MANDI-SUB-001",
+                gatewayOrderId: "TXN-MANDI-SUB-001",
                 paymentDate: mandiSubDate1,
-                paymentStatus: "success",
+                paymentStatus: "captured",
                 paymentMethod: "upi",
                 paymentCollectedBy: superAdminRecord.id,
             })
 
             await tx.insert(mandiSubcriptionCharges).values({
-                id: "f2f2f2f2-2222-2222-2222-222222222222",
+                id: crypto.randomUUID(),
                 vendorId: mandiVendor2.id,
                 amount: 100000, // Rs 1000 in paise
-                transactionId: "TXN-MANDI-SUB-002",
+                gatewayOrderId: "TXN-MANDI-SUB-002",
                 paymentDate: mandiSubDate2,
-                paymentStatus: "success",
+                paymentStatus: "captured",
                 paymentMethod: "cash",
                 paymentCollectedBy: superAdminRecord.id,
             })
 
             await tx.insert(mandiSubcriptionCharges).values({
-                id: "f3f3f3f3-3333-3333-3333-333333333333",
+                id: crypto.randomUUID(),
                 vendorId: mandiVendor1.id,
                 amount: 100000, // Rs 1000 in paise — renewal
-                transactionId: null,
+                gatewayOrderId: null,
                 paymentDate: new Date(),
                 paymentStatus: "pending",
                 paymentMethod: "upi",
@@ -685,49 +764,57 @@ async function main() {
             const marketSubDate2 = new Date()
             marketSubDate2.setDate(marketSubDate2.getDate() - 10) // 10 days ago
 
-            await tx.insert(marketSubcriptionCharges).values({
-                id: "a1f1a1f1-1111-1111-1111-111111111111",
-                vendorId: "cde1cde1-1111-1111-1111-111111111111", // Suresh Patel
-                amount: 150000, // Rs 1500 in paise
-                transactionId: "TXN-MARKET-SUB-001",
-                paymentDate: marketSubDate1,
-                paymentStatus: "success",
-                paymentMethod: "upi",
-                paymentCollectedBy: operatorRecord.id,
-            })
+            if (seededMarketVendors[0]) {
+                await tx.insert(marketSubcriptionCharges).values({
+                    id: crypto.randomUUID(),
+                    vendorId: seededMarketVendors[0].id,
+                    amount: 150000, // Rs 1500 in paise
+                    gatewayOrderId: "TXN-MARKET-SUB-001",
+                    paymentDate: marketSubDate1,
+                    paymentStatus: "captured",
+                    paymentMethod: "upi",
+                    paymentCollectedBy: operatorRecord.id,
+                })
+            }
 
-            await tx.insert(marketSubcriptionCharges).values({
-                id: "a2f2a2f2-2222-2222-2222-222222222222",
-                vendorId: "cde2cde2-2222-2222-2222-222222222222", // Rajesh Verma
-                amount: 150000, // Rs 1500 in paise
-                transactionId: "TXN-MARKET-SUB-002",
-                paymentDate: marketSubDate2,
-                paymentStatus: "success",
-                paymentMethod: "cash",
-                paymentCollectedBy: operatorRecord.id,
-            })
+            if (seededMarketVendors[1]) {
+                await tx.insert(marketSubcriptionCharges).values({
+                    id: crypto.randomUUID(),
+                    vendorId: seededMarketVendors[1].id,
+                    amount: 150000, // Rs 1500 in paise
+                    gatewayOrderId: "TXN-MARKET-SUB-002",
+                    paymentDate: marketSubDate2,
+                    paymentStatus: "captured",
+                    paymentMethod: "cash",
+                    paymentCollectedBy: operatorRecord.id,
+                })
+            }
 
-            await tx.insert(marketSubcriptionCharges).values({
-                id: "a3f3a3f3-3333-3333-3333-333333333333",
-                vendorId: "cde3cde3-3333-3333-3333-333333333333", // Sharma Vendor
-                amount: 150000, // Rs 1500 in paise
-                transactionId: null,
-                paymentDate: new Date(),
-                paymentStatus: "pending",
-                paymentMethod: "upi",
-                paymentCollectedBy: operatorRecord.id,
-            })
+            if (seededMarketVendors[2]) {
+                await tx.insert(marketSubcriptionCharges).values({
+                    id: crypto.randomUUID(),
+                    vendorId: seededMarketVendors[2].id,
+                    amount: 150000, // Rs 1500 in paise
+                    gatewayOrderId: null,
+                    paymentDate: new Date(),
+                    paymentStatus: "pending",
+                    paymentMethod: "upi",
+                    paymentCollectedBy: operatorRecord.id,
+                })
+            }
 
-            await tx.insert(marketSubcriptionCharges).values({
-                id: "a4f4a4f4-4444-4444-4444-444444444444",
-                vendorId: "cde5cde5-5555-5555-5555-555533333333", // Bhati Vendor
-                amount: 150000, // Rs 1500 in paise
-                transactionId: "TXN-MARKET-SUB-004",
-                paymentDate: marketSubDate1,
-                paymentStatus: "failed",
-                paymentMethod: "net_banking",
-                paymentCollectedBy: operatorRecord.id,
-            })
+            if (seededMarketVendors[4]) {
+                await tx.insert(marketSubcriptionCharges).values({
+                    id: crypto.randomUUID(),
+                    vendorId: seededMarketVendors[4].id,
+                    amount: 150000, // Rs 1500 in paise
+                    gatewayOrderId: "TXN-MARKET-SUB-004",
+                    paymentDate: marketSubDate1,
+                    paymentStatus: "failed",
+                    paymentMethod: "net_banking",
+                    paymentCollectedBy: operatorRecord.id,
+                })
+            }
             console.log("✅ Market Subscription Charges seeded.")
 
             // 2.15. Insert Market Mandi Orders (Associated with Dispatch Slots)
@@ -739,136 +826,81 @@ async function main() {
                 return d
             }
 
-            const ordersToSeed = [
-                // Slot 1: 04:00 AM - 04:12 AM (Suresh Patel, Sharma, Rehman)
-                {
-                    orderCode: "ORD-40261",
-                    marketStoreId: "cab1cab1-1111-1111-1111-111111111111",
-                    marketStoreName: "Suresh Patel Grocery",
-                    quantityInGram: 100000,
-                    status: "confirmed" as const,
-                    createdAt: makeDate(4, 0),
-                },
-                {
-                    orderCode: "ORD-40262",
-                    marketStoreId: "cab3cab3-3333-3333-3333-333333333333",
-                    marketStoreName: "Sharma Vegetables",
-                    quantityInGram: 80000,
-                    status: "cancelled" as const,
-                    createdAt: makeDate(4, 0),
-                },
-                {
-                    orderCode: "ORD-40263",
-                    marketStoreId: "cab8cab8-8888-8888-8888-888833333333",
-                    marketStoreName: "Rehman Vegetables",
-                    quantityInGram: 60000,
-                    status: "out_for_delivery" as const,
-                    createdAt: makeDate(4, 5),
-                },
-
-                // Slot 2: 05:00 AM - 05:20 AM (Rajesh Verma, Aarya, Hamza)
-                {
-                    orderCode: "ORD-40264",
-                    marketStoreId: "cab2cab2-2222-2222-2222-222222222222",
-                    marketStoreName: "Rajesh Supermarket",
-                    quantityInGram: 120000,
-                    status: "out_for_delivery" as const,
-                    createdAt: makeDate(5, 0),
-                },
-                {
-                    orderCode: "ORD-40265",
-                    marketStoreId: "cab4cab4-4444-4444-4444-444433333333",
-                    marketStoreName: "Aarya Vegetables",
-                    quantityInGram: 140000,
-                    status: "confirmed" as const,
-                    createdAt: makeDate(5, 8),
-                },
-                {
-                    orderCode: "ORD-40266",
-                    marketStoreId: "cab9cab9-9999-9999-9999-999933333333",
-                    marketStoreName: "Hamza Vegetables",
-                    quantityInGram: 100000,
-                    status: "confirmed" as const,
-                    createdAt: makeDate(5, 6),
-                },
-
-                // Slot 3: 06:00 AM - 06:30 AM (Bhati, Maanvi)
-                {
-                    orderCode: "ORD-40267",
-                    marketStoreId: "cab5cab5-5555-5555-5555-555533333333",
-                    marketStoreName: "Bhati Vegetables",
-                    quantityInGram: 80000,
-                    status: "confirmed" as const,
-                    createdAt: makeDate(6, 4),
-                },
-                {
-                    orderCode: "ORD-40268",
-                    marketStoreId: "caba1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-                    marketStoreName: "Maanvi Vegetables",
-                    quantityInGram: 60000,
-                    status: "confirmed" as const,
-                    createdAt: makeDate(6, 2),
-                },
-
-                // Slot 4: 07:00 AM - 07:15 AM (Bhawani, Mishra)
-                {
-                    orderCode: "ORD-40269",
-                    marketStoreId: "cab6cab6-6666-6666-6666-666633333333",
-                    marketStoreName: "Bhawani Vegetables",
-                    quantityInGram: 140000,
-                    status: "confirmed" as const,
-                    createdAt: makeDate(7, 9),
-                },
-                {
-                    orderCode: "ORD-40270",
-                    marketStoreId: "cabb1111-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-                    marketStoreName: "Mishra Vegetables",
-                    quantityInGram: 120000,
-                    status: "confirmed" as const,
-                    createdAt: makeDate(7, 11),
-                },
-
-                // Slot 5: 08:00 AM - 08:45 AM (Sid, Noor)
-                {
-                    orderCode: "ORD-40271",
-                    marketStoreId: "cab7cab7-7777-7777-7777-777733333333",
-                    marketStoreName: "Sid Vegetables",
-                    quantityInGram: 120000,
-                    status: "confirmed" as const,
-                    createdAt: makeDate(8, 0),
-                },
-                {
-                    orderCode: "ORD-40272",
-                    marketStoreId: "cabc1111-cccc-cccc-cccc-cccccccccccc",
-                    marketStoreName: "Noor Vegetables",
-                    quantityInGram: 90000,
-                    status: "out_for_delivery" as const,
-                    createdAt: makeDate(8, 5),
-                },
-            ]
+            const ordersToSeed = seededMarketStores.map((store, index) => {
+                const hour = 4 + (index % 5)
+                const minute = (index * 5) % 60
+                const statusOptions: Array<
+                    | "pending"
+                    | "confirmed"
+                    | "out_for_delivery"
+                    | "delivered"
+                    | "cancelled"
+                    | "rejected"
+                > = ["confirmed", "cancelled", "out_for_delivery", "delivered", "pending"]
+                return {
+                    orderCode: `ORD-${40260 + index}`,
+                    marketStoreId: store.id,
+                    marketStoreName: store.storeName,
+                    quantityInGram: 60000 + index * 10000,
+                    status: statusOptions[index % statusOptions.length]!,
+                    createdAt: makeDate(hour, minute),
+                }
+            })
 
             let seededOrdersCount = 0
             let seededHistoryCount = 0
             let seededPaymentsCount = 0
 
             for (const o of ordersToSeed) {
-                const pricePerKgInPaise = 2400
-                const totalAmountInPaise = (o.quantityInGram / 1000) * pricePerKgInPaise
+                const pricePerKg = 2400
+                const totalAmount = (o.quantityInGram / 1000) * pricePerKg
 
+                let headerStatus:
+                    | "pending"
+                    | "confirmed"
+                    | "partially_fulfilled"
+                    | "fulfilled"
+                    | "cancelled"
+                    | "refunded" = "confirmed"
+                let itemStatus:
+                    | "pending"
+                    | "accepted"
+                    | "preparing"
+                    | "out_for_delivery"
+                    | "delivered"
+                    | "rejected"
+                    | "cancelled" = "accepted"
+
+                if (o.status === "out_for_delivery") {
+                    headerStatus = "confirmed"
+                    itemStatus = "out_for_delivery"
+                } else if (o.status === "delivered") {
+                    headerStatus = "fulfilled"
+                    itemStatus = "delivered"
+                } else if (o.status === "cancelled" || o.status === "rejected") {
+                    headerStatus = "cancelled"
+                    itemStatus = "cancelled"
+                } else if (o.status === "pending") {
+                    headerStatus = "pending"
+                    itemStatus = "pending"
+                }
+
+                // 1. Header Order
                 const [insertedOrder] = await tx
                     .insert(marketMandiOrder)
                     .values({
+                        id: crypto.randomUUID(),
                         marketStoreId: o.marketStoreId,
-                        mandiStoreId: "da11da11-1111-1111-1111-111111111111", // Ramesh Tomato Wholesale
-                        vegId: "11111111-1111-1111-1111-111111111111", // Tomato
                         orderCode: o.orderCode,
-                        mandiStoreName: "Ramesh Tomato Wholesale",
-                        marketStoreName: o.marketStoreName,
-                        vegName: "Tomato",
-                        quantityInGram: o.quantityInGram,
-                        pricePerKgInPaise,
-                        totalAmountInPaise,
-                        status: o.status,
+                        marketStoreName: o.marketStoreName!,
+                        idempotencyKey: `IDEM-${o.orderCode}`,
+                        status: headerStatus,
+                        fulfillmentType: "delivery",
+                        mandiCounterId: vashiCounter.id,
+                        pickupCode: `PKP-${o.orderCode.slice(-4)}`,
+                        subtotal: totalAmount,
+                        totalAmount: totalAmount,
+                        placedAt: o.createdAt,
                         confirmedAt: o.createdAt,
                         createdAt: o.createdAt,
                     })
@@ -878,31 +910,87 @@ async function main() {
                     throw new Error("Failed to insert order during seeding")
                 }
 
+                // 2. Order Line Item (Direct relationship to Mandi Store)
+                const [insertedItem] = await tx
+                    .insert(marketMandiOrderItem)
+                    .values({
+                        id: crypto.randomUUID(),
+                        orderId: insertedOrder.id,
+                        mandiStoreId: tomatoMandiStore.id,
+                        vegId: seededVegetables[0]!.id, // Tomato
+                        vegNameSnapshot: "Tomato",
+                        mandiStoreNameSnapshot: tomatoMandiStore.storeName!,
+                        quantityInGram: o.quantityInGram,
+                        pricePerKg,
+                        totalAmount,
+                        status: itemStatus,
+                        createdAt: o.createdAt,
+                    })
+                    .returning()
+
                 seededOrdersCount++
 
-                // Insert Status History
+                // 3. Status History
                 await tx.insert(marketMandiOrderStatusHistory).values({
+                    id: crypto.randomUUID(),
                     orderId: insertedOrder.id,
-                    status: o.status,
-                    changedByType: "system",
-                    note: "Initial seed status",
+                    orderItemId: insertedItem?.id,
+                    toStatus: headerStatus,
+                    triggeredBy: "system",
+                    reason: "Initial seed status",
                     createdAt: o.createdAt,
                 })
                 seededHistoryCount++
 
-                // Insert Payment record
-                const isPaid = o.status !== "cancelled"
-                await tx.insert(marketMandiOrderPayment).values({
-                    orderId: insertedOrder.id,
-                    amountInPaise: totalAmountInPaise,
-                    paymentStatus: isPaid ? ("success" as const) : ("failed" as const),
-                    paymentMethod: "upi" as const,
-                    transactionId: `TXN${o.orderCode.replace("ORD-", "")}`,
-                    paidAt: isPaid ? o.createdAt : null,
-                    createdAt: o.createdAt,
-                })
+                // 4. Payment record
+                // 4. Payment record
+                const isPaid = headerStatus !== "cancelled"
+                const [insertedPayment] = await tx
+                    .insert(marketMandiPayment)
+                    .values({
+                        id: crypto.randomUUID(),
+                        orderId: insertedOrder.id,
+                        idempotencyKey: `SEED-${o.orderCode}`,
+                        provider: "razorpay" as const,
+                        method: "upi" as const,
+                        amount: totalAmount,
+                        status: isPaid ? ("captured" as const) : ("failed" as const),
+                        gatewayPaymentId: `TXN${o.orderCode.replace("ORD-", "")}`,
+                        paidAt: isPaid ? o.createdAt : null,
+                        createdAt: o.createdAt,
+                    })
+                    .returning()
+
+                if (insertedPayment) {
+                    await tx.insert(marketMandiPaymentSplit).values({
+                        id: crypto.randomUUID(),
+                        paymentId: insertedPayment.id,
+                        splitType: "vendor_payout",
+                        vendorId: mandiVendor1.id, // Vendor receiving payout
+                        amount: totalAmount - 500, // taking 500 paise as fee
+                    })
+
+                    await tx.insert(marketMandiPaymentStatusHistory).values({
+                        id: crypto.randomUUID(),
+                        paymentId: insertedPayment.id,
+                        toStatus: insertedPayment.status,
+                        triggeredBy: "system",
+                        createdAt: o.createdAt,
+                    })
+
+                    await tx.insert(marketMandiPaymentWebhookEvent).values({
+                        id: crypto.randomUUID(),
+                        provider: "razorpay",
+                        eventId: `EVT-${o.orderCode}`,
+                        eventType: isPaid ? "payment.captured" : "payment.failed",
+                        paymentId: insertedPayment.id,
+                        rawPayload: { status: insertedPayment.status },
+                        receivedAt: o.createdAt,
+                    })
+                }
                 seededPaymentsCount++
             }
+
             console.log(
                 `✅ ${seededOrdersCount} Orders, ${seededHistoryCount} History records, and ${seededPaymentsCount} Payments seeded.`,
             )
@@ -914,26 +1002,28 @@ async function main() {
             { Entity: "Cities", Count: 2 },
             { Entity: "Vegetables", Count: 5 },
             { Entity: "Mandis", Count: 2 },
+            { Entity: "Mandi ROS Counters", Count: 2 },
             { Entity: "Mandi Vendors", Count: 2 },
             { Entity: "Mandi Stores", Count: 2 },
             { Entity: "Mandi Prices", Count: 2 },
             { Entity: "Mandi KYC Docs", Count: 3 },
-            { Entity: "Market Vendors", Count: 12 },
+            { Entity: "Market Vendors & Wallets", Count: 12 },
             { Entity: "Market Stores", Count: 12 },
+            { Entity: "Market Vendor Carts", Count: 2 },
             { Entity: "Market KYC Docs", Count: 3 },
             { Entity: "Mandi Subscription Charges", Count: 3 },
             { Entity: "Market Subscription Charges", Count: 4 },
             { Entity: "Market Mandi Orders", Count: 12 },
-            { Entity: "Market Status History", Count: 12 },
-            { Entity: "Market Mandi Payments", Count: 12 },
+            { Entity: "Market Mandi Payment Splits", Count: 12 },
+            { Entity: "Market Mandi Status History", Count: 12 },
+            { Entity: "Market Mandi Webhook Events", Count: 12 },
         ])
 
-        console.log("🎉 Database seeding completed successfully!")
-        process.exit(0)
+        console.log("\n🎉 Database seeding completed successfully!")
     } catch (error) {
-        console.error("❌ Database seeding failed:", error)
+        console.error("❌ Error seeding database:", error)
         process.exit(1)
     }
 }
 
-main()
+main().then(() => process.exit(0))

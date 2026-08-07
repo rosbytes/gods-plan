@@ -1,28 +1,41 @@
 import { relations } from "drizzle-orm"
-import { pgEnum, pgTable, uuid, varchar } from "drizzle-orm/pg-core"
+import { index, pgTable, text, uuid, varchar } from "drizzle-orm/pg-core"
 import { timestamps } from "../common-utils/columnHelpers"
 import { marketMandiOrder } from "./marketMandiOrder"
-import { orderStatusEnum } from "../common-utils/enums"
+import { marketMandiOrderItem } from "./marketMandiOrderItem"
+import { orderStatus } from "./enums"
 
-export const marketMandiOrderStatus = pgEnum("market_mandi_order_status", orderStatusEnum)
+// Append-only status transition history for orders / order items
+export const marketMandiOrderStatusHistory = pgTable(
+    "market_mandi_order_status_history",
+    {
+        id: uuid("id").primaryKey().defaultRandom(),
 
-export const marketMandiOrderStatusHistory = pgTable("market_mandi_order_status_history", {
-    id: uuid("id").primaryKey().defaultRandom(),
+        orderId: uuid("order_id")
+            .references(() => marketMandiOrder.id, { onDelete: "cascade" })
+            .notNull(),
 
-    orderId: uuid("order_id")
-        .references(() => marketMandiOrder.id, { onDelete: "cascade" })
-        .notNull(),
+        // Optional item reference if transition is for a specific line item
+        orderItemId: uuid("order_item_id").references(() => marketMandiOrderItem.id, {
+            onDelete: "cascade",
+        }),
 
-    status: marketMandiOrderStatus("status").notNull(),
+        fromStatus: orderStatus("from_status"),
+        toStatus: orderStatus("to_status").notNull(),
 
-    // who changed it — could be a mandi store admin, market store admin, or system/cron
-    changedByType: varchar("changed_by_type", { length: 32 }).notNull(), // "market_store" | "mandi_store" | "system" | "admin"
-    changedById: uuid("changed_by_id"), // nullable — system transitions have no actor
+        reason: text("reason"),
 
-    note: varchar("note", { length: 500 }), // optional: "rejected — out of stock"
+        // Who/what triggered this — "system" | "market_store" | "mandi_store" | "admin"
+        triggeredBy: varchar("triggered_by", { length: 32 }).notNull(),
+        changedById: uuid("changed_by_id"), // Optional actor UUID
 
-    ...timestamps,
-})
+        ...timestamps,
+    },
+    (t) => [
+        index("market_mandi_order_status_history_order_id_idx").on(t.orderId),
+        index("market_mandi_order_status_history_order_item_id_idx").on(t.orderItemId),
+    ],
+)
 
 export const marketMandiOrderStatusHistoryRelations = relations(
     marketMandiOrderStatusHistory,
@@ -30,6 +43,10 @@ export const marketMandiOrderStatusHistoryRelations = relations(
         order: one(marketMandiOrder, {
             fields: [marketMandiOrderStatusHistory.orderId],
             references: [marketMandiOrder.id],
+        }),
+        orderItem: one(marketMandiOrderItem, {
+            fields: [marketMandiOrderStatusHistory.orderItemId],
+            references: [marketMandiOrderItem.id],
         }),
     }),
 )

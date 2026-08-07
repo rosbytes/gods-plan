@@ -1,75 +1,109 @@
 import { relations } from "drizzle-orm"
-import { integer, pgEnum, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core"
+import {
+    doublePrecision,
+    index,
+    integer,
+    pgTable,
+    text,
+    timestamp,
+    uniqueIndex,
+    uuid,
+    varchar,
+} from "drizzle-orm/pg-core"
 import { timestamps } from "../common-utils/columnHelpers"
 import { marketStore } from "./marketStore"
-import { mandiStore } from "./mandiStore"
-import { veg } from "./veg"
-import { orderStatusEnum } from "../common-utils/enums"
+import { fulfillmentType, orderStatus } from "./enums"
+import { marketMandiOrderItem } from "./marketMandiOrderItem"
+import { marketMandiPayment } from "./marketMandiPayment"
 import { marketMandiOrderStatusHistory } from "./marketMandiOrderStatusHistory"
-import { marketMandiOrderPayment } from "./marketMandiOrderPayment"
+import { mandiCounter } from "./mandiCounter"
 
-// db Enums
-export const marketMandiOrderStatus = pgEnum("market_mandi_order_status", orderStatusEnum)
+// Checkout Header Order — 1 row per checkout placed by a Market Store
+export const marketMandiOrder = pgTable(
+    "market_mandi_order",
+    {
+        id: uuid("id").primaryKey().defaultRandom(),
 
-// Market Place the order on Mandi
-export const marketMandiOrder = pgTable("market_mandi_order", {
-    id: uuid("id").primaryKey().defaultRandom(),
+        // Human-readable order reference, e.g. ORD-2026-000123
+        orderCode: varchar("order_code", { length: 32 }).notNull().unique(),
 
-    // human-readable order reference, e.g. ORD-2026-000123
-    orderCode: varchar("order_code", { length: 32 }).notNull().unique(),
+        // The market store placing this order
+        marketStoreId: uuid("market_store_id")
+            .references(() => marketStore.id, { onDelete: "set null" })
+            .notNull(),
 
-    // stores reference
-    marketStoreId: uuid("market_store_id")
-        .references(() => marketStore.id, { onDelete: "set null" })
-        .notNull(),
+        // Store snapshot at time of order
+        marketStoreName: varchar("market_store_name", { length: 255 }).notNull(),
 
-    mandiStoreId: uuid("mandi_store_id")
-        .references(() => mandiStore.id, { onDelete: "set null" })
-        .notNull(),
+        // Prevents duplicate orders from double-submitted checkouts
+        idempotencyKey: varchar("idempotency_key", { length: 128 }).notNull(),
 
-    // vegie reference
-    vegId: uuid("veg_id")
-        .references(() => veg.id, { onDelete: "restrict" })
-        .notNull(),
+        // Overall order header status
+        status: orderStatus("status").notNull().default("pending"),
 
-    // snapshots (store names/product names can change later — freeze them here)
-    mandiStoreName: varchar("mandi_store_name", { length: 255 }).notNull(),
-    marketStoreName: varchar("market_store_name", { length: 255 }).notNull(),
-    vegName: varchar("veg_name", { length: 255 }).notNull(),
+        // Fulfillment mode — "delivery" or "self_pickup"
+        fulfillmentType: fulfillmentType("fulfillment_type").notNull().default("delivery"),
 
-    // quantity
-    quantityInGram: integer("quantity_in_gram").notNull(),
+        // ROS Counter for self-pickup / payment verification
+        mandiCounterId: uuid("mandi_counter_id").references(() => mandiCounter.id, {
+            onDelete: "set null",
+        }),
 
-    // price + total snapshots, always in paise (integers, never float)
-    pricePerKgInPaise: integer("price_per_kg_in_paise").notNull(),
-    totalAmountInPaise: integer("total_amount_in_paise").notNull(),
+        // Verification code shown to ROS Counter / Mandi vendor for self-pickup
+        pickupCode: varchar("pickup_code", { length: 16 }),
 
-    // order lifecycle
-    status: marketMandiOrderStatus("status").notNull().default("pending"),
-    confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+        // Recorded when payment is collected / verified at ROS Counter
+        counterPaidAt: timestamp("counter_paid_at", { withTimezone: true }),
 
-    ...timestamps,
-})
+        // Money in paise (integers)
+        subtotal: integer("subtotal").notNull(),
+        tax: integer("tax").notNull().default(0),
+        deliveryFee: integer("delivery_fee").notNull().default(0),
+        discount: integer("discount").notNull().default(0),
+        totalAmount: integer("total_amount").notNull(),
+
+        // Delivery address snapshot
+        deliveryAddressLine1: text("delivery_address_line1"),
+        deliveryAddressLine2: text("delivery_address_line2"),
+        deliveryCity: varchar("delivery_city", { length: 100 }),
+        deliveryState: varchar("delivery_state", { length: 100 }),
+        deliveryPincode: varchar("delivery_pincode", { length: 10 }),
+        deliveryLat: doublePrecision("delivery_lat"),
+        deliveryLng: doublePrecision("delivery_lng"),
+
+        cancellationReason: text("cancellation_reason"),
+
+        // Optimistic locking for updates
+        version: integer("version").notNull().default(1),
+
+        placedAt: timestamp("placed_at", { withTimezone: true }).notNull().defaultNow(),
+        confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+
+        ...timestamps,
+    },
+    (t) => [
+        uniqueIndex("market_mandi_order_order_code_unique").on(t.orderCode),
+        uniqueIndex("market_mandi_order_idempotency_key_unique").on(t.idempotencyKey),
+        index("market_mandi_order_market_store_id_idx").on(t.marketStoreId),
+        index("market_mandi_order_mandi_counter_id_idx").on(t.mandiCounterId),
+        index("market_mandi_order_status_idx").on(t.status),
+        index("market_mandi_order_fulfillment_type_idx").on(t.fulfillmentType),
+        index("market_mandi_order_placed_at_idx").on(t.placedAt),
+    ],
+)
 
 export const marketMandiOrderRelations = relations(marketMandiOrder, ({ one, many }) => ({
     marketStore: one(marketStore, {
         fields: [marketMandiOrder.marketStoreId],
         references: [marketStore.id],
     }),
-    mandiStore: one(mandiStore, {
-        fields: [marketMandiOrder.mandiStoreId],
-        references: [mandiStore.id],
+    mandiCounter: one(mandiCounter, {
+        fields: [marketMandiOrder.mandiCounterId],
+        references: [mandiCounter.id],
     }),
-    veg: one(veg, {
-        fields: [marketMandiOrder.vegId],
-        references: [veg.id],
-    }),
-
-    // status change history for this order
+    items: many(marketMandiOrderItem),
+    payments: many(marketMandiPayment),
     statusHistory: many(marketMandiOrderStatusHistory),
-
-    // payments for this order
-    payments: many(marketMandiOrderPayment),
 }))
 
 // Inferred types

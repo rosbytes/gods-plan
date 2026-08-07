@@ -4,6 +4,7 @@ import { timestamps } from "../common-utils/columnHelpers"
 import { city } from "./city"
 import { mandiStore } from "./mandiStore"
 import { admin } from "./admin"
+import { mandiCounter } from "./mandiCounter"
 
 export const mandi = pgTable("mandi", {
     id: uuid("id").primaryKey().defaultRandom(),
@@ -24,7 +25,7 @@ export const mandi = pgTable("mandi", {
 
     fullAddress: varchar("full_address", { length: 500 }),
 
-    // image that represent the mandi
+    // image that represents the mandi
     mandiImage: varchar("mandi_image", { length: 500 }),
     ...timestamps,
 })
@@ -44,6 +45,9 @@ export const mandiRelations = relations(mandi, ({ one, many }) => ({
 
     // stores in this mandi
     mandiStores: many(mandiStore),
+
+    // ROS Counters at this mandi
+    mandiCounters: many(mandiCounter),
 }))
 
 // Inferred types

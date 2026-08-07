@@ -7,7 +7,7 @@ import { mandi } from "./mandi"
 export const marketStore = pgTable("market_store", {
     id: uuid("id").primaryKey().defaultRandom(),
 
-    // assigned mandi to the vendor
+    // assigned mandi to the store
     mandiId: uuid("mandi_id")
         .references(() => mandi.id, { onDelete: "restrict" })
         .notNull(),
