@@ -5,6 +5,10 @@
             "dependsOn": ["^build"],
             "outputs": [".next/**", "!.next/cache/**", "dist/**", "bundle.cjs*", "index.js"]
         },
+        "build:app": {
+            "dependsOn": ["^build"],
+            "outputs": [".next/**", "!.next/cache/**", "dist/**", "bundle.cjs*", "index.js"]
+        },
         "prod:build": {
             "outputs": [".next/**", "!.next/cache/**", "dist/**", "bundle.cjs*", "index.js"]
         },
