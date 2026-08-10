@@ -34,3 +34,15 @@ export const ZPayOrderInputSchema = z.object({
 })
 
 export type TPayOrderInput = z.infer<typeof ZPayOrderInputSchema>
+
+export const ZGetOrdersInputSchema = z.object({
+    searchQuery: z.string().optional(),
+})
+
+export type TGetOrdersInput = z.infer<typeof ZGetOrdersInputSchema>
+
+export const ZGetOrderDetailsInputSchema = z.object({
+    orderId: z.string().uuid(),
+})
+
+export type TGetOrderDetailsInput = z.infer<typeof ZGetOrderDetailsInputSchema>

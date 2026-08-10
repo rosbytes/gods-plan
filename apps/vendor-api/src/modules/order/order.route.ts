@@ -5,11 +5,14 @@ import {
     createRazorpayOrderHandler,
     placeOrderHandler,
     payOrderHandler,
+    getOrdersHandler,
+    getOrderDetailsHandler,
 } from "./order.controller"
 import {
     ZCheckoutDetailsSchema,
     ZPlaceOrderInputSchema,
     ZPayOrderInputSchema,
+    ZGetOrdersInputSchema,
 } from "./order.schema"
 
 export const orderRouter = router({
@@ -29,4 +32,12 @@ export const orderRouter = router({
     payOrder: vendorProcedure
         .input(ZPayOrderInputSchema)
         .mutation(({ ctx, input }) => payOrderHandler(ctx, input)),
+
+    getOrders: vendorProcedure
+        .input(ZGetOrdersInputSchema)
+        .query(({ ctx, input }) => getOrdersHandler(ctx, input)),
+
+    getOrderDetails: vendorProcedure
+        .input(z.object({ orderId: z.string().uuid() }))
+        .query(({ ctx, input }) => getOrderDetailsHandler(ctx, input.orderId)),
 })

@@ -9,6 +9,10 @@ import {
     marketMandiOrder,
     marketMandiOrderItem,
     marketMandiPayment,
+    desc,
+    marketVendorWallet,
+    mandiPrice,
+    marketMandiOrderStatusHistory,
 } from "@ros/db"
 import { findVendorStore } from "../catalog/catalog.service"
 import { razorpay } from "../../configs"
@@ -284,4 +288,369 @@ export async function payOrder(
     })
 
     return { success: true }
+}
+
+export async function getOrders(vendorId: string, input: { searchQuery?: string | undefined }) {
+    const store = await findVendorStore(vendorId)
+    if (!store) {
+        throw new Error("Vendor store not found")
+    }
+
+    const orders = await db
+        .select({
+            id: marketMandiOrder.id,
+            orderCode: marketMandiOrder.orderCode,
+            status: marketMandiOrder.status,
+            placedAt: marketMandiOrder.placedAt,
+            totalAmount: marketMandiOrder.totalAmount,
+            subtotal: marketMandiOrder.subtotal,
+        })
+        .from(marketMandiOrder)
+        .where(eq(marketMandiOrder.marketStoreId, store.id))
+        .orderBy(desc(marketMandiOrder.placedAt))
+
+    const orderList = []
+
+    for (const order of orders) {
+        const orderIdStr = order.orderCode.toLowerCase()
+        const formattedDate = order.placedAt
+            .toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+            })
+            .toLowerCase()
+
+        if (input.searchQuery) {
+            const search = input.searchQuery.toLowerCase().trim()
+            if (!orderIdStr.includes(search) && !formattedDate.includes(search)) {
+                continue
+            }
+        }
+
+        // Count order items
+        const items = await db
+            .select({
+                quantityInGram: marketMandiOrderItem.quantityInGram,
+            })
+            .from(marketMandiOrderItem)
+            .where(eq(marketMandiOrderItem.orderId, order.id))
+
+        const totalQuantityKg = items.reduce((sum, i) => sum + i.quantityInGram, 0) / 1000
+        const totalItemsCount = items.length
+
+        // Fetch payment method
+        const payments = await db
+            .select({
+                provider: marketMandiPayment.provider,
+                method: marketMandiPayment.method,
+                status: marketMandiPayment.status,
+            })
+            .from(marketMandiPayment)
+            .where(
+                and(
+                    eq(marketMandiPayment.orderId, order.id),
+                    eq(marketMandiPayment.status, "captured"),
+                ),
+            )
+            .limit(1)
+
+        let paymentLabel = "Unpaid"
+        if (payments.length > 0) {
+            const pay = payments[0]!
+            if (pay.provider === "manual" || pay.method === "cash") {
+                paymentLabel = "Paid Cash at ROS Counter"
+            } else {
+                paymentLabel = "Paid Online"
+            }
+        } else if (order.status === "confirmed" && order.subtotal > 0) {
+            paymentLabel = "Paid Cash at ROS Counter"
+        }
+
+        // Determine status display value
+        let statusLabel: "Pickup Pending" | "Completed" | "Cancelled" | "Pickup Failed" =
+            "Pickup Pending"
+
+        const todayStart = new Date()
+        todayStart.setHours(0, 0, 0, 0)
+        const isPastOrder = order.placedAt.getTime() < todayStart.getTime()
+
+        if (["cancelled", "rejected"].includes(order.status)) {
+            statusLabel = "Cancelled"
+        } else if (["pickuped_up", "delivered", "fulfilled"].includes(order.status)) {
+            statusLabel = "Completed"
+        } else {
+            if (isPastOrder) {
+                statusLabel = "Pickup Failed"
+            } else {
+                statusLabel = "Pickup Pending"
+            }
+        }
+
+        orderList.push({
+            id: order.id,
+            orderCode: order.orderCode,
+            statusLabel,
+            placedAt: order.placedAt.toISOString(),
+            totalQuantityKg,
+            totalItemsCount,
+            totalAmount: order.totalAmount / 100,
+            paymentLabel,
+        })
+    }
+
+    return orderList
+}
+
+export async function getOrderDetails(vendorId: string, orderId: string) {
+    const store = await findVendorStore(vendorId)
+    if (!store) {
+        throw new Error("Vendor store not found")
+    }
+
+    // 1. Fetch order header
+    const [order] = await db
+        .select()
+        .from(marketMandiOrder)
+        .where(and(eq(marketMandiOrder.id, orderId), eq(marketMandiOrder.marketStoreId, store.id)))
+        .limit(1)
+
+    if (!order) {
+        throw new Error("Order not found")
+    }
+
+    // 2. Fetch Mandi details
+    const [mandiDetails] = await db.select().from(mandi).where(eq(mandi.id, store.mandiId)).limit(1)
+
+    if (!mandiDetails) {
+        throw new Error("Assigned Mandi not found")
+    }
+
+    // 3. Fetch order items with veg snapshots
+    const items = await db
+        .select({
+            id: marketMandiOrderItem.id,
+            mandiStoreId: marketMandiOrderItem.mandiStoreId,
+            quantityInGram: marketMandiOrderItem.quantityInGram,
+            vegId: marketMandiOrderItem.vegId,
+            vegName: marketMandiOrderItem.vegNameSnapshot,
+            pricePerKg: marketMandiOrderItem.pricePerKg,
+            vegNameInHindi: veg.nameInHindi,
+            vegPrimaryImage: veg.vegPrimaryImage,
+        })
+        .from(marketMandiOrderItem)
+        .innerJoin(veg, eq(marketMandiOrderItem.vegId, veg.id))
+        .where(eq(marketMandiOrderItem.orderId, order.id))
+
+    const mappedItems = []
+    let estimatedTotal = 0
+    let walletAdjustment = 0
+
+    for (const item of items) {
+        const quantityKg = item.quantityInGram / 1000
+
+        // Find latest price record in mandiPrice for this vegetable
+        const [priceRecord] = await db
+            .select()
+            .from(mandiPrice)
+            .where(
+                and(
+                    eq(mandiPrice.mandiStoreId, item.mandiStoreId),
+                    eq(mandiPrice.vegId, item.vegId),
+                ),
+            )
+            .orderBy(desc(mandiPrice.createdAt))
+            .limit(1)
+
+        const estimatedPrice = item.pricePerKg / 100
+        const actualPrice = priceRecord ? priceRecord.price / 100 : estimatedPrice
+        const diffAmount = (actualPrice - estimatedPrice) * quantityKg
+        const subtotal = actualPrice * quantityKg
+
+        estimatedTotal += estimatedPrice * quantityKg
+        walletAdjustment += diffAmount
+
+        mappedItems.push({
+            id: item.id,
+            veg: {
+                id: item.vegId,
+                name: item.vegName,
+                nameInHindi: item.vegNameInHindi,
+                vegPrimaryImage: item.vegPrimaryImage,
+                estimatedPrice,
+            },
+            quantityKg,
+            estimatedPrice,
+            actualPrice,
+            diffAmount,
+            subtotal,
+        })
+    }
+
+    const totalWeight = mappedItems.reduce((sum, item) => sum + item.quantityKg, 0)
+
+    // Check payment method from payment record
+    const payments = await db
+        .select()
+        .from(marketMandiPayment)
+        .where(
+            and(
+                eq(marketMandiPayment.orderId, order.id),
+                eq(marketMandiPayment.status, "captured"),
+            ),
+        )
+        .limit(1)
+
+    const refundedPayments = await db
+        .select()
+        .from(marketMandiPayment)
+        .where(
+            and(
+                eq(marketMandiPayment.orderId, order.id),
+                eq(marketMandiPayment.status, "refunded"),
+            ),
+        )
+        .limit(1)
+
+    const isOnline = payments.length > 0 && payments[0]!.provider === "razorpay"
+    let paymentMethod = isOnline ? "Online" : "Cash"
+    if (
+        order.status === "cancelled" ||
+        order.status === "rejected" ||
+        order.status === "refunded"
+    ) {
+        if (refundedPayments.length > 0 || order.status === "refunded") {
+            paymentMethod = "Refunded"
+        } else if (payments.length > 0) {
+            paymentMethod = "Refund Initiated"
+        } else {
+            paymentMethod = "Not Paid"
+        }
+    }
+
+    const paymentPaidAtStr =
+        payments.length > 0 && payments[0]!.paidAt
+            ? payments[0]!.paidAt.toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+              }) +
+              ", " +
+              payments[0]!.paidAt.toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+              })
+            : null
+
+    let pickupTimeStr = "Pending"
+    if (["pickuped_up", "delivered", "fulfilled"].includes(order.status)) {
+        const complDate = order.updatedAt || order.placedAt
+        pickupTimeStr = complDate.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+        })
+    } else {
+        pickupTimeStr = "04:00 AM"
+    }
+
+    let statusLabel: "Pickup Pending" | "Completed" | "Cancelled" | "Pickup Failed" =
+        "Pickup Pending"
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const isPastOrder = order.placedAt.getTime() < todayStart.getTime()
+
+    if (["cancelled", "rejected"].includes(order.status)) {
+        statusLabel = "Cancelled"
+    } else if (["pickuped_up", "delivered", "fulfilled"].includes(order.status)) {
+        statusLabel = "Completed"
+    } else {
+        if (isPastOrder) {
+            statusLabel = "Pickup Failed"
+        } else {
+            statusLabel = "Pickup Pending"
+        }
+    }
+
+    let cancelledBy = ""
+    let cancellationReason = order.cancellationReason || ""
+
+    if (order.status === "cancelled" || order.status === "rejected") {
+        const [historyRecord] = await db
+            .select()
+            .from(marketMandiOrderStatusHistory)
+            .where(
+                and(
+                    eq(marketMandiOrderStatusHistory.orderId, order.id),
+                    eq(marketMandiOrderStatusHistory.toStatus, order.status),
+                ),
+            )
+            .orderBy(desc(marketMandiOrderStatusHistory.createdAt))
+            .limit(1)
+
+        if (historyRecord) {
+            if (historyRecord.triggeredBy === "market_store") {
+                cancelledBy = "You"
+            } else if (historyRecord.triggeredBy === "mandi_store") {
+                cancelledBy = "Mandi"
+            } else {
+                cancelledBy = "ROS Team"
+            }
+            if (!cancellationReason) {
+                cancellationReason = historyRecord.reason || ""
+            }
+        } else {
+            cancelledBy = "ROS Team"
+        }
+        if (!cancellationReason) {
+            cancellationReason = "Found a better price elsewhere"
+        }
+    }
+
+    const placedTimeStr = order.placedAt.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+    })
+    const placedDateStr = order.placedAt.toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+    })
+    const placedAtTimeDate = `${placedTimeStr}, ${placedDateStr}`
+
+    // Fetch vendor wallet balance
+    const [wallet] = await db
+        .select()
+        .from(marketVendorWallet)
+        .where(eq(marketVendorWallet.vendorId, vendorId))
+        .limit(1)
+
+    const walletBalance = wallet ? wallet.balance / 100 : 0
+
+    return {
+        orderId: order.id,
+        orderCode: order.orderCode,
+        statusLabel,
+        placedAt: order.status === "cancelled" ? placedAtTimeDate : placedDateStr,
+        pickupTime: pickupTimeStr,
+        paymentMethod,
+        paymentPaidAt: paymentPaidAtStr,
+        walletBalance,
+        cancelledBy,
+        cancellationReason,
+        checkoutDetails: {
+            mandiName: mandiDetails.name,
+            mandiAddress: mandiDetails.fullAddress || mandiDetails.name,
+            slot: store.slot || 1,
+            slotTime: "04:00 AM - 06:00 AM",
+        },
+        items: mappedItems,
+        totalItems: mappedItems.length,
+        totalWeight,
+        estimatedTotal,
+        walletAdjustment,
+        amountToPay: estimatedTotal + walletAdjustment,
+    }
 }
