@@ -103,7 +103,7 @@ export default function Home() {
 
             {/* Sticky Checkout Bar */}
             {totalItems > 0 && (
-                <div className="fixed right-0 bottom-[72px] left-0 z-40 flex flex-col gap-3 rounded-t-3xl border-t border-gray-100 bg-white px-4 py-4 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
+                <div className="fixed right-0 bottom-18 left-0 z-40 flex flex-col gap-3 rounded-t-3xl border-t border-gray-100 bg-white px-4 py-4 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
                     <div className="flex items-center justify-between px-1">
                         <span className="text-sm font-semibold text-gray-500">
                             {totalItems} Items <span className="mx-1 text-gray-300">|</span>{" "}

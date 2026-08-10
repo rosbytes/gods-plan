@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom"
 import { Icon } from "@iconify/react"
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { trpc } from "../lib/trpc"
 import { toast } from "sonner"
 
@@ -50,19 +50,64 @@ export default function OrderSuccess() {
     } | null
 
     const orderId = state?.orderId || ""
-    const orderCode = state?.orderCode || "ORD-SUCCESS"
-    const paymentMethod = state?.paymentMethod || "pay_online"
-    const checkoutDetails = state?.checkoutDetails
-    const items = state?.items || []
-    const totalItems = state?.totalItems || 0
-    const totalWeight = state?.totalWeight || 0
-    const estimatedTotal = state?.estimatedTotal || 0
+    const shouldFetch = !state?.items || state.items.length === 0
+    const { data: dbDetails, isLoading } = trpc.order.getOrderDetails.useQuery(
+        { orderId },
+        { enabled: shouldFetch && !!orderId },
+    )
+
+    const orderCode = state?.orderCode || dbDetails?.orderCode || "ORD-SUCCESS"
+    const paymentMethod =
+        state?.paymentMethod ||
+        (dbDetails?.paymentMethod === "Online"
+            ? ("pay_online" as const)
+            : ("pay_at_pickup" as const))
+    const checkoutDetails = state?.checkoutDetails || dbDetails?.checkoutDetails
+    const items = state?.items && state.items.length > 0 ? state.items : dbDetails?.items || []
+    const totalItems =
+        state?.totalItems !== undefined ? state.totalItems : dbDetails?.totalItems || 0
+    const totalWeight =
+        state?.totalWeight !== undefined ? state.totalWeight : dbDetails?.totalWeight || 0
+    const estimatedTotal =
+        state?.estimatedTotal !== undefined ? state.estimatedTotal : dbDetails?.estimatedTotal || 0
 
     // Local payment method state to dynamically switch screen if they pay online from success screen
     const [localPaymentMethod, setLocalPaymentMethod] = useState<"pay_online" | "pay_at_pickup">(
         paymentMethod,
     )
     const [paying, setPaying] = useState(false)
+
+    useEffect(() => {
+        if (dbDetails?.paymentMethod) {
+            setLocalPaymentMethod(
+                dbDetails.paymentMethod === "Online" ? "pay_online" : "pay_at_pickup",
+            )
+        }
+    }, [dbDetails])
+
+    // Generate a secure idempotency key for this session
+    const idempotencyKey = useMemo(() => crypto.randomUUID(), [])
+
+    // Tomorrow's Date String / Order Placed Date
+    const tomorrowDateString = useMemo(() => {
+        let date = new Date()
+        if (state?.checkoutDetails) {
+            // Fresh checkout tomorrow
+            date.setDate(date.getDate() + 1)
+        } else if (dbDetails?.placedAt) {
+            // Past order date
+            date = new Date(dbDetails.placedAt)
+        } else {
+            date.setDate(date.getDate() + 1)
+        }
+        return date
+            .toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "long",
+                weekday: "long",
+            })
+            .replace(/^[a-zA-Z]+,\s/, "")
+    }, [state, dbDetails])
 
     const { mutateAsync: createRzpOrder } = trpc.order.createRazorpayOrder.useMutation()
 
@@ -78,21 +123,13 @@ export default function OrderSuccess() {
         },
     })
 
-    // Generate a secure idempotency key for this session
-    const idempotencyKey = useMemo(() => crypto.randomUUID(), [])
-
-    // Tomorrow's Date String
-    const tomorrowDateString = useMemo(() => {
-        const tomorrow = new Date()
-        tomorrow.setDate(tomorrow.getDate() + 1)
-        return tomorrow
-            .toLocaleDateString("en-IN", {
-                day: "numeric",
-                month: "long",
-                weekday: "long",
-            })
-            .replace(/^[a-zA-Z]+,\s/, "")
-    }, [])
+    if (shouldFetch && isLoading) {
+        return (
+            <div className="relative flex min-h-screen items-center justify-center bg-[#F8F9FA]">
+                <Icon icon="mdi:loading" className="h-8 w-8 animate-spin text-[#0B4E3E]" />
+            </div>
+        )
+    }
 
     const handlePayNow = async () => {
         if (paying || !orderId) return
