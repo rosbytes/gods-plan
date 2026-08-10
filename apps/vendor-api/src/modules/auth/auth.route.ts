@@ -1,5 +1,5 @@
 import { publicProcedure, router, vendorProcedure } from "../../trpc/globals"
-import { login, logout, refresh } from "./auth.controller"
+import { login, logout, refresh, getMe } from "./auth.controller"
 import { ZLoginSchema } from "./auth.schema"
 
 export const authRouter = router({
@@ -8,4 +8,6 @@ export const authRouter = router({
     refresh: publicProcedure.mutation(refresh),
 
     logout: vendorProcedure.mutation(logout),
+
+    me: vendorProcedure.query(({ ctx }) => getMe(ctx)),
 })

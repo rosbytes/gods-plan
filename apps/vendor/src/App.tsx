@@ -6,6 +6,7 @@ import OrderSuccess from "./pages/OrderSuccess"
 import Pickup from "./pages/Pickup"
 import Orders from "./pages/Orders"
 import OrderDetails from "./pages/OrderDetails"
+import { ProtectedRoute } from "./components/auth/ProtectedRoute"
 
 function App() {
     return (
@@ -13,12 +14,54 @@ function App() {
             <Routes>
                 <Route path="/" element={<Navigate to="/login" replace />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="/home" element={<Home />} />
-                <Route path="/review-order" element={<ReviewOrder />} />
-                <Route path="/order-success" element={<OrderSuccess />} />
-                <Route path="/pickup" element={<Pickup />} />
-                <Route path="/orders" element={<Orders />} />
-                <Route path="/orders/:orderId" element={<OrderDetails />} />
+                <Route
+                    path="/home"
+                    element={
+                        <ProtectedRoute>
+                            <Home />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/review-order"
+                    element={
+                        <ProtectedRoute>
+                            <ReviewOrder />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/order-success"
+                    element={
+                        <ProtectedRoute>
+                            <OrderSuccess />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/pickup"
+                    element={
+                        <ProtectedRoute>
+                            <Pickup />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/orders"
+                    element={
+                        <ProtectedRoute>
+                            <Orders />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/orders/:orderId"
+                    element={
+                        <ProtectedRoute>
+                            <OrderDetails />
+                        </ProtectedRoute>
+                    }
+                />
             </Routes>
         </Router>
     )

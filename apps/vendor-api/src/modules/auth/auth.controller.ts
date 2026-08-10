@@ -120,3 +120,24 @@ export async function logout({ ctx }: { ctx: Context }) {
         success: true,
     }
 }
+
+export async function getMe(ctx: { id: string }) {
+    if (!ctx.id) {
+        throw new TRPCError({
+            message: "Unauthorized access",
+            code: "UNAUTHORIZED",
+        })
+    }
+    const vendorRecord = await getMarketVendorById(ctx.id)
+    if (!vendorRecord) {
+        throw new TRPCError({
+            message: "Vendor profile not found",
+            code: "UNAUTHORIZED",
+        })
+    }
+    return {
+        id: vendorRecord.id,
+        fullName: vendorRecord.fullName,
+        phone: vendorRecord.primaryPhone,
+    }
+}
