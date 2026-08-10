@@ -1,9 +1,6 @@
+import { lazy } from "@trpc/server"
 import { publicProcedure, router } from "./globals"
 import { z } from "zod"
-import { authRouter } from "../modules/auth/auth.route"
-import { catalogRouter } from "../modules/catalog/catalog.route"
-import { cartRouter } from "../modules/cart/cart.route"
-import { orderRouter } from "../modules/order/order.route"
 
 // Define a simple router
 export const appRouter = router({
@@ -14,10 +11,12 @@ export const appRouter = router({
     greetings: publicProcedure.query(() => {
         return `Hello, Welcome to tRPC`
     }),
-    auth: authRouter,
-    catalog: catalogRouter,
-    cart: cartRouter,
-    order: orderRouter,
+    // Option 1: Short-hand when the module has exactly 1 router exported
+    auth: lazy(() => import("../modules/auth/auth.route")),
+    catalog: lazy(() => import("../modules/catalog/catalog.route")),
+    cart: lazy(() => import("../modules/cart/cart.route")),
+    order: lazy(() => import("../modules/order/order.route")),
+    pickup: lazy(() => import("../modules/pickup/pickup.route")),
     // payment: paymentRouter,
 })
 
