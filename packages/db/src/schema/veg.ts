@@ -9,12 +9,12 @@ export const veg = pgTable("veg", {
     id: uuid("id").primaryKey().defaultRandom(),
 
     name: varchar({ length: 500 }).notNull().unique(),
-    nameInHindi: varchar({ length: 255 }),
+    nameInHindi: varchar("name_in_hindi", { length: 255 }),
 
     // image that represent the veg
-    vegPrimaryImage: varchar({ length: 500 }),
+    vegPrimaryImage: varchar("veg_primary_image", { length: 500 }),
     // TODO: apply max length of array
-    vegImageGallery: varchar({ length: 500 }).array(),
+    vegImageGallery: varchar("veg_image_gallery", { length: 500 }).array(),
 
     createdBy: uuid("created_by").references(() => admin.id, { onDelete: "set null" }),
 
