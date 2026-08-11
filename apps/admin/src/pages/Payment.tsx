@@ -79,7 +79,7 @@ export default function Payment() {
         onSuccess: (data) => {
             toast.success("Payment skipped — subscription charge marked as pending")
             navigate(
-                `/payment-status/${vendorId}/${storeId}?status=pending&method=cash&orderId=${data.transactionId}${typeParam}`,
+                `/payment-status/${vendorId}/${storeId}?status=pending&method=cash&orderId=${data.gatewayOrderId}${typeParam}`,
             )
         },
         onError: (err) => {

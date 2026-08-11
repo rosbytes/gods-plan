@@ -5,7 +5,7 @@
     "private": true,
     "scripts": {
         "dev": "tsx watch src/index.ts",
-        "build": "tsup",
+        "build": "pnpm typecheck && tsup",
         "dev:build": "tsc -b && tsc-alias -f",
         "prod:build": "turbo run build",
         "start": "node api/index.js",

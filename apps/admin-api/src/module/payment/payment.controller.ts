@@ -84,7 +84,7 @@ export const createOrder = async ({
                     .update(mandiSubcriptionCharges)
                     .set({
                         amount: amountPaise,
-                        transactionId: order.id,
+                        gatewayOrderId: order.id,
                         paymentDate: new Date(),
                         paymentCollectedBy: ctx.admin.id,
                     })
@@ -93,7 +93,7 @@ export const createOrder = async ({
                 await db.insert(mandiSubcriptionCharges).values({
                     vendorId: input.vendorId,
                     amount: amountPaise,
-                    transactionId: order.id,
+                    gatewayOrderId: order.id,
                     paymentDate: new Date(),
                     paymentStatus: "pending",
                     paymentMethod: "upi",
@@ -117,7 +117,7 @@ export const createOrder = async ({
                     .update(marketSubcriptionCharges)
                     .set({
                         amount: amountPaise,
-                        transactionId: order.id,
+                        gatewayOrderId: order.id,
                         paymentDate: new Date(),
                         paymentCollectedBy: ctx.admin.id,
                     })
@@ -126,7 +126,7 @@ export const createOrder = async ({
                 await db.insert(marketSubcriptionCharges).values({
                     vendorId: input.vendorId,
                     amount: amountPaise,
-                    transactionId: order.id,
+                    gatewayOrderId: order.id,
                     paymentDate: new Date(),
                     paymentStatus: "pending",
                     paymentMethod: "upi",
@@ -162,21 +162,21 @@ export const getPaymentStatus = async ({
     ctx: AdminContext
 }) => {
     try {
-        // Build search conditions — verifyPayment may have overwritten transactionId
-        // from order_xxx to pay_xxx, so search for either
+        // Build search conditions — verifyPayment may have stored gatewayPaymentId
+        // separately from gatewayOrderId, so search for either
         const marketConditions = input.paymentId
             ? or(
-                  eq(marketSubcriptionCharges.transactionId, input.orderId),
-                  eq(marketSubcriptionCharges.transactionId, input.paymentId),
+                  eq(marketSubcriptionCharges.gatewayOrderId, input.orderId),
+                  eq(marketSubcriptionCharges.gatewayPaymentId, input.paymentId),
               )
-            : eq(marketSubcriptionCharges.transactionId, input.orderId)
+            : eq(marketSubcriptionCharges.gatewayOrderId, input.orderId)
 
         const mandiConditions = input.paymentId
             ? or(
-                  eq(mandiSubcriptionCharges.transactionId, input.orderId),
-                  eq(mandiSubcriptionCharges.transactionId, input.paymentId),
+                  eq(mandiSubcriptionCharges.gatewayOrderId, input.orderId),
+                  eq(mandiSubcriptionCharges.gatewayPaymentId, input.paymentId),
               )
-            : eq(mandiSubcriptionCharges.transactionId, input.orderId)
+            : eq(mandiSubcriptionCharges.gatewayOrderId, input.orderId)
 
         // Check DB first — webhook or verifyPayment may have updated transactionId
         let [record] = await db
@@ -198,10 +198,11 @@ export const getPaymentStatus = async ({
         }
 
         // If already resolved, return the DB status with amount in PAISE
-        if (record.paymentStatus === "success" || record.paymentStatus === "failed") {
+        // "captured" is the terminal success state (funds actually moved)
+        if (record.paymentStatus === "captured" || record.paymentStatus === "failed") {
             return {
                 status: record.paymentStatus,
-                paymentId: record.transactionId,
+                paymentId: record.gatewayPaymentId,
                 method: record.paymentMethod,
                 amount: record.amount, // in PAISE
                 paidAt: record.paymentDate,
@@ -215,26 +216,30 @@ export const getPaymentStatus = async ({
         )?.find((p) => p.status === "captured" || p.status === "authorized")
 
         if (paid) {
-            // Sync to DB
+            // Sync to DB — set gatewayPaymentId and mark captured
             const updatedMarket = await db
                 .update(marketSubcriptionCharges)
-                .set({ paymentStatus: "success", transactionId: paid.id, paymentDate: new Date() })
-                .where(eq(marketSubcriptionCharges.transactionId, input.orderId))
+                .set({
+                    paymentStatus: "captured",
+                    gatewayPaymentId: paid.id,
+                    paymentDate: new Date(),
+                })
+                .where(eq(marketSubcriptionCharges.gatewayOrderId, input.orderId))
                 .returning()
 
             if (!updatedMarket.length) {
                 await db
                     .update(mandiSubcriptionCharges)
                     .set({
-                        paymentStatus: "success",
-                        transactionId: paid.id,
+                        paymentStatus: "captured",
+                        gatewayPaymentId: paid.id,
                         paymentDate: new Date(),
                     })
-                    .where(eq(mandiSubcriptionCharges.transactionId, input.orderId))
+                    .where(eq(mandiSubcriptionCharges.gatewayOrderId, input.orderId))
             }
 
             return {
-                status: "success" as const,
+                status: "captured" as const,
                 paymentId: paid.id,
                 method: paid.method ?? "upi",
                 amount: record.amount, // in PAISE
@@ -283,22 +288,22 @@ export const verifyPayment = async ({
     const updatedMarket = await db
         .update(marketSubcriptionCharges)
         .set({
-            paymentStatus: "success",
-            transactionId: input.razorpayPaymentId,
+            paymentStatus: "captured",
+            gatewayPaymentId: input.razorpayPaymentId,
             paymentDate: new Date(),
         })
-        .where(eq(marketSubcriptionCharges.transactionId, input.razorpayOrderId))
+        .where(eq(marketSubcriptionCharges.gatewayOrderId, input.razorpayOrderId))
         .returning()
 
     if (!updatedMarket.length) {
         await db
             .update(mandiSubcriptionCharges)
             .set({
-                paymentStatus: "success",
-                transactionId: input.razorpayPaymentId,
+                paymentStatus: "captured",
+                gatewayPaymentId: input.razorpayPaymentId,
                 paymentDate: new Date(),
             })
-            .where(eq(mandiSubcriptionCharges.transactionId, input.razorpayOrderId))
+            .where(eq(mandiSubcriptionCharges.gatewayOrderId, input.razorpayOrderId))
     }
 
     return { success: true, paymentId: input.razorpayPaymentId }
@@ -322,7 +327,7 @@ export const skipPayment = async ({
         const amountPaise = isMandi
             ? MANDI_REGISTRATION_AMOUNT_PAISE
             : MARKET_REGISTRATION_AMOUNT_PAISE
-        const transactionId = `skipped_${Date.now()}`
+        const skippedOrderId = `skipped_${Date.now()}`
 
         if (isMandi) {
             const [existingPending] = await db
@@ -341,7 +346,7 @@ export const skipPayment = async ({
                     .update(mandiSubcriptionCharges)
                     .set({
                         amount: amountPaise,
-                        transactionId,
+                        gatewayOrderId: skippedOrderId,
                         paymentDate: new Date(),
                         paymentStatus: "pending",
                         paymentMethod: "cash",
@@ -353,7 +358,7 @@ export const skipPayment = async ({
                 await db.insert(mandiSubcriptionCharges).values({
                     vendorId: input.vendorId,
                     amount: amountPaise,
-                    transactionId,
+                    gatewayOrderId: skippedOrderId,
                     paymentDate: new Date(),
                     paymentStatus: "pending",
                     paymentMethod: "cash",
@@ -378,7 +383,7 @@ export const skipPayment = async ({
                     .update(marketSubcriptionCharges)
                     .set({
                         amount: amountPaise,
-                        transactionId,
+                        gatewayOrderId: skippedOrderId,
                         paymentDate: new Date(),
                         paymentStatus: "pending",
                         paymentMethod: "cash",
@@ -390,7 +395,7 @@ export const skipPayment = async ({
                 await db.insert(marketSubcriptionCharges).values({
                     vendorId: input.vendorId,
                     amount: amountPaise,
-                    transactionId,
+                    gatewayOrderId: skippedOrderId,
                     paymentDate: new Date(),
                     paymentStatus: "pending",
                     paymentMethod: "cash",
@@ -400,7 +405,7 @@ export const skipPayment = async ({
             }
         }
 
-        return { success: true, transactionId, amount: amountPaise } // in PAISE
+        return { success: true, gatewayOrderId: skippedOrderId, amount: amountPaise } // in PAISE
     } catch (error: any) {
         console.error("[skipPayment] error:", error)
         throw new TRPCError({

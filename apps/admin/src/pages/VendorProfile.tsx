@@ -384,10 +384,10 @@ export default function VendorProfile() {
                                     <span className="text-[13px] font-medium text-gray-600">
                                         Transaction ID:{" "}
                                         <span className="ml-1 font-semibold text-gray-800">
-                                            {charge?.transactionId || "N/A"}
+                                            {charge?.gatewayPaymentId || "N/A"}
                                         </span>
                                     </span>
-                                    {charge?.transactionId && (
+                                    {charge?.gatewayPaymentId && (
                                         <button className="cursor-pointer p-1 text-gray-400 hover:text-gray-600">
                                             <svg
                                                 width="14"
