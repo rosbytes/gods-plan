@@ -392,25 +392,25 @@ async function main() {
                     fullName: "Suresh Patel",
                     primaryPhone: "+918888888801",
                     alternatePhone: "+918800000001",
-                    slot: 1,
+                    slot: 15,
                 },
                 {
                     fullName: "Rajesh Verma",
                     primaryPhone: "+918888888802",
                     alternatePhone: null,
-                    slot: 2,
+                    slot: 4,
                 },
                 {
                     fullName: "Sharma Vendor",
                     primaryPhone: "+918888888803",
                     alternatePhone: "+918800000003",
-                    slot: 1,
+                    slot: 22,
                 },
                 {
                     fullName: "Aarya Vendor",
                     primaryPhone: "+918888888804",
                     alternatePhone: null,
-                    slot: 2,
+                    slot: 6,
                 },
                 {
                     fullName: "Bhati Vendor",
@@ -422,13 +422,13 @@ async function main() {
                     fullName: "Bhawani Vendor",
                     primaryPhone: "+918888888806",
                     alternatePhone: null,
-                    slot: 4,
+                    slot: 22,
                 },
                 {
                     fullName: "Sid Vendor",
                     primaryPhone: "+918888888807",
                     alternatePhone: null,
-                    slot: 5,
+                    slot: 15,
                 },
                 {
                     fullName: "Rehman Vendor",
@@ -440,7 +440,7 @@ async function main() {
                     fullName: "Hamza Vendor",
                     primaryPhone: "+918888888809",
                     alternatePhone: null,
-                    slot: 2,
+                    slot: 22,
                 },
                 {
                     fullName: "Maanvi Vendor",
@@ -458,7 +458,7 @@ async function main() {
                     fullName: "Noor Vendor",
                     primaryPhone: "+918888888813",
                     alternatePhone: null,
-                    slot: 5,
+                    slot: 15,
                 },
             ]
 
