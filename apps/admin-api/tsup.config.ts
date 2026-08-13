@@ -7,7 +7,7 @@ export default defineConfig({
     splitting: false,
     clean: true,
     bundle: true,
-    // noExternal: [/.*/],
-    noExternal: ["@ros/db", "@ros/ui", "@ros/commons", "cookie"],
+    noExternal: [/.*/],
+    // noExternal: ["@ros/db", "@ros/commons", "cookie"],
     outExtension: () => ({ js: ".cjs" }),
 })
