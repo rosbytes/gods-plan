@@ -8,5 +8,6 @@ export default defineConfig({
     clean: true,
     bundle: true,
     noExternal: [/.*/],
+    // noExternal: ["@ros/db", "@ros/ui", "@ros/commons"],
     outExtension: () => ({ js: ".cjs" }),
 })
