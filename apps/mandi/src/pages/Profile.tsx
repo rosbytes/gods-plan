@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom"
 import { BackArrowIcon } from "@/components/icons"
 import { useStore } from "@/store"
+import AppLayout from "@/components/layouts/AppLayout"
+import { trpc } from "@/libs/trpc"
 
 // ─── Page-specific icons (only used here) ───────────────────────────
 function HeadsetIcon() {
@@ -66,8 +68,10 @@ function InfoRow({
 }) {
     return (
         <div className={hasBorder ? "border-t border-[#F2F3F6] pt-4" : ""}>
-            <p className="font-apercu text-[16px] font-semibold text-[#999999]">{label}</p>
-            <p className="font-apercu text-[20px] font-bold text-[#444444]">{value}</p>
+            <p className="font-apercu text-[16px] font-semibold text-[#999999] md:text-sm">
+                {label}
+            </p>
+            <p className="font-apercu text-[20px] font-bold text-[#444444] md:text-lg">{value}</p>
         </div>
     )
 }
@@ -76,17 +80,30 @@ export default function Profile() {
     const navigate = useNavigate()
     const logout = useStore((state) => state.logout)
 
+    const { data: profile } = trpc.vendor.getProfile.useQuery(undefined, {
+        retry: false,
+        refetchOnWindowFocus: false,
+    })
+
+    const logoutMutation = trpc.auth.logout.useMutation({
+        onSettled: () => {
+            logout()
+            navigate("/login", { replace: true })
+        },
+    })
+
     const handleLogout = () => {
-        logout()
-        navigate("/login", { replace: true })
+        logoutMutation.mutate()
     }
 
-    return (
-        <div className="relative mx-auto min-h-screen max-w-[412px] bg-[#F2F3F6] pb-10">
-            <div className="h-[24px]" />
+    const name = profile?.fullName || "Sachin Tichkule"
+    const phone = profile?.primaryPhone || "+91 925126211"
+    const avatar = profile?.avatarUrl || "/assets/images/profile.jpg"
 
-            {/* Top Bar */}
-            <div className="flex items-center gap-3 bg-[#F2F3F6] px-5 py-3">
+    return (
+        <AppLayout>
+            {/* Mobile Top Bar */}
+            <div className="flex items-center gap-3 bg-[#F2F3F6] px-5 py-3 md:hidden">
                 <button
                     onClick={() => navigate(-1)}
                     className="shrink-0 cursor-pointer border-none bg-transparent p-1"
@@ -96,114 +113,162 @@ export default function Profile() {
                 <h1 className="font-apercu text-[20px] font-bold text-[#000000]">Profile</h1>
             </div>
 
-            {/* Vendor Details Card */}
-            <div className="mx-5 mt-4 rounded-[12px] bg-white p-5">
-                <div className="mb-4 flex items-center gap-4">
-                    <div className="h-[48px] w-[48px] shrink-0 overflow-hidden rounded-full bg-[#CBD5E1]">
-                        <img
-                            src="/assets/images/profile.jpg"
-                            alt="Sachin Tichkule"
-                            className="h-full w-full object-cover"
-                        />
-                    </div>
+            {/* Desktop Page Header */}
+            <div className="mb-6 hidden items-center justify-between border-b border-gray-200/80 pb-5 md:flex">
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 shadow-xs transition-colors hover:bg-gray-50 hover:text-gray-900"
+                    >
+                        <BackArrowIcon />
+                    </button>
                     <div>
-                        <p className="font-apercu text-[20px] font-bold text-[#000000]">
-                            Sachin Tichkule
-                        </p>
-                        <p className="font-apercu text-[16px] font-normal text-[#444444]">
-                            Id: ROS402
+                        <h1 className="font-apercu text-2xl font-bold text-[#000000]">
+                            Profile & Account Settings
+                        </h1>
+                        <p className="font-apercu text-sm font-medium text-[#999999]">
+                            Manage your vendor profile, shop info, and settlement account
                         </p>
                     </div>
                 </div>
-                <InfoRow
-                    label="Manage"
-                    value={<span className="text-[#0A5445]">Potato/ आलू</span>}
-                />
-            </div>
-
-            {/* Business Details Card */}
-            <div className="mx-5 mt-4 rounded-[12px] bg-white p-5">
-                <div className="mb-4">
-                    <p className="font-apercu text-[16px] font-semibold text-[#999999]">Shop</p>
-                    <p className="font-apercu text-[20px] font-bold text-[#444444]">
-                        Ze-bros Vegetables
-                    </p>
-                </div>
-                <InfoRow
-                    label="Address"
-                    value={
-                        <>
-                            Shop no 33, Potato Block,
-                            <br />
-                            Muhana Mandi, Jaipur, 302029
-                        </>
-                    }
-                />
-            </div>
-
-            {/* KYC Card */}
-            <div className="mx-5 mt-4 rounded-[12px] bg-white p-5">
-                <p className="font-apercu text-[16px] font-semibold text-[#999999]">KYC Status</p>
-                <p className="font-apercu text-[20px] font-bold text-[#444444]">
-                    Verified: Aadhar Card
-                </p>
-            </div>
-
-            {/* Contact Details Card */}
-            <div className="mx-5 mt-4 rounded-[12px] bg-white p-5">
-                <div className="mb-4">
-                    <p className="font-apercu text-[16px] font-semibold text-[#999999]">Primary</p>
-                    <p className="font-apercu text-[20px] font-bold text-[#444444]">
-                        +91 925126211
-                    </p>
-                </div>
-                <InfoRow label="Alternate" value="+91 926226211" />
-            </div>
-
-            {/* Bank Details Card */}
-            <div className="mx-5 mt-4 rounded-[12px] bg-white p-5">
-                <div className="mb-4">
-                    <p className="font-apercu text-[16px] font-semibold text-[#999999]">
-                        Settlement Account
-                    </p>
-                    <p className="font-apercu text-[20px] font-bold text-[#444444]">
-                        6969 0420 0007 1971
-                    </p>
-                </div>
-                <div className="mb-4 border-t border-[#F2F3F6] pt-4">
-                    <p className="font-apercu text-[16px] font-semibold text-[#999999]">
-                        IFSC Code
-                    </p>
-                    <p className="font-apercu text-[20px] font-bold text-[#444444]">LOKI0013</p>
-                </div>
-                <InfoRow label="Account Name" value="Ze-bros Pvt. Ltd." />
-            </div>
-
-            {/* More Section */}
-            <div className="mx-5 mt-4 overflow-hidden rounded-[12px] bg-white">
-                <button className="flex w-full items-center gap-5 border-b border-[#F2F3F6] px-5 py-4">
-                    <HeadsetIcon />
-                    <span className="font-apercu text-[20px] font-bold text-[#444444]">
-                        Customer Support
-                    </span>
-                </button>
-                <button className="flex w-full items-center gap-5 px-5 py-4">
-                    <DocumentIcon />
-                    <span className="font-apercu text-[20px] font-bold text-[#444444]">
-                        Terms & Conditions
-                    </span>
-                </button>
-            </div>
-
-            {/* Logout Button */}
-            <div className="mx-5 mt-4">
                 <button
                     onClick={handleLogout}
-                    className="font-apercu flex h-12.5 w-full cursor-pointer items-center justify-center rounded-xl border-[1.5px] border-[#E21931] bg-transparent text-[18px] font-bold text-[#E21931] transition-colors hover:bg-[rgba(226,25,49,0.05)]"
+                    className="font-apercu flex cursor-pointer items-center gap-2 rounded-xl border border-[#E21931] bg-white px-5 py-2.5 text-sm font-bold text-[#E21931] shadow-xs transition-colors hover:bg-red-50"
                 >
                     Log out
                 </button>
             </div>
-        </div>
+
+            {/* Main Layout Grid */}
+            <div className="space-y-4 md:grid md:grid-cols-12 md:gap-6 md:space-y-0">
+                {/* Left Column (Desktop: 4 cols) */}
+                <div className="space-y-4 md:col-span-4">
+                    {/* Vendor Details Card */}
+                    <div className="mx-5 mt-4 rounded-xl bg-white p-5 shadow-xs md:mx-0 md:mt-0">
+                        <div className="mb-4 flex items-center gap-4">
+                            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-[#CBD5E1] md:h-16 md:w-16">
+                                <img
+                                    src={avatar}
+                                    alt={name}
+                                    className="h-full w-full object-cover"
+                                />
+                            </div>
+                            <div>
+                                <p className="font-apercu text-[20px] font-bold text-[#000000] md:text-lg">
+                                    {name}
+                                </p>
+                                <p className="font-apercu text-[16px] font-normal text-[#444444] md:text-sm">
+                                    Id: ROS402
+                                </p>
+                            </div>
+                        </div>
+                        <InfoRow
+                            label="Manage"
+                            value={<span className="text-[#0A5445]">Potato/ आलू</span>}
+                        />
+                    </div>
+
+                    {/* KYC Card */}
+                    <div className="mx-5 mt-4 rounded-xl bg-white p-5 shadow-xs md:mx-0 md:mt-0">
+                        <p className="font-apercu text-[16px] font-semibold text-[#999999] md:text-sm">
+                            KYC Status
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <p className="font-apercu text-[20px] font-bold text-[#444444] md:text-base">
+                                Verified: Aadhar Card
+                            </p>
+                            <span className="hidden rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700 md:inline-block">
+                                ✓ Verified
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* More Section */}
+                    <div className="mx-5 mt-4 overflow-hidden rounded-xl bg-white shadow-xs md:mx-0 md:mt-0">
+                        <button className="flex w-full cursor-pointer items-center gap-5 border-b border-[#F2F3F6] px-5 py-4 transition-colors hover:bg-gray-50">
+                            <HeadsetIcon />
+                            <span className="font-apercu text-[20px] font-bold text-[#444444] md:text-base">
+                                Customer Support
+                            </span>
+                        </button>
+                        <button className="flex w-full cursor-pointer items-center gap-5 px-5 py-4 transition-colors hover:bg-gray-50">
+                            <DocumentIcon />
+                            <span className="font-apercu text-[20px] font-bold text-[#444444] md:text-base">
+                                Terms & Conditions
+                            </span>
+                        </button>
+                    </div>
+
+                    {/* Mobile Logout Button */}
+                    <div className="mx-5 mt-4 md:hidden">
+                        <button
+                            onClick={handleLogout}
+                            className="font-apercu flex h-12.5 w-full cursor-pointer items-center justify-center rounded-xl border-[1.5px] border-[#E21931] bg-transparent text-[18px] font-bold text-[#E21931] transition-colors hover:bg-[rgba(226,25,49,0.05)]"
+                        >
+                            Log out
+                        </button>
+                    </div>
+                </div>
+
+                {/* Right Column (Desktop: 8 cols) */}
+                <div className="space-y-4 md:col-span-8">
+                    {/* Business Details Card */}
+                    <div className="mx-5 mt-4 rounded-xl bg-white p-5 shadow-xs md:mx-0 md:mt-0">
+                        <div className="mb-4">
+                            <p className="font-apercu text-[16px] font-semibold text-[#999999] md:text-sm">
+                                Shop
+                            </p>
+                            <p className="font-apercu text-[20px] font-bold text-[#444444] md:text-lg">
+                                Ze-bros Vegetables
+                            </p>
+                        </div>
+                        <InfoRow
+                            label="Address"
+                            value={
+                                <>
+                                    Shop no 33, Potato Block,
+                                    <br />
+                                    Muhana Mandi, Jaipur, 302029
+                                </>
+                            }
+                        />
+                    </div>
+
+                    {/* Contact Details Card */}
+                    <div className="mx-5 mt-4 rounded-xl bg-white p-5 shadow-xs md:mx-0 md:mt-0">
+                        <div className="mb-4">
+                            <p className="font-apercu text-[16px] font-semibold text-[#999999] md:text-sm">
+                                Primary
+                            </p>
+                            <p className="font-apercu text-[20px] font-bold text-[#444444] md:text-lg">
+                                {phone}
+                            </p>
+                        </div>
+                        <InfoRow label="Alternate" value="+91 926226211" />
+                    </div>
+
+                    {/* Bank Details Card */}
+                    <div className="mx-5 mt-4 rounded-xl bg-white p-5 shadow-xs md:mx-0 md:mt-0">
+                        <div className="mb-4">
+                            <p className="font-apercu text-[16px] font-semibold text-[#999999] md:text-sm">
+                                Settlement Account
+                            </p>
+                            <p className="font-apercu text-[20px] font-bold text-[#444444] md:text-lg">
+                                6969 0420 0007 1971
+                            </p>
+                        </div>
+                        <div className="mb-4 border-t border-[#F2F3F6] pt-4">
+                            <p className="font-apercu text-[16px] font-semibold text-[#999999] md:text-sm">
+                                IFSC Code
+                            </p>
+                            <p className="font-apercu text-[20px] font-bold text-[#444444] md:text-lg">
+                                LOKI0013
+                            </p>
+                        </div>
+                        <InfoRow label="Account Name" value="Ze-bros Pvt. Ltd." />
+                    </div>
+                </div>
+            </div>
+        </AppLayout>
     )
 }
