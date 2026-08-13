@@ -26,6 +26,10 @@ export default function SlotTabs({ tabs = [], onTabChange }: SlotTabsProps) {
         }
     }, [activeTab])
 
+    useEffect(() => {
+        setActiveTab(0)
+    }, [tabs.length])
+
     return (
         <div className="bg-[#F2F3F6] px-4 py-3">
             <div
@@ -39,7 +43,7 @@ export default function SlotTabs({ tabs = [], onTabChange }: SlotTabsProps) {
                         <button
                             key={index}
                             onClick={() => handleTabClick(index)}
-                            className={`shrink-0 cursor-pointer rounded-full border-none px-5 py-2.5 text-[15px] leading-[22px] transition-all duration-150 ${
+                            className={`shrink-0 cursor-pointer rounded-full border-none px-5 py-2.5 text-[15px] leading-5.5 transition-all duration-150 ${
                                 isActive
                                     ? "bg-white font-bold text-[#111111] shadow-[0_2px_4px_rgba(0,0,0,0.06)]"
                                     : "bg-transparent font-medium text-[#6B7280] hover:text-[#111111]"

@@ -1,5 +1,6 @@
 import type { Vendor } from "@/types"
 import { Avatar, Button } from "@/components/ui"
+import EmptySlot from "./EmptySlot"
 
 interface VendorListProps {
     vendors: Vendor[]
@@ -131,6 +132,10 @@ export function VendorList({
     paidVendors = new Set(),
 }: VendorListProps) {
     const isBefore4AM = new Date().getHours() < 4
+
+    if (!vendors || vendors.length === 0) {
+        return <EmptySlot />
+    }
 
     return (
         <div className="overflow-hidden rounded-lg bg-white">

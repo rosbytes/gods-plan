@@ -1,5 +1,36 @@
 import type { Slot } from "@/types"
 
+export function getSlotDetails(slotNum: number): Slot {
+    const label = `Slot ${slotNum}`
+
+    // Start time: 04:00 AM + (slotNum - 1) * 10 minutes
+    const baseHour = 4
+    const totalStartMinutes = (slotNum - 1) * 10
+    const startHourNum = baseHour + Math.floor(totalStartMinutes / 60)
+    const startMinNum = totalStartMinutes % 60
+
+    // End time: 04:00 AM + slotNum * 10 minutes
+    const totalEndMinutes = slotNum * 10
+    const endHourNum = baseHour + Math.floor(totalEndMinutes / 60)
+    const endMinNum = totalEndMinutes % 60
+
+    // Format AM/PM
+    const formatTime = (h: number, m: number) => {
+        const ampm = h >= 12 ? "PM" : "AM"
+        const hr = h % 12 || 12
+        return `${hr.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")} ${ampm}`
+    }
+
+    const startTimeStr = formatTime(startHourNum, startMinNum)
+    const endTimeStr = formatTime(endHourNum, endMinNum)
+
+    return {
+        id: `slot${slotNum}`,
+        label,
+        time: `${startTimeStr} – ${endTimeStr}`,
+    }
+}
+
 /** Standard 5-slot layout used across Home, Orders, Search */
 export const SLOTS: Slot[] = [
     { id: "slot1", label: "Slot 1", time: "04:00 AM – 04:12 AM" },

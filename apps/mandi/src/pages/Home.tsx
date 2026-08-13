@@ -1,34 +1,73 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import AppLayout from "@/components/layouts/AppLayout"
 import { PageHeader, Button, Avatar } from "@/components/ui"
 import StatsBar from "@/components/StatsBar"
 import SlotTabs from "@/components/SlotTabs"
 import { VendorList } from "@/components/VendorCard"
-import { SLOTS } from "@/data/slots"
+import { getSlotDetails } from "@/data/slots"
 import { HOME_STATS } from "@/data/vendors"
 import type { Vendor } from "@/types"
 import { trpc } from "@/libs/trpc"
+import { toast } from "sonner"
+import UpdatePriceDialog from "@/components/UpdatePriceDialog"
 
 export default function HomePage() {
     const navigate = useNavigate()
     const [activeSlotIdx, setActiveSlotIdx] = useState(0)
     const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null)
     const [paidVendors, setPaidVendors] = useState<Set<string>>(new Set())
+    const [isUpdatePriceOpen, setIsUpdatePriceOpen] = useState(false)
 
-    const activeSlot = SLOTS[activeSlotIdx]!
+    const utils = trpc.useUtils()
 
     // Fetch stats and slot orders from our backend API
     const { data: stats } = trpc.vendor.getHomeStats.useQuery(undefined, {
         refetchOnWindowFocus: false,
     })
 
-    const { data: vendors = [], isLoading: isLoadingOrders } = trpc.vendor.getSlotOrders.useQuery(
-        { slotId: activeSlot.id },
-        {
-            refetchOnWindowFocus: false,
+    const updatePriceMutation = trpc.vendor.updatePrice.useMutation({
+        onSuccess: () => {
+            toast.success("Price updated successfully")
+            utils.vendor.getHomeStats.invalidate()
+            setIsUpdatePriceOpen(false)
         },
-    )
+        onError: (err) => {
+            toast.error(err.message || "Failed to update price")
+        },
+    })
+
+    const handleUpdatePrice = async (newPrice: number) => {
+        await updatePriceMutation.mutateAsync({ price: newPrice })
+    }
+
+    const todayStr = new Date().toISOString().split("T")[0]!
+
+    const { data: groupedOrders = {}, isLoading: isLoadingOrders } =
+        trpc.vendor.getGroupedOrders.useQuery(
+            { date: todayStr },
+            {
+                refetchOnWindowFocus: false,
+            },
+        )
+
+    const slotNumbers = Object.keys(groupedOrders)
+        .map(Number)
+        .sort((a, b) => a - b)
+
+    const dynamicSlots = slotNumbers.map(getSlotDetails)
+    const hasSlots = dynamicSlots.length > 0
+
+    useEffect(() => {
+        setActiveSlotIdx(0)
+        setSelectedVendor(null)
+    }, [dynamicSlots.length])
+
+    const safeActiveSlotIdx = activeSlotIdx < dynamicSlots.length ? activeSlotIdx : 0
+    const activeSlot = dynamicSlots[safeActiveSlotIdx]
+    const vendors = activeSlot
+        ? groupedOrders[parseInt(activeSlot.id.replace("slot", ""), 10)] || []
+        : []
 
     const handleSelectVendor = (vendor: Vendor) => {
         setSelectedVendor(selectedVendor?.name === vendor.name ? null : vendor)
@@ -73,33 +112,38 @@ export default function HomePage() {
                 pricePerKg={stats?.pricePerKg ?? HOME_STATS.pricePerKg}
                 totalOrders={stats?.totalOrders ?? HOME_STATS.totalOrders}
                 totalQuantityKg={stats?.totalQuantityKg ?? HOME_STATS.totalQuantityKg}
+                onPriceClick={() => setIsUpdatePriceOpen(true)}
             />
 
             {/* Grid Layout: Left Column (Slots + List) & Right Column (Billing detail panel on desktop) */}
             <div className="mt-4 flex flex-col gap-6 lg:flex-row">
                 <div className="min-w-0 grow">
-                    <SlotTabs
-                        tabs={SLOTS.map((s) => ({ label: s.label }))}
-                        onTabChange={(idx) => {
-                            setActiveSlotIdx(idx)
-                            setSelectedVendor(null) // clear selected vendor when switching slots
-                        }}
-                    />
+                    {hasSlots && (
+                        <>
+                            <SlotTabs
+                                tabs={dynamicSlots.map((s) => ({ label: s.label }))}
+                                onTabChange={(idx) => {
+                                    setActiveSlotIdx(idx)
+                                    setSelectedVendor(null) // clear selected vendor when switching slots
+                                }}
+                            />
 
-                    <div className="flex items-center gap-2.5 px-4 py-3">
-                        <div className="h-px flex-1 bg-[#EAEBED]" />
-                        <span className="rounded-full border border-[#EAEBED] bg-white px-3.5 py-1 text-[13px] font-medium whitespace-nowrap text-[#444444]">
-                            {activeSlot.time}
-                        </span>
-                        <div className="h-px flex-1 bg-[#EAEBED]" />
-                    </div>
+                            <div className="flex items-center gap-2.5 px-4 py-3">
+                                <div className="h-px flex-1 bg-[#EAEBED]" />
+                                <span className="rounded-full border border-[#EAEBED] bg-white px-3.5 py-1 text-[13px] font-medium whitespace-nowrap text-[#444444]">
+                                    {activeSlot?.time}
+                                </span>
+                                <div className="h-px flex-1 bg-[#EAEBED]" />
+                            </div>
+                        </>
+                    )}
 
                     <div className="px-4 md:px-0">
                         {isLoadingOrders ? (
                             <div className="flex items-center justify-center py-12">
                                 <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#0B4E3E]" />
                             </div>
-                        ) : (
+                        ) : hasSlots ? (
                             <VendorList
                                 vendors={vendors as Vendor[]}
                                 selectedVendorId={selectedVendor?.id ?? null}
@@ -109,6 +153,13 @@ export default function HomePage() {
                                 onCollect={handleCollect}
                                 paidVendors={paidVendors}
                             />
+                        ) : (
+                            <div className="flex min-h-75 flex-col items-center justify-center px-4 py-16 text-center">
+                                <p className="font-apercu text-[24px] leading-8.5 font-semibold text-[#444444]">
+                                    No orders found <br />
+                                    for today
+                                </p>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -137,13 +188,13 @@ export default function HomePage() {
                                 <div className="flex items-center justify-between text-sm font-medium">
                                     <span className="text-gray-400">Selected Slot</span>
                                     <span className="font-semibold text-gray-900">
-                                        {activeSlot.label}
+                                        {activeSlot?.label}
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between text-sm font-medium">
                                     <span className="text-gray-400">Timings</span>
                                     <span className="font-semibold text-gray-900">
-                                        {activeSlot.time}
+                                        {activeSlot?.time}
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between text-sm font-medium">
@@ -205,6 +256,14 @@ export default function HomePage() {
                     )}
                 </div>
             </div>
+
+            <UpdatePriceDialog
+                isOpen={isUpdatePriceOpen}
+                onClose={() => setIsUpdatePriceOpen(false)}
+                currentPrice={stats?.pricePerKg ?? 0}
+                onUpdate={handleUpdatePrice}
+                isLoading={updatePriceMutation.isPending}
+            />
         </AppLayout>
     )
 }
