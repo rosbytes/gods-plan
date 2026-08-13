@@ -1,6 +1,39 @@
-import { db, eq, and, gte, lte, marketMandiOrder, marketStore, marketVendor } from "@ros/db"
+import { db, eq, and, gte, lte, marketMandiOrder, marketMandiOrderItem, marketStore } from "@ros/db"
 import { TRPCError } from "@trpc/server"
-import { getMandiStore, getOrders, getPrice, getVendorById } from "./vendor.service"
+import { getMandiStore, getOrders, getPrice, getVendorById, createPrice } from "./vendor.service"
+
+export async function updatePrice({ vendorId, price }: { vendorId: string; price: number }) {
+    try {
+        const store = await getMandiStore(vendorId)
+        if (!store) {
+            throw new TRPCError({
+                code: "NOT_FOUND",
+                message: "Mandi store not found for this vendor",
+            })
+        }
+
+        const priceInPaise = Math.round(price * 100)
+        const updatedPrice = await createPrice(store.id, store.vegId, priceInPaise)
+
+        if (!updatedPrice) {
+            throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to save updated price record",
+            })
+        }
+
+        return {
+            success: true,
+            price: updatedPrice.price / 100,
+        }
+    } catch (error) {
+        if (error instanceof TRPCError) throw error
+        throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to update price",
+        })
+    }
+}
 
 export async function getHomeStats({ vendorId }: { vendorId: string }) {
     try {
@@ -45,7 +78,7 @@ export async function getSlotOrders({ vendorId, slotId }: { vendorId: string; sl
         if (!store) {
             throw new TRPCError({
                 code: "NOT_FOUND",
-                message: "Mandi store not found for this vendor",
+                message: "Mandi store not found",
             })
         }
 
@@ -56,22 +89,25 @@ export async function getSlotOrders({ vendorId, slotId }: { vendorId: string; sl
             .select({
                 orderCode: marketMandiOrder.orderCode,
                 marketStoreName: marketMandiOrder.marketStoreName,
-                quantityInGram: marketMandiOrder.quantityInGram,
-                status: marketMandiOrder.status,
-                totalAmountInPaise: marketMandiOrder.totalAmountInPaise,
-                createdAt: marketMandiOrder.createdAt,
+                quantityInGram: marketMandiOrderItem.quantityInGram,
+                status: marketMandiOrderItem.status,
+                totalAmount: marketMandiOrderItem.totalAmount,
+                createdAt: marketMandiOrderItem.createdAt,
             })
-            .from(marketMandiOrder)
+            .from(marketMandiOrderItem)
+            .innerJoin(marketMandiOrder, eq(marketMandiOrderItem.orderId, marketMandiOrder.id))
             .innerJoin(marketStore, eq(marketMandiOrder.marketStoreId, marketStore.id))
-            .innerJoin(marketVendor, eq(marketStore.vendorId, marketVendor.id))
             .where(
-                and(eq(marketMandiOrder.mandiStoreId, store.id), eq(marketStore.slot, slotNumber)),
+                and(
+                    eq(marketMandiOrderItem.mandiStoreId, store.id),
+                    eq(marketStore.slot, slotNumber),
+                ),
             )
 
         // 3. Map database orders to Vendor interface
         return orders.map((o) => {
             let statusStr: "order-picked" | "cancelled" | "running-late" | "active" = "active"
-            if (o.status === "confirmed" || o.status === "delivered") {
+            if (o.status === "confirmed" || o.status === "delivered" || o.status === "accepted") {
                 statusStr = "order-picked"
             } else if (o.status === "cancelled" || o.status === "rejected") {
                 statusStr = "cancelled"
@@ -94,7 +130,7 @@ export async function getSlotOrders({ vendorId, slotId }: { vendorId: string; sl
                 name: o.marketStoreName,
                 quantity: o.quantityInGram / 1000,
                 status: statusStr,
-                totalBill: o.totalAmountInPaise / 100,
+                totalBill: o.totalAmount / 100,
                 pickupTime: pickupTimeStr,
             }
         })
@@ -163,20 +199,20 @@ export async function getGroupedOrders({ vendorId, date }: { vendorId: string; d
                 id: marketMandiOrder.id,
                 orderCode: marketMandiOrder.orderCode,
                 marketStoreName: marketMandiOrder.marketStoreName,
-                quantityInGram: marketMandiOrder.quantityInGram,
-                status: marketMandiOrder.status,
-                totalAmountInPaise: marketMandiOrder.totalAmountInPaise,
-                createdAt: marketMandiOrder.createdAt,
+                quantityInGram: marketMandiOrderItem.quantityInGram,
+                status: marketMandiOrderItem.status,
+                totalAmount: marketMandiOrderItem.totalAmount,
+                createdAt: marketMandiOrderItem.createdAt,
                 slot: marketStore.slot,
             })
-            .from(marketMandiOrder)
+            .from(marketMandiOrderItem)
+            .innerJoin(marketMandiOrder, eq(marketMandiOrderItem.orderId, marketMandiOrder.id))
             .innerJoin(marketStore, eq(marketMandiOrder.marketStoreId, marketStore.id))
-            .innerJoin(marketVendor, eq(marketStore.vendorId, marketVendor.id))
             .where(
                 and(
-                    eq(marketMandiOrder.mandiStoreId, store.id),
-                    gte(marketMandiOrder.createdAt, start),
-                    lte(marketMandiOrder.createdAt, end),
+                    eq(marketMandiOrderItem.mandiStoreId, store.id),
+                    gte(marketMandiOrderItem.createdAt, start),
+                    lte(marketMandiOrderItem.createdAt, end),
                 ),
             )
 
@@ -193,11 +229,6 @@ export async function getGroupedOrders({ vendorId, date }: { vendorId: string; d
             }>
         > = {}
 
-        // Prepopulate slots 1 through 5
-        for (let i = 1; i <= 5; i++) {
-            grouped[i] = []
-        }
-
         for (const o of orders) {
             const slotNum = o.slot || 1
             if (!grouped[slotNum]) {
@@ -205,7 +236,7 @@ export async function getGroupedOrders({ vendorId, date }: { vendorId: string; d
             }
 
             let statusStr: "order-picked" | "cancelled" | "running-late" | "active" = "active"
-            if (o.status === "confirmed" || o.status === "delivered") {
+            if (o.status === "confirmed" || o.status === "delivered" || o.status === "accepted") {
                 statusStr = "order-picked"
             } else if (o.status === "cancelled" || o.status === "rejected") {
                 statusStr = "cancelled"
@@ -228,7 +259,7 @@ export async function getGroupedOrders({ vendorId, date }: { vendorId: string; d
                 name: o.marketStoreName,
                 quantity: o.quantityInGram / 1000,
                 status: statusStr,
-                totalBill: o.totalAmountInPaise / 100,
+                totalBill: o.totalAmount / 100,
                 pickupTime: pickupTimeStr,
             })
         }
@@ -238,57 +269,7 @@ export async function getGroupedOrders({ vendorId, date }: { vendorId: string; d
         if (error instanceof TRPCError) throw error
         throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to fetch grouped vendor orders",
-        })
-    }
-}
-
-// Get all distinct slots of a vendor on a specific date
-export async function getSlots(vendorId: string, date: string) {
-    try {
-        // 1. Get the store for this vendor
-        const store = await getMandiStore(vendorId)
-        if (!store) {
-            throw new TRPCError({
-                code: "NOT_FOUND",
-                message: "Mandi store not found",
-            })
-        }
-
-        // 2. Compute date bounds in UTC format
-        const start = new Date(date)
-        if (isNaN(start.getTime())) {
-            throw new TRPCError({
-                code: "BAD_REQUEST",
-                message: "Invalid date format",
-            })
-        }
-        start.setUTCHours(0, 0, 0, 0)
-        const end = new Date(date)
-        end.setUTCHours(23, 59, 59, 999)
-
-        // 3. Query all orders for the store within bounds
-        const orders = await db
-            .selectDistinct({
-                slot: marketStore.slot,
-            })
-            .from(marketMandiOrder)
-            .innerJoin(marketStore, eq(marketMandiOrder.marketStoreId, marketStore.id))
-            .innerJoin(marketVendor, eq(marketStore.vendorId, marketVendor.id))
-            .where(
-                and(
-                    eq(marketMandiOrder.mandiStoreId, store.id),
-                    gte(marketMandiOrder.createdAt, start),
-                    lte(marketMandiOrder.createdAt, end),
-                ),
-            )
-
-        return orders.map((o) => o.slot as number).sort((a, b) => a - b)
-    } catch (error) {
-        if (error instanceof TRPCError) throw error
-        throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to fetch vendor slots",
+            message: "Failed to fetch grouped orders",
         })
     }
 }

@@ -1,6 +1,12 @@
 import { router, vendorProcedure } from "../../trpc/globals"
-import { getHomeStats, getProfile, getSlotOrders, getGroupedOrders } from "./vendor.controller"
-import { ZGetSlotOrders, ZGetGroupedOrders } from "./vendor.schema"
+import {
+    getHomeStats,
+    getProfile,
+    getSlotOrders,
+    getGroupedOrders,
+    updatePrice,
+} from "./vendor.controller"
+import { ZGetSlotOrders, ZGetGroupedOrders, ZUpdatePrice } from "./vendor.schema"
 
 export const vendorRouter = router({
     getHomeStats: vendorProcedure.query(async ({ ctx }) => {
@@ -23,5 +29,12 @@ export const vendorRouter = router({
 
     getProfile: vendorProcedure.query(async ({ ctx }) => {
         return getProfile(ctx.id)
+    }),
+
+    updatePrice: vendorProcedure.input(ZUpdatePrice).mutation(async ({ input, ctx }) => {
+        return updatePrice({
+            vendorId: ctx.id,
+            price: input.price,
+        })
     }),
 })

@@ -2,22 +2,20 @@ import { t } from "../trpc/trpc"
 import type { Context } from "../trpc"
 import { TRPCError } from "@trpc/server"
 import { verifyAccessToken } from "../utils/tokens"
+import { parseCookie } from "cookie"
 
 export const isVendor = t.middleware(async ({ ctx, next }) => {
-    const token = ctx.req.headers.authorization?.split(" ")[1]
+    const cookies = parseCookie(ctx.req.headers.cookie ?? "")
+    const authHeader = ctx.req.headers.authorization
+    const headerToken = authHeader?.startsWith("Bearer ")
+        ? authHeader.slice(7)
+        : authHeader?.split(" ")[1]
+
+    const token = cookies.accessToken ?? headerToken
+
     if (!token) throw new TRPCError({ code: "UNAUTHORIZED", message: "Missing token" })
     try {
         const decoded = verifyAccessToken(token)
-        // Don't make call to db, use something like in memory storage, may be redis.
-        // const [vendor] = await db.select().from(mandiVendor).where(eq(mandiVendor.id, decoded.id))
-
-        // if (!vendor) {
-        //     throw new TRPCError({
-        //         code: "UNAUTHORIZED",
-        //         message: "Mandi vendor not found",
-        //     })
-        // }
-
         return next({
             ctx: {
                 ...ctx,

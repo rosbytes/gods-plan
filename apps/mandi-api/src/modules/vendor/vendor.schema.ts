@@ -11,3 +11,9 @@ export const ZGetGroupedOrders = z.object({
 })
 
 export type TGetGroupedOrders = z.infer<typeof ZGetGroupedOrders>
+
+export const ZUpdatePrice = z.object({
+    price: z.number().positive("Price must be greater than 0"),
+})
+
+export type TUpdatePrice = z.infer<typeof ZUpdatePrice>
