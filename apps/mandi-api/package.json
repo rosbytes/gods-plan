@@ -7,8 +7,8 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "dev": "tsx watch src/app.ts",
-        "start": "node dist/app.mjs",
-        "build": "pnpm typecheck && tsdown",
+        "start": "node api/index.js",
+        "build": "pnpm typecheck && tsup",
         "typecheck": "tsc --noEmit"
     },
     "keywords": [],
@@ -36,6 +36,7 @@
         "@types/node": "^26.0.1",
         "@vercel/config": "^0.5.6",
         "tsdown": "^0.22.3",
+        "tsup": "^8.5.1",
         "tsx": "^4.21.0",
         "typescript": "^6.0.3"
     }
