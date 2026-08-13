@@ -14,7 +14,11 @@ app.use(cors({ origin: [env.FRONTEND_URL], credentials: true }))
 app.use(express.json())
 
 app.get("/", (req, res) => {
-    res.send("Server is working")
+    res.json({ message: "Server is working" })
+})
+
+app.get("/api", (req, res) => {
+    res.json({ message: "Server is working at api" })
 })
 
 app.use("/trpc", createExpressMiddleware({ router: appRouter, createContext }))
