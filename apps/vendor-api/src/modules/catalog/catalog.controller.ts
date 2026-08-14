@@ -16,7 +16,11 @@ export async function getVegetablesHandler(ctx: VendorContext) {
 
         const vegies = await availableVegiesInMandi(store.mandiId)
 
-        return vegies
+        return vegies.map((item) => ({
+            ...item,
+            // convert paise → rupees; 0 when no price set yet
+            pricePerKg: item.priceInPaise != null ? item.priceInPaise / 100 : 0,
+        }))
     } catch (error) {
         logger.error(error)
         throw new TRPCError({

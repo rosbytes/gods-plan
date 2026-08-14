@@ -20,7 +20,7 @@ export default function Home() {
             nameInHindi: item.veg.nameInHindi,
             vegPrimaryImage: item.veg.vegPrimaryImage,
             mandiStoreId: item.mandi_store.id,
-            estimatedPrice: 12 + (item.veg.name.length % 5) * 5,
+            estimatedPrice: item.pricePerKg,
         }))
     }, [vegetablesResponse])
 
