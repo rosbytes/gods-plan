@@ -17,3 +17,15 @@ export const ZUpdatePrice = z.object({
 })
 
 export type TUpdatePrice = z.infer<typeof ZUpdatePrice>
+
+export const ZGetFinanceStats = z.object({
+    date: z.string(),
+})
+
+export type TGetFinanceStats = z.infer<typeof ZGetFinanceStats>
+
+export const ZSearchOrders = z.object({
+    query: z.string().min(1, "Search query cannot be empty"),
+})
+
+export type TSearchOrders = z.infer<typeof ZSearchOrders>

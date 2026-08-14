@@ -47,9 +47,9 @@ export default function PageHeader({
                         className="flex h-10.5 w-10.5 shrink-0 cursor-pointer overflow-hidden rounded-full border border-white bg-[#CBD5E1] shadow-sm"
                         onClick={() => navigate("/profile")}
                     >
-                        {profile?.avatarUrl ? (
+                        {profile?.storeImage ? (
                             <img
-                                src={profile.avatarUrl}
+                                src={profile.storeImage}
                                 alt={profile.fullName}
                                 className="h-full w-full object-cover"
                             />

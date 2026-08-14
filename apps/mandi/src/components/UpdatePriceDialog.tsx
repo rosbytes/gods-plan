@@ -4,7 +4,7 @@ import Button from "./ui/Button"
 interface UpdatePriceDialogProps {
     isOpen: boolean
     onClose: () => void
-    currentPrice: number
+    currentPrice: number | null
     onUpdate: (price: number) => Promise<void>
     isLoading: boolean
 }
@@ -20,7 +20,7 @@ export default function UpdatePriceDialog({
 
     useEffect(() => {
         if (isOpen) {
-            setPriceInput(currentPrice > 0 ? currentPrice.toString() : "")
+            setPriceInput(currentPrice != null && currentPrice > 0 ? currentPrice.toString() : "")
         }
     }, [isOpen, currentPrice])
 

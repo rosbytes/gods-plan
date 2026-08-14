@@ -5,8 +5,16 @@ import {
     getSlotOrders,
     getGroupedOrders,
     updatePrice,
+    getFinanceStats,
+    searchOrders,
 } from "./vendor.controller"
-import { ZGetSlotOrders, ZGetGroupedOrders, ZUpdatePrice } from "./vendor.schema"
+import {
+    ZGetSlotOrders,
+    ZGetGroupedOrders,
+    ZUpdatePrice,
+    ZGetFinanceStats,
+    ZSearchOrders,
+} from "./vendor.schema"
 
 export const vendorRouter = router({
     getHomeStats: vendorProcedure.query(async ({ ctx }) => {
@@ -35,6 +43,20 @@ export const vendorRouter = router({
         return updatePrice({
             vendorId: ctx.id,
             price: input.price,
+        })
+    }),
+
+    getFinanceStats: vendorProcedure.input(ZGetFinanceStats).query(async ({ input, ctx }) => {
+        return getFinanceStats({
+            vendorId: ctx.id,
+            date: input.date,
+        })
+    }),
+
+    searchOrders: vendorProcedure.input(ZSearchOrders).query(async ({ input, ctx }) => {
+        return searchOrders({
+            vendorId: ctx.id,
+            query: input.query,
         })
     }),
 })

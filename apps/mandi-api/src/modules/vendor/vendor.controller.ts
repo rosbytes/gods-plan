@@ -1,6 +1,14 @@
 import { db, eq, and, gte, lte, marketMandiOrder, marketMandiOrderItem, marketStore } from "@ros/db"
 import { TRPCError } from "@trpc/server"
-import { getMandiStore, getOrders, getPrice, getVendorById, createPrice } from "./vendor.service"
+import {
+    getMandiStore,
+    getOrders,
+    getPrice,
+    createPrice,
+    getFullProfile,
+    getFinanceStatsForStore,
+    searchOrdersByQuery,
+} from "./vendor.service"
 
 export async function updatePrice({ vendorId, price }: { vendorId: string; price: number }) {
     try {
@@ -48,7 +56,7 @@ export async function getHomeStats({ vendorId }: { vendorId: string }) {
 
         // 2. Get the current vegetable price for the store
         const priceRecord = await getPrice(store.id)
-        const pricePerKg = priceRecord ? priceRecord.price / 100 : 0
+        const pricePerKg = priceRecord ? priceRecord.price / 100 : null
 
         // 3. Get the orders placed for this store
         const orders = await getOrders(store.id)
@@ -123,7 +131,7 @@ export async function getSlotOrders({ vendorId, slotId }: { vendorId: string; sl
                       minute: "2-digit",
                       hour12: true,
                   })
-                : "04:00 AM"
+                : undefined
 
             return {
                 id: o.orderCode,
@@ -145,26 +153,92 @@ export async function getSlotOrders({ vendorId, slotId }: { vendorId: string; sl
 
 export async function getProfile(vendorId: string) {
     try {
-        const vendor = await getVendorById(vendorId)
-        if (!vendor) {
+        const profile = await getFullProfile(vendorId)
+        if (!profile) {
             throw new TRPCError({
                 code: "NOT_FOUND",
                 message: "Mandi vendor not found",
             })
         }
-
-        return {
-            id: vendorId,
-            fullName: vendor.fullName,
-            primaryPhone: vendor.primaryPhone,
-            avatarUrl:
-                "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-        }
+        return profile
     } catch (error) {
         if (error instanceof TRPCError) throw error
         throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Failed to fetch vendor profile",
+        })
+    }
+}
+
+export async function getFinanceStats({ vendorId, date }: { vendorId: string; date: string }) {
+    try {
+        const store = await getMandiStore(vendorId)
+        if (!store) {
+            throw new TRPCError({
+                code: "NOT_FOUND",
+                message: "Mandi store not found",
+            })
+        }
+
+        if (isNaN(new Date(date).getTime())) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid date format" })
+        }
+
+        return getFinanceStatsForStore(store.id, date)
+    } catch (error) {
+        if (error instanceof TRPCError) throw error
+        throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to fetch finance stats",
+        })
+    }
+}
+
+export async function searchOrders({ vendorId, query }: { vendorId: string; query: string }) {
+    try {
+        const store = await getMandiStore(vendorId)
+        if (!store) {
+            throw new TRPCError({
+                code: "NOT_FOUND",
+                message: "Mandi store not found",
+            })
+        }
+
+        const results = await searchOrdersByQuery(store.id, query.trim())
+
+        return results.map((o) => {
+            let statusStr: "order-picked" | "cancelled" | "running-late" | "active" = "active"
+            if (o.status === "confirmed" || o.status === "delivered" || o.status === "accepted") {
+                statusStr = "order-picked"
+            } else if (o.status === "cancelled" || o.status === "rejected") {
+                statusStr = "cancelled"
+            } else if (o.status === "out_for_delivery") {
+                statusStr = "running-late"
+            }
+
+            const pickupTimeStr = o.createdAt
+                ? new Date(o.createdAt).toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                  })
+                : undefined
+
+            return {
+                id: o.orderCode,
+                name: o.marketStoreName,
+                quantity: o.quantityInGram / 1000,
+                status: statusStr,
+                totalBill: o.totalAmount / 100,
+                pickupTime: pickupTimeStr,
+                slot: o.slot ?? null,
+            }
+        })
+    } catch (error) {
+        if (error instanceof TRPCError) throw error
+        throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to search orders",
         })
     }
 }
@@ -225,12 +299,13 @@ export async function getGroupedOrders({ vendorId, date }: { vendorId: string; d
                 quantity: number
                 status: "order-picked" | "cancelled" | "running-late" | "active"
                 totalBill: number
-                pickupTime: string
+                pickupTime: string | undefined
             }>
         > = {}
 
         for (const o of orders) {
-            const slotNum = o.slot || 1
+            const slotNum = o.slot
+            if (!slotNum) continue // skip orders with no slot assignment
             if (!grouped[slotNum]) {
                 grouped[slotNum] = []
             }
@@ -252,7 +327,7 @@ export async function getGroupedOrders({ vendorId, date }: { vendorId: string; d
                       minute: "2-digit",
                       hour12: true,
                   })
-                : "04:00 AM"
+                : undefined
 
             grouped[slotNum].push({
                 id: o.orderCode,

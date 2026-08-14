@@ -96,9 +96,10 @@ export default function Profile() {
         logoutMutation.mutate()
     }
 
-    const name = profile?.fullName || "Sachin Tichkule"
-    const phone = profile?.primaryPhone || "+91 925126211"
-    const avatar = profile?.avatarUrl || "/assets/images/profile.jpg"
+    const name = profile?.fullName ?? null
+    const phone = profile?.primaryPhone ?? null
+    const alternatePhone = profile?.alternatePhone ?? null
+    const avatar = profile?.storeImage ?? null
 
     return (
         <AppLayout>
@@ -147,24 +148,38 @@ export default function Profile() {
                     <div className="mx-5 mt-4 rounded-xl bg-white p-5 shadow-xs md:mx-0 md:mt-0">
                         <div className="mb-4 flex items-center gap-4">
                             <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-[#CBD5E1] md:h-16 md:w-16">
-                                <img
-                                    src={avatar}
-                                    alt={name}
-                                    className="h-full w-full object-cover"
-                                />
+                                {avatar ? (
+                                    <img
+                                        src={avatar}
+                                        alt={name ?? "Vendor"}
+                                        className="h-full w-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="flex h-full w-full items-center justify-center">
+                                        <span className="font-apercu text-lg font-bold text-[#444444]">
+                                            {name ? name.charAt(0).toUpperCase() : "?"}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                             <div>
                                 <p className="font-apercu text-[20px] font-bold text-[#000000] md:text-lg">
-                                    {name}
+                                    {name ?? "—"}
                                 </p>
                                 <p className="font-apercu text-[16px] font-normal text-[#444444] md:text-sm">
-                                    Id: ROS402
+                                    Id: {profile?.id?.slice(0, 8).toUpperCase() ?? "—"}
                                 </p>
                             </div>
                         </div>
                         <InfoRow
                             label="Manage"
-                            value={<span className="text-[#0A5445]">Potato/ आलू</span>}
+                            value={
+                                <span className="text-[#0A5445]">
+                                    {profile?.vegName
+                                        ? `${profile.vegName}${profile.vegNameInHindi ? ` / ${profile.vegNameInHindi}` : ""}`
+                                        : "—"}
+                                </span>
+                            }
                         />
                     </div>
 
@@ -175,7 +190,9 @@ export default function Profile() {
                         </p>
                         <div className="flex items-center gap-2">
                             <p className="font-apercu text-[20px] font-bold text-[#444444] md:text-base">
-                                Verified: Aadhar Card
+                                {profile?.kycType
+                                    ? `Verified: ${profile.kycType.charAt(0).toUpperCase() + profile.kycType.slice(1)} Card`
+                                    : "Not submitted"}
                             </p>
                             <span className="hidden rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700 md:inline-block">
                                 ✓ Verified
@@ -219,19 +236,10 @@ export default function Profile() {
                                 Shop
                             </p>
                             <p className="font-apercu text-[20px] font-bold text-[#444444] md:text-lg">
-                                Ze-bros Vegetables
+                                {profile?.storeName ?? "—"}
                             </p>
                         </div>
-                        <InfoRow
-                            label="Address"
-                            value={
-                                <>
-                                    Shop no 33, Potato Block,
-                                    <br />
-                                    Muhana Mandi, Jaipur, 302029
-                                </>
-                            }
-                        />
+                        <InfoRow label="Address" value={profile?.storeAddress ?? "—"} />
                     </div>
 
                     {/* Contact Details Card */}
@@ -241,10 +249,10 @@ export default function Profile() {
                                 Primary
                             </p>
                             <p className="font-apercu text-[20px] font-bold text-[#444444] md:text-lg">
-                                {phone}
+                                {phone ?? "—"}
                             </p>
                         </div>
-                        <InfoRow label="Alternate" value="+91 926226211" />
+                        <InfoRow label="Alternate" value={alternatePhone ?? "—"} />
                     </div>
 
                     {/* Bank Details Card */}
@@ -254,7 +262,7 @@ export default function Profile() {
                                 Settlement Account
                             </p>
                             <p className="font-apercu text-[20px] font-bold text-[#444444] md:text-lg">
-                                6969 0420 0007 1971
+                                —
                             </p>
                         </div>
                         <div className="mb-4 border-t border-[#F2F3F6] pt-4">
@@ -262,10 +270,10 @@ export default function Profile() {
                                 IFSC Code
                             </p>
                             <p className="font-apercu text-[20px] font-bold text-[#444444] md:text-lg">
-                                LOKI0013
+                                —
                             </p>
                         </div>
-                        <InfoRow label="Account Name" value="Ze-bros Pvt. Ltd." />
+                        <InfoRow label="Account Name" value="—" />
                     </div>
                 </div>
             </div>

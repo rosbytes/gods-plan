@@ -1,25 +1,29 @@
-import { useState, useMemo } from "react"
+import { useState, useDeferredValue } from "react"
 import { useNavigate } from "react-router-dom"
-import SlotTabs from "@/components/SlotTabs"
 import { VendorList } from "@/components/VendorCard"
-import { BackArrowIcon, CalendarIcon } from "@/components/icons"
-import { SLOTS } from "@/data/slots"
-import { SEARCH_VENDORS } from "@/data/vendors"
+import { BackArrowIcon } from "@/components/icons"
+import { trpc } from "@/libs/trpc"
 import type { Vendor } from "@/types"
 
 export default function Search() {
     const navigate = useNavigate()
     const [searchQuery, setSearchQuery] = useState("")
-    const [_selectedSlot, setSelectedSlot] = useState(0)
     const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null)
 
-    const filteredVendors = useMemo(() => {
-        if (!searchQuery.trim()) return []
-        const query = searchQuery.toLowerCase()
-        return SEARCH_VENDORS.filter(
-            (v) => v.name.toLowerCase().includes(query) || v.id.includes(query),
-        )
-    }, [searchQuery])
+    // Defer query to avoid firing on every keystroke
+    const deferredQuery = useDeferredValue(searchQuery.trim())
+    const shouldSearch = deferredQuery.length > 0
+
+    const {
+        data: results = [],
+        isLoading,
+        isError,
+    } = trpc.vendor.searchOrders.useQuery(
+        { query: deferredQuery },
+        { enabled: shouldSearch, refetchOnWindowFocus: false },
+    )
+
+    const vendors = results as Vendor[]
 
     const handleSelectVendor = (vendor: Vendor) => {
         setSelectedVendor(selectedVendor?.id === vendor.id ? null : vendor)
@@ -45,13 +49,16 @@ export default function Search() {
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search by name or order ID..."
+                            placeholder="Search by vendor name or order ID..."
                             className="font-apercu flex-1 border-none bg-transparent text-[16px] font-semibold text-[#444444] outline-none placeholder:text-[#999999]"
                             autoFocus
                         />
                         {searchQuery && (
                             <button
-                                onClick={() => setSearchQuery("")}
+                                onClick={() => {
+                                    setSearchQuery("")
+                                    setSelectedVendor(null)
+                                }}
                                 className="ml-2 cursor-pointer border-none bg-transparent text-xl leading-none text-[#999999]"
                             >
                                 ×
@@ -61,24 +68,9 @@ export default function Search() {
                 </div>
             </div>
 
-            {/* Filters: Date & Slots */}
-            {searchQuery.trim().length > 0 && (
-                <>
-                    <div className="mt-2 px-5">
-                        <button className="flex items-center gap-3 rounded-[25px] bg-white px-4 py-3 shadow-sm">
-                            <span className="font-apercu text-[20px] font-semibold text-[#444444]">
-                                18 March, 2026
-                            </span>
-                            <CalendarIcon />
-                        </button>
-                    </div>
-                    <SlotTabs tabs={SLOTS} onTabChange={setSelectedSlot} />
-                </>
-            )}
-
             {/* Content Area */}
             <div className="mt-4 px-5">
-                {!searchQuery.trim() ? (
+                {!shouldSearch ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <p className="font-apercu text-center text-[24px] leading-7 font-semibold text-[#444444]">
                             Search by vendor name
@@ -86,7 +78,17 @@ export default function Search() {
                             or order ID
                         </p>
                     </div>
-                ) : filteredVendors.length === 0 ? (
+                ) : isLoading ? (
+                    <div className="flex items-center justify-center py-16">
+                        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#0B4E3E]" />
+                    </div>
+                ) : isError ? (
+                    <div className="flex flex-col items-center justify-center py-20">
+                        <p className="font-apercu text-center text-[20px] font-semibold text-red-500">
+                            Failed to search orders
+                        </p>
+                    </div>
+                ) : vendors.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <p className="font-apercu text-center text-[24px] font-semibold text-[#444444]">
                             No results found...
@@ -94,7 +96,7 @@ export default function Search() {
                     </div>
                 ) : (
                     <VendorList
-                        vendors={filteredVendors}
+                        vendors={vendors}
                         selectedVendorId={selectedVendor?.id ?? null}
                         onSelectVendor={handleSelectVendor}
                         highlightedVendor={selectedVendor}

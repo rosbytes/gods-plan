@@ -6,7 +6,6 @@ import StatsBar from "@/components/StatsBar"
 import SlotTabs from "@/components/SlotTabs"
 import { VendorList } from "@/components/VendorCard"
 import { getSlotDetails } from "@/data/slots"
-import { HOME_STATS } from "@/data/vendors"
 import type { Vendor } from "@/types"
 import { trpc } from "@/libs/trpc"
 import { toast } from "sonner"
@@ -22,7 +21,11 @@ export default function HomePage() {
     const utils = trpc.useUtils()
 
     // Fetch stats and slot orders from our backend API
-    const { data: stats } = trpc.vendor.getHomeStats.useQuery(undefined, {
+    const {
+        data: stats,
+        isLoading: isLoadingStats,
+        isError: isStatsError,
+    } = trpc.vendor.getHomeStats.useQuery(undefined, {
         refetchOnWindowFocus: false,
     })
 
@@ -109,9 +112,11 @@ export default function HomePage() {
             </div>
 
             <StatsBar
-                pricePerKg={stats?.pricePerKg ?? HOME_STATS.pricePerKg}
-                totalOrders={stats?.totalOrders ?? HOME_STATS.totalOrders}
-                totalQuantityKg={stats?.totalQuantityKg ?? HOME_STATS.totalQuantityKg}
+                pricePerKg={stats?.pricePerKg ?? null}
+                totalOrders={stats?.totalOrders ?? 0}
+                totalQuantityKg={stats?.totalQuantityKg ?? 0}
+                isLoading={isLoadingStats}
+                isError={isStatsError}
                 onPriceClick={() => setIsUpdatePriceOpen(true)}
             />
 
@@ -206,7 +211,9 @@ export default function HomePage() {
                                 <div className="flex items-center justify-between text-sm font-medium">
                                     <span className="text-gray-400">Rate per Kg</span>
                                     <span className="font-bold text-gray-900">
-                                        ₹ {stats?.pricePerKg ?? 24} / Kg
+                                        {stats?.pricePerKg != null
+                                            ? `₹ ${stats.pricePerKg} / Kg`
+                                            : "—"}
                                     </span>
                                 </div>
                             </div>
@@ -216,9 +223,9 @@ export default function HomePage() {
                                     Total Bill:
                                 </span>
                                 <span className="font-apercu text-2xl font-black text-[#0B4E3E]">
-                                    ₹{" "}
-                                    {selectedVendor.totalBill ??
-                                        selectedVendor.quantity * (stats?.pricePerKg ?? 24)}
+                                    {selectedVendor.totalBill != null
+                                        ? `₹ ${selectedVendor.totalBill.toLocaleString()}`
+                                        : "—"}
                                 </span>
                             </div>
 
@@ -226,7 +233,9 @@ export default function HomePage() {
                                 <Button onClick={handleCollect}>Collect Payment</Button>
                             ) : (
                                 <Button variant="status">
-                                    Pickup at {selectedVendor.pickupTime || "04:00 AM"}
+                                    {selectedVendor.pickupTime
+                                        ? `Pickup at ${selectedVendor.pickupTime}`
+                                        : "Pickup time not set"}
                                 </Button>
                             )}
                         </div>
@@ -260,7 +269,7 @@ export default function HomePage() {
             <UpdatePriceDialog
                 isOpen={isUpdatePriceOpen}
                 onClose={() => setIsUpdatePriceOpen(false)}
-                currentPrice={stats?.pricePerKg ?? 0}
+                currentPrice={stats?.pricePerKg ?? null}
                 onUpdate={handleUpdatePrice}
                 isLoading={updatePriceMutation.isPending}
             />
