@@ -9,6 +9,7 @@ import {
     ZUpdateMarketStoreSchema,
     ZSaveMandiStoreKycSchema,
     ZSaveMarketStoreKycSchema,
+    ZToggleStoreStatusSchema,
 } from "./store.schema"
 import {
     saveStore,
@@ -20,6 +21,7 @@ import {
     updateMarketStore,
     saveMandiStoreKyc,
     saveMarketStoreKyc,
+    toggleStoreStatus,
 } from "./store.controller"
 
 export const storeRouter = router({
@@ -36,4 +38,5 @@ export const storeRouter = router({
     //
     getKyc: adminProcedure.input(ZGetKycSchema).query(getKyc),
     // saveKyc: adminProcedure.input(ZSaveKycSchema).mutation(saveKyc),
+    toggleStatus: adminProcedure.input(ZToggleStoreStatusSchema).mutation(toggleStoreStatus),
 })

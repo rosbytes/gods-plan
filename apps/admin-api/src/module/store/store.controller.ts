@@ -9,6 +9,7 @@ import type {
     TUpdateMarketStoreSchema,
     TSaveMandiStoreKycSchema,
     TSaveMarketStoreKycSchema,
+    TToggleStoreStatusSchema,
 } from "./store.schema"
 import { db, marketStore, marketKycDoc, eq, and, mandiStore, mandiKycDoc } from "@ros/db"
 import type { AdminContext } from "../../middlewares"
@@ -285,6 +286,46 @@ export async function getKyc({ input }: { input: TGetKycSchema; ctx: AdminContex
         if (!result.length) throw new TRPCError({ message: "KYC not found", code: "NOT_FOUND" })
         return { kyc: result[0] }
     } catch (error) {
+        throw new TRPCError({
+            message: error instanceof Error ? error.message : "Database Error",
+            code: "INTERNAL_SERVER_ERROR",
+        })
+    }
+}
+
+export async function toggleStoreStatus({
+    input,
+}: {
+    input: TToggleStoreStatusSchema
+    ctx: AdminContext
+}) {
+    try {
+        const { storeId, type, field, value } = input
+
+        const updateData: { isActive?: boolean; isApproved?: boolean } = {}
+        if (field === "isActive") updateData.isActive = value
+        if (field === "isApproved") updateData.isApproved = value
+
+        if (type === "market") {
+            const [updated] = await db
+                .update(marketStore)
+                .set(updateData)
+                .where(eq(marketStore.id, storeId))
+                .returning()
+            if (!updated)
+                throw new TRPCError({ message: "Market store not found", code: "NOT_FOUND" })
+            return { success: true, store: updated }
+        }
+
+        const [updated] = await db
+            .update(mandiStore)
+            .set(updateData)
+            .where(eq(mandiStore.id, storeId))
+            .returning()
+        if (!updated) throw new TRPCError({ message: "Mandi store not found", code: "NOT_FOUND" })
+        return { success: true, store: updated }
+    } catch (error) {
+        if (error instanceof TRPCError) throw error
         throw new TRPCError({
             message: error instanceof Error ? error.message : "Database Error",
             code: "INTERNAL_SERVER_ERROR",

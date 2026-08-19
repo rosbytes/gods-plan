@@ -11,6 +11,83 @@ type KycDoc = {
     backUrl?: string
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Toggle Switch Component
+// ──────────────────────────────────────────────────────────────────────────────
+function ToggleSwitch({
+    checked,
+    onChange,
+    disabled,
+    id,
+}: {
+    checked: boolean
+    onChange: (val: boolean) => void
+    disabled?: boolean
+    id: string
+}) {
+    return (
+        <button
+            id={id}
+            type="button"
+            role="switch"
+            aria-checked={checked}
+            disabled={disabled}
+            onClick={() => onChange(!checked)}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                checked ? "bg-[#135B47]" : "bg-gray-200"
+            }`}
+        >
+            <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out ${
+                    checked ? "translate-x-5" : "translate-x-0.5"
+                }`}
+            />
+        </button>
+    )
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Status Row Component
+// ──────────────────────────────────────────────────────────────────────────────
+function StatusRow({
+    label,
+    description,
+    checked,
+    onChange,
+    isLoading,
+    id,
+}: {
+    label: string
+    description: string
+    checked: boolean
+    onChange: (val: boolean) => void
+    isLoading?: boolean
+    id: string
+}) {
+    return (
+        <div className="flex items-center justify-between gap-4 py-3">
+            <div className="flex flex-col">
+                <span className="text-[14px] font-semibold text-gray-800">{label}</span>
+                <span className="text-[12px] font-medium text-gray-400">{description}</span>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+                <span
+                    className={`rounded-md px-2 py-0.5 text-[11px] font-bold tracking-wide uppercase ${
+                        checked ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-500"
+                    }`}
+                >
+                    {checked ? "Yes" : "No"}
+                </span>
+                {isLoading ? (
+                    <div className="h-6 w-11 animate-pulse rounded-full bg-gray-200" />
+                ) : (
+                    <ToggleSwitch id={id} checked={checked} onChange={onChange} />
+                )}
+            </div>
+        </div>
+    )
+}
+
 export default function VendorProfile() {
     const navigate = useNavigate()
     const { vendorId } = useParams<{ vendorId: string }>()
@@ -40,6 +117,38 @@ export default function VendorProfile() {
         },
     })
 
+    const toggleVendorMutation = trpc.vendor.toggleStatus.useMutation({
+        onSuccess: (_, variables) => {
+            const label =
+                variables.field === "isApproved"
+                    ? variables.value
+                        ? "Vendor approved"
+                        : "Vendor approval revoked"
+                    : variables.value
+                      ? "Vendor activated"
+                      : "Vendor deactivated"
+            toast.success(label)
+            refetch()
+        },
+        onError: (err) => toast.error(err.message || "Failed to update vendor status"),
+    })
+
+    const toggleStoreMutation = trpc.store.toggleStatus.useMutation({
+        onSuccess: (_, variables) => {
+            const label =
+                variables.field === "isApproved"
+                    ? variables.value
+                        ? "Store approved"
+                        : "Store approval revoked"
+                    : variables.value
+                      ? "Store activated"
+                      : "Store deactivated"
+            toast.success(label)
+            refetch()
+        },
+        onError: (err) => toast.error(err.message || "Failed to update store status"),
+    })
+
     if (isLoading) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-[#F5F6F8]">
@@ -65,8 +174,11 @@ export default function VendorProfile() {
     }
 
     const { vendor, charge, type } = data
-    const store = (vendor as any).marketStores?.[0] ?? (vendor as any).mandiStores?.[0]
-    const kyc: KycDoc | null = (vendor as any).kycDocs?.[0] ?? null
+    const vendorAny = vendor as any
+    const store = vendorAny.marketStores?.[0] ?? vendorAny.mandiStores?.[0]
+    const kyc: KycDoc | null = vendorAny.kycDocs?.[0] ?? null
+    const vendorIsApproved: boolean = vendorAny.isApproved ?? false
+    const vendorIsActive: boolean = vendorAny.isActive ?? false
 
     const handleOpenEdit = () => {
         setFormData({
@@ -105,6 +217,25 @@ export default function VendorProfile() {
             hour12: true,
         })
     }
+
+    // ──── Toggle helpers ────────────────────────────────────────────────────
+    const handleVendorToggle = (field: "isActive" | "isApproved", value: boolean) => {
+        if (!vendorId) return
+        toggleVendorMutation.mutate({ vendorId, type, field, value })
+    }
+
+    const handleStoreToggle = (field: "isActive" | "isApproved", value: boolean) => {
+        if (!store?.id) return
+        toggleStoreMutation.mutate({
+            storeId: store.id,
+            type,
+            field,
+            value,
+        })
+    }
+
+    const isVendorToggling = toggleVendorMutation.isPending
+    const isStoreToggling = toggleStoreMutation.isPending
 
     return (
         <div className="flex min-h-screen flex-col bg-[#F5F6F8] pb-10 font-sans text-gray-900">
@@ -178,12 +309,39 @@ export default function VendorProfile() {
                                 )}
                             </div>
                         </div>
-                        <div className="flex flex-col">
+                        <div className="flex flex-1 flex-col">
                             <span className="text-[17px] font-bold tracking-tight text-gray-900 md:text-lg">
                                 {store?.storeName || vendor.fullName}
                             </span>
                             <span className="text-[14px] font-medium text-gray-400 capitalize">
                                 {type === "mandi" ? "Mandi Vendor" : "Market Vendor"}
+                            </span>
+                        </div>
+                        {/* Quick status badges */}
+                        <div className="flex flex-col items-end gap-1.5">
+                            <span
+                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${
+                                    vendorIsApproved
+                                        ? "bg-emerald-50 text-emerald-700"
+                                        : "bg-amber-50 text-amber-700"
+                                }`}
+                            >
+                                <span
+                                    className={`h-1.5 w-1.5 rounded-full ${vendorIsApproved ? "bg-emerald-500" : "bg-amber-500"}`}
+                                />
+                                {vendorIsApproved ? "Approved" : "Pending"}
+                            </span>
+                            <span
+                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${
+                                    vendorIsActive
+                                        ? "bg-blue-50 text-blue-700"
+                                        : "bg-gray-100 text-gray-500"
+                                }`}
+                            >
+                                <span
+                                    className={`h-1.5 w-1.5 rounded-full ${vendorIsActive ? "bg-blue-500" : "bg-gray-400"}`}
+                                />
+                                {vendorIsActive ? "Active" : "Inactive"}
                             </span>
                         </div>
                     </div>
@@ -244,6 +402,58 @@ export default function VendorProfile() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* ── Vendor Status & Approval ──────────────────────────── */}
+                        <div className="space-y-3">
+                            <h2 className="text-[15px] font-bold text-gray-600">
+                                Vendor Status & Approval
+                            </h2>
+                            <div className="divide-y divide-gray-100 rounded-2xl bg-white p-5 shadow-sm">
+                                <StatusRow
+                                    id="vendor-approved-toggle"
+                                    label="Approved"
+                                    description="Admin has reviewed and approved this vendor"
+                                    checked={vendorIsApproved}
+                                    isLoading={isVendorToggling}
+                                    onChange={(val) => handleVendorToggle("isApproved", val)}
+                                />
+                                <StatusRow
+                                    id="vendor-active-toggle"
+                                    label="Active"
+                                    description="Vendor can log in and use the platform"
+                                    checked={vendorIsActive}
+                                    isLoading={isVendorToggling}
+                                    onChange={(val) => handleVendorToggle("isActive", val)}
+                                />
+                            </div>
+                        </div>
+
+                        {/* ── Store Status & Approval ───────────────────────────── */}
+                        {store && (
+                            <div className="space-y-3">
+                                <h2 className="text-[15px] font-bold text-gray-600">
+                                    Store Status & Approval
+                                </h2>
+                                <div className="divide-y divide-gray-100 rounded-2xl bg-white p-5 shadow-sm">
+                                    <StatusRow
+                                        id="store-approved-toggle"
+                                        label="Approved"
+                                        description="Admin has approved this store's application"
+                                        checked={Boolean(store.isApproved)}
+                                        isLoading={isStoreToggling}
+                                        onChange={(val) => handleStoreToggle("isApproved", val)}
+                                    />
+                                    <StatusRow
+                                        id="store-active-toggle"
+                                        label="Active"
+                                        description="Store is visible and accepts orders"
+                                        checked={Boolean(store.isActive)}
+                                        isLoading={isStoreToggling}
+                                        onChange={(val) => handleStoreToggle("isActive", val)}
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         {/* Store Photo */}
                         <div className="space-y-3">

@@ -103,3 +103,11 @@ export const ZGetKycSchema = z.object({
 })
 
 export type TGetKycSchema = z.infer<typeof ZGetKycSchema>
+
+export const ZToggleStoreStatusSchema = z.object({
+    storeId: z.uuid("Invalid store ID"),
+    type: z.enum(["market", "mandi"]),
+    field: z.enum(["isActive", "isApproved"]),
+    value: z.boolean(),
+})
+export type TToggleStoreStatusSchema = z.infer<typeof ZToggleStoreStatusSchema>

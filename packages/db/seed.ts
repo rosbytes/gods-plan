@@ -272,6 +272,8 @@ async function main() {
                     alternatePhone: "+919999999911",
                     pin: hashedPin,
                     createdBy: superAdminRecord.id,
+                    isActive: true,
+                    isApproved: true,
                 })
                 .returning()
 
@@ -284,6 +286,8 @@ async function main() {
                     alternatePhone: null,
                     pin: hashedPin,
                     createdBy: superAdminRecord.id,
+                    isActive: true,
+                    isApproved: true,
                 })
                 .returning()
 
@@ -306,6 +310,8 @@ async function main() {
                     fullAddress: "Gala No. 45, Vashi Mandi, Navi Mumbai",
                     storeName: "Ramesh Tomato Wholesale",
                     storeImage: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877",
+                    isActive: true,
+                    isApproved: true,
                 })
                 .returning()
 
@@ -321,6 +327,8 @@ async function main() {
                     fullAddress: "Shop 102, Azadpur Mandi, Delhi",
                     storeName: "Amit Potato Merchant",
                     storeImage: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877",
+                    isActive: true,
+                    isApproved: true,
                 })
                 .returning()
 
@@ -473,6 +481,8 @@ async function main() {
                         alternatePhone: cfg.alternatePhone,
                         pin: hashedPin,
                         createdBy: superAdminRecord.id,
+                        isActive: true,
+                        isApproved: true,
                     })
                     .returning()
 
@@ -642,6 +652,8 @@ async function main() {
                         fullAddress: cfg.address,
                         radiusM: cfg.radiusM,
                         slot: vendor.slot,
+                        isActive: true,
+                        isApproved: true,
                     })
                     .returning()
 

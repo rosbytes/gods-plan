@@ -5,6 +5,7 @@ import type {
     TCreateMandiVendorSchema,
     TGetVendorSchema,
     TUpdateVendorSchema,
+    TToggleVendorStatusSchema,
 } from "./vendor.schema"
 import {
     db,
@@ -392,6 +393,46 @@ export async function updateVendor({ input }: { input: TUpdateVendorSchema }) {
         }
 
         throw new TRPCError({ message: "Vendor not found", code: "NOT_FOUND" })
+    } catch (error) {
+        if (error instanceof TRPCError) throw error
+        throw new TRPCError({
+            message: error instanceof Error ? error.message : "Database Error",
+            code: "INTERNAL_SERVER_ERROR",
+        })
+    }
+}
+
+export async function toggleVendorStatus({
+    input,
+}: {
+    input: TToggleVendorStatusSchema
+    ctx: AdminContext
+}) {
+    try {
+        const { vendorId, type, field, value } = input
+
+        const updateData: { isActive?: boolean; isApproved?: boolean } = {}
+        if (field === "isActive") updateData.isActive = value
+        if (field === "isApproved") updateData.isApproved = value
+
+        if (type === "market") {
+            const [updated] = await db
+                .update(marketVendor)
+                .set(updateData)
+                .where(eq(marketVendor.id, vendorId))
+                .returning()
+            if (!updated)
+                throw new TRPCError({ message: "Market vendor not found", code: "NOT_FOUND" })
+            return { success: true, vendor: updated }
+        }
+
+        const [updated] = await db
+            .update(mandiVendor)
+            .set(updateData)
+            .where(eq(mandiVendor.id, vendorId))
+            .returning()
+        if (!updated) throw new TRPCError({ message: "Mandi vendor not found", code: "NOT_FOUND" })
+        return { success: true, vendor: updated }
     } catch (error) {
         if (error instanceof TRPCError) throw error
         throw new TRPCError({

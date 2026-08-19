@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm"
-import { pgTable, uuid, doublePrecision, varchar } from "drizzle-orm/pg-core"
+import { pgTable, uuid, doublePrecision, varchar, boolean } from "drizzle-orm/pg-core"
 import { timestamps } from "../common-utils/columnHelpers"
 import { mandiVendor } from "./mandiVendor"
 import { mandi } from "./mandi"
@@ -31,6 +31,12 @@ export const mandiStore = pgTable("mandi_store", {
     storeImage: varchar("store_image", { length: 500 }),
 
     fullAddress: varchar("full_address", { length: 500 }).notNull(),
+
+    // if store is active or not (by default inactive)
+    isActive: boolean("is_active").default(false).notNull(),
+
+    // approved by admin (by default not approved)
+    isApproved: boolean("is_approved").default(false).notNull(),
 
     ...timestamps,
 })

@@ -6,6 +6,7 @@ import {
     ZGetVendorSchema,
     ZDeleteVendorSchema,
     ZUpdateVendorSchema,
+    ZToggleVendorStatusSchema,
 } from "./vendor.schema"
 import {
     listMarketVendors,
@@ -18,6 +19,7 @@ import {
     updateVendor,
     listVendors,
     deleteVendor,
+    toggleVendorStatus,
 } from "./vendor.controller"
 
 export const vendorRouter = router({
@@ -32,4 +34,5 @@ export const vendorRouter = router({
     getById: adminProcedure.input(ZGetVendorSchema).query(getVendor),
     update: adminProcedure.input(ZUpdateVendorSchema).mutation(updateVendor),
     delete: adminProcedure.input(ZDeleteVendorSchema).mutation(deleteVendor),
+    toggleStatus: adminProcedure.input(ZToggleVendorStatusSchema).mutation(toggleVendorStatus),
 })

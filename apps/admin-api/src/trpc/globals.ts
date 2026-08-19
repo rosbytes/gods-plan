@@ -1,15 +1,21 @@
 import { isAdmin } from "../middlewares"
 import { t } from "./trpc"
 // import { tokenBucket } from "../utils"
-// import { logger } from "../configs"
+import { env, logger } from "../configs"
 // import { isUser, isVendor, isBoard } from "../middlewares"
 
 // tRPC Logger for request and response duration, and path of the request
-const trpcLogger = t.middleware(async ({ path, type, next }) => {
+const trpcLogger = t.middleware(async ({ path, type, input, next }) => {
     const start = Date.now()
     const result = await next()
     const duration = Date.now() - start
-    // logger.info(`[tRPC] ${type} ${path} - ${duration}ms`)
+    logger.info(`[tRPC] ${type} ${path} - ${duration}ms`)
+    if (env.NODE_ENV !== "production") {
+        logger.info(`[tRPC] input: ${JSON.stringify(input, null, 2)}`)
+        logger.info(
+            `[tRPC] output: ${JSON.stringify(result.ok ? result.data : result.error, null, 2)}`,
+        )
+    }
     return result
 })
 

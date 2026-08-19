@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm"
-import { pgTable, uuid, integer, doublePrecision, varchar } from "drizzle-orm/pg-core"
+import { pgTable, uuid, integer, doublePrecision, varchar, boolean } from "drizzle-orm/pg-core"
 import { timestamps } from "../common-utils/columnHelpers"
 import { marketVendor } from "./marketVendor"
 import { mandi } from "./mandi"
@@ -31,6 +31,11 @@ export const marketStore = pgTable("market_store", {
     // slot is kind of batch, this will contain 10 vendor or stores of market vendor in a slot/batch then next slot will be assigned to new vendor,
     // and it will be probably based on sequence like first 10 vendor in slot 1 then 11 - 20 vendor in slot 2
     slot: integer(),
+
+    isActive: boolean("is_active").default(false).notNull(),
+
+    // approved by admin (by default not approved)
+    isApproved: boolean("is_approved").default(false).notNull(),
 
     ...timestamps,
 })

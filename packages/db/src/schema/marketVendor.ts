@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar } from "drizzle-orm/pg-core"
+import { boolean, pgTable, uuid, varchar } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 import { timestamps } from "../common-utils/columnHelpers"
 import { marketStore } from "./marketStore"
@@ -22,6 +22,11 @@ export const marketVendor = pgTable("market_vendor", {
     createdBy: uuid("created_by")
         .notNull()
         .references(() => admin.id, { onDelete: "restrict" }),
+
+    isActive: boolean("is_active").default(false).notNull(),
+
+    // approved by admin (by default not approved)
+    isApproved: boolean("is_approved").default(false).notNull(),
 
     ...timestamps,
 })
