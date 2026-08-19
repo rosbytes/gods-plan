@@ -4,6 +4,8 @@ import { timestamps } from "../common-utils/columnHelpers"
 import { marketVendor } from "./marketVendor"
 import { mandi } from "./mandi"
 
+import { marketStoreAgreement } from "./marketStoreAgreement"
+
 export const marketStore = pgTable("market_store", {
     id: uuid("id").primaryKey().defaultRandom(),
 
@@ -52,6 +54,8 @@ export const marketStoreRelations = relations(marketStore, ({ one }) => ({
         fields: [marketStore.vendorId],
         references: [marketVendor.id],
     }),
+
+    agreement: one(marketStoreAgreement),
 }))
 
 // Inferred types

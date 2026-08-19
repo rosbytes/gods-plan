@@ -10,6 +10,7 @@ import { vegRouter } from "../module/veg/veg.route"
 import { otpRouter } from "../module/otp/otp.route"
 import { adminUserRouter } from "../module/adminUser/adminUser.route"
 import { assetRouter } from "../module/asset/asset.route"
+import { agreementRouter } from "../module/agreement/agreement.route"
 
 // Define a simple router
 export const appRouter = router({
@@ -27,6 +28,7 @@ export const appRouter = router({
     otp: otpRouter,
     adminUser: adminUserRouter,
     asset: assetRouter,
+    agreement: agreementRouter,
 })
 
 // Export type definition of API

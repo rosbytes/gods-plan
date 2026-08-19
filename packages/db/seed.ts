@@ -26,6 +26,8 @@ import {
     marketMandiPaymentSplit,
     marketMandiPaymentStatusHistory,
     marketMandiPaymentWebhookEvent,
+    marketStoreAgreement,
+    mandiStoreAgreement,
 } from "./src/index"
 
 async function main() {
@@ -56,6 +58,8 @@ async function main() {
             await tx.delete(mandiPrice)
             await tx.delete(marketKycDoc)
             await tx.delete(mandiKycDoc)
+            await tx.delete(marketStoreAgreement)
+            await tx.delete(mandiStoreAgreement)
             await tx.delete(marketSubcriptionCharges)
             await tx.delete(mandiSubcriptionCharges)
             await tx.delete(marketStore)
@@ -393,6 +397,41 @@ async function main() {
             })
             console.log("✅ Mandi KYC Documents seeded.")
 
+            // 2.9b. Insert Mandi Store Agreements
+            console.log("📝 Seeding Mandi Store Agreements...")
+            await tx.insert(mandiStoreAgreement).values({
+                id: crypto.randomUUID(),
+                vendorId: mandiVendor1.id,
+                storeId: tomatoMandiStore.id,
+                agreementType: "nda_and_intent",
+                title: "NON-DISCLOSURE & PRE-COLLABORATION INTENT AGREEMENT",
+                version: "1.0",
+                termsSnapshot: "Standard Pre-Collaboration & NDA Terms accepted digitally via OTP.",
+                signerName: mandiVendor1.fullName,
+                signerPhone: mandiVendor1.primaryPhone,
+                verificationMethod: "otp",
+                verificationIdentifier: mandiVendor1.primaryPhone,
+                signedByAdminId: superAdminRecord.id,
+                signedAt: new Date(),
+            })
+
+            await tx.insert(mandiStoreAgreement).values({
+                id: crypto.randomUUID(),
+                vendorId: mandiVendor2.id,
+                storeId: potatoMandiStore.id,
+                agreementType: "nda_and_intent",
+                title: "NON-DISCLOSURE & PRE-COLLABORATION INTENT AGREEMENT",
+                version: "1.0",
+                termsSnapshot: "Standard Pre-Collaboration & NDA Terms accepted digitally via OTP.",
+                signerName: mandiVendor2.fullName,
+                signerPhone: mandiVendor2.primaryPhone,
+                verificationMethod: "otp",
+                verificationIdentifier: mandiVendor2.primaryPhone,
+                signedByAdminId: superAdminRecord.id,
+                signedAt: new Date(),
+            })
+            console.log("✅ Mandi Store Agreements seeded.")
+
             // 2.10. Insert Market Vendors & Wallets
             console.log("🤝 Seeding Market Vendors & Wallets...")
             const marketVendorConfigs = [
@@ -726,6 +765,30 @@ async function main() {
             }
             console.log("✅ Market KYC Documents seeded.")
 
+            // 2.12b. Insert Market Store Agreements
+            console.log("📝 Seeding Market Store Agreements...")
+            for (let i = 0; i < seededMarketStores.length; i++) {
+                const s = seededMarketStores[i]!
+                const v = seededMarketVendors[i]!
+                await tx.insert(marketStoreAgreement).values({
+                    id: crypto.randomUUID(),
+                    vendorId: v.id,
+                    storeId: s.id,
+                    agreementType: "nda_and_intent",
+                    title: "NON-DISCLOSURE & PRE-COLLABORATION INTENT AGREEMENT",
+                    version: "1.0",
+                    termsSnapshot:
+                        "Standard Pre-Collaboration & NDA Terms accepted digitally via OTP.",
+                    signerName: v.fullName,
+                    signerPhone: v.primaryPhone,
+                    verificationMethod: "otp",
+                    verificationIdentifier: v.primaryPhone,
+                    signedByAdminId: superAdminRecord.id,
+                    signedAt: new Date(),
+                })
+            }
+            console.log("✅ Market Store Agreements seeded.")
+
             // 2.13. Insert Mandi Subscription Charges
             console.log("💳 Seeding Mandi Subscription Charges...")
             const mandiSubDate1 = new Date()
@@ -1023,6 +1086,8 @@ async function main() {
             { Entity: "Market Stores", Count: 12 },
             { Entity: "Market Vendor Carts", Count: 2 },
             { Entity: "Market KYC Docs", Count: 3 },
+            { Entity: "Mandi Store Agreements", Count: 2 },
+            { Entity: "Market Store Agreements", Count: 12 },
             { Entity: "Mandi Subscription Charges", Count: 3 },
             { Entity: "Market Subscription Charges", Count: 4 },
             { Entity: "Market Mandi Orders", Count: 12 },

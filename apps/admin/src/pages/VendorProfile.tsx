@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom"
 import { trpc } from "../lib/trpc"
 import { toast } from "sonner"
 import { Button, Input, Modal } from "../components/ui"
+import { generateAndDownloadAgreementPdf } from "../lib/agreementPdf"
 
 type KycDoc = {
     storefrontUrl?: string
@@ -93,6 +94,7 @@ export default function VendorProfile() {
     const { vendorId } = useParams<{ vendorId: string }>()
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+    const [isAgreementModalOpen, setIsAgreementModalOpen] = useState(false)
     const [formData, setFormData] = useState({
         fullName: "",
         primaryPhone: "",
@@ -177,6 +179,7 @@ export default function VendorProfile() {
     const vendorAny = vendor as any
     const store = vendorAny.marketStores?.[0] ?? vendorAny.mandiStores?.[0]
     const kyc: KycDoc | null = vendorAny.kycDocs?.[0] ?? null
+    const agreement = store?.agreement ?? null
     const vendorIsApproved: boolean = vendorAny.isApproved ?? false
     const vendorIsActive: boolean = vendorAny.isActive ?? false
 
@@ -639,6 +642,189 @@ export default function VendorProfile() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* ── Store Agreement & Digital Verification ───────────────────────────── */}
+                        {store && (
+                            <div className="col-span-full space-y-3 pb-2">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-[15px] font-bold text-gray-600">
+                                        Store Agreement
+                                    </h2>
+                                    <span
+                                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold tracking-wide uppercase ${
+                                            agreement
+                                                ? "bg-emerald-50 text-emerald-700"
+                                                : "bg-amber-50 text-amber-700"
+                                        }`}
+                                    >
+                                        <span
+                                            className={`h-1.5 w-1.5 rounded-full ${
+                                                agreement ? "bg-emerald-500" : "bg-amber-500"
+                                            }`}
+                                        />
+                                        {agreement ? "Signed & Verified" : "Pending Agreement"}
+                                    </span>
+                                </div>
+
+                                <div className="space-y-4 rounded-2xl bg-white p-5 shadow-sm">
+                                    {agreement ? (
+                                        <>
+                                            <div className="flex flex-col gap-1 border-b border-gray-100 pb-3 sm:flex-row sm:items-center sm:justify-between">
+                                                <div>
+                                                    <p className="text-[14px] font-bold text-gray-800">
+                                                        {agreement.title ||
+                                                            "Vendor Service Agreement"}
+                                                    </p>
+                                                    <p className="text-[12px] text-gray-400">
+                                                        Version {agreement.version || "1.0"} •
+                                                        Standard Non-Disclosure & Intent Terms
+                                                    </p>
+                                                </div>
+                                                <span className="self-start rounded-md bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-600 sm:self-auto">
+                                                    Digital OTP Verified
+                                                </span>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                                <div>
+                                                    <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase">
+                                                        Signatory Name
+                                                    </p>
+                                                    <p className="text-[13px] font-bold text-gray-800">
+                                                        {agreement.signerName}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase">
+                                                        Verified Phone
+                                                    </p>
+                                                    <p className="text-[13px] font-bold text-gray-800">
+                                                        {agreement.signerPhone}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase">
+                                                        Signed Date & Time
+                                                    </p>
+                                                    <p className="text-[13px] font-bold text-gray-800">
+                                                        {formatDate(agreement.signedAt)}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase">
+                                                        Verification Method
+                                                    </p>
+                                                    <p className="text-[13px] font-bold text-gray-800">
+                                                        {agreement.verificationMethod?.toUpperCase()}{" "}
+                                                        (
+                                                        {agreement.verificationIdentifier ||
+                                                            agreement.signerPhone}
+                                                        )
+                                                    </p>
+                                                </div>
+                                                {agreement.signedByAdmin && (
+                                                    <div className="col-span-full">
+                                                        <p className="text-[11px] font-semibold tracking-wider text-gray-400 uppercase">
+                                                            Supervised / Recorded By Admin
+                                                        </p>
+                                                        <p className="text-[13px] font-medium text-gray-700">
+                                                            {agreement.signedByAdmin.name} (
+                                                            {agreement.signedByAdmin.email})
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="flex flex-wrap items-center gap-3 pt-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsAgreementModalOpen(true)}
+                                                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-gray-100 px-3.5 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-200"
+                                                >
+                                                    <svg
+                                                        width="14"
+                                                        height="14"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                    >
+                                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                        <circle cx="12" cy="12" r="3"></circle>
+                                                    </svg>
+                                                    View Agreement
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        generateAndDownloadAgreementPdf({
+                                                            name:
+                                                                agreement.signerName ||
+                                                                vendor.fullName,
+                                                            phone:
+                                                                agreement.signerPhone ||
+                                                                vendor.primaryPhone,
+                                                            storeId: store.id,
+                                                            date: formatDate(agreement.signedAt),
+                                                            verificationMethod:
+                                                                agreement.verificationMethod,
+                                                            verificationIdentifier:
+                                                                agreement.verificationIdentifier,
+                                                        })
+                                                    }
+                                                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#135B47] px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#0f4737]"
+                                                >
+                                                    <svg
+                                                        width="14"
+                                                        height="14"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                    >
+                                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                                    </svg>
+                                                    Download PDF
+                                                </button>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="flex flex-col items-start justify-between gap-3 py-2 sm:flex-row sm:items-center">
+                                            <div>
+                                                <p className="text-[14px] font-semibold text-gray-800">
+                                                    No Agreement Recorded
+                                                </p>
+                                                <p className="text-[12px] text-gray-500">
+                                                    The vendor has not yet completed the digital OTP
+                                                    agreement verification for this store.
+                                                </p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    navigate(
+                                                        `/agreement/${vendorId}/${store.id}?type=${
+                                                            type === "mandi"
+                                                                ? "mandi_vendor"
+                                                                : "market_vendor"
+                                                        }`,
+                                                    )
+                                                }
+                                                className="shrink-0 cursor-pointer rounded-xl bg-[#135B47] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#0f4737]"
+                                            >
+                                                Sign Agreement
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -708,6 +894,120 @@ export default function VendorProfile() {
                         </Button>
                     </div>
                 </form>
+            </Modal>
+
+            {/* View Signed Agreement Modal */}
+            <Modal
+                isOpen={isAgreementModalOpen}
+                onClose={() => setIsAgreementModalOpen(false)}
+                title="Signed Vendor Agreement"
+                subtitle={agreement?.title || "Pre-Collaboration Intent & NDA Agreement"}
+                maxWidth="lg"
+            >
+                <div className="space-y-4 pt-2">
+                    <div className="max-h-[60vh] space-y-3 overflow-y-auto rounded-xl bg-gray-50 p-4 text-[13px] leading-relaxed text-gray-700">
+                        <h4 className="text-center font-bold text-gray-900">
+                            NON-DISCLOSURE & PRE-COLLABORATION INTENT AGREEMENT
+                        </h4>
+                        <p className="text-center text-xs text-gray-500">
+                            Signed on {agreement ? formatDate(agreement.signedAt) : "N/A"}
+                        </p>
+
+                        <div className="rounded-lg border border-gray-200 bg-white p-3">
+                            <p className="font-bold text-gray-900">Between:</p>
+                            <p className="mt-1 font-semibold text-gray-800">
+                                Oneprovisiongrowth Pvt Ltd (Republic of Sabjiwala)
+                            </p>
+                            <p className="text-xs text-gray-500">
+                                PAN: AAECO7051N | CIN: U46301RJ2025PTC102143
+                            </p>
+                            <p className="mt-2 font-semibold text-gray-800">AND</p>
+                            <p className="mt-1 font-semibold text-gray-800">
+                                {agreement?.signerName || vendor.fullName}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                                Store: {store?.storeName || `Store_${store?.id?.substring(0, 8)}`} |
+                                Phone: {agreement?.signerPhone || vendor.primaryPhone}
+                            </p>
+                        </div>
+
+                        <p className="font-bold text-gray-900">1. Purpose</p>
+                        <p>
+                            The Company has shared its business model, operational plan, and
+                            collaboration structure with the Vendor. This Agreement protects
+                            confidentiality and records mutual intent.
+                        </p>
+
+                        <p className="font-bold text-gray-900">2. Confidentiality</p>
+                        <p>
+                            The Vendor agrees that all information shared by the Company shall be
+                            treated as strictly confidential and not disclosed to third parties.
+                        </p>
+
+                        <p className="font-bold text-gray-900">
+                            3. Expression of Intent & Good Faith
+                        </p>
+                        <p>
+                            Both parties agree to proceed in good faith towards formal commercial
+                            execution without competing or misusing disclosed materials.
+                        </p>
+
+                        <p className="font-bold text-gray-900">
+                            4. Digital Signature & Verification Certificate
+                        </p>
+                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-emerald-900">
+                            <p className="text-xs font-semibold text-emerald-800">
+                                Digitally Accepted & Verified
+                            </p>
+                            <p className="mt-1 text-xs">
+                                Signatory:{" "}
+                                <span className="font-semibold">{agreement?.signerName}</span> (
+                                {agreement?.signerPhone})
+                            </p>
+                            <p className="text-xs">
+                                Verification Method: {agreement?.verificationMethod?.toUpperCase()}{" "}
+                                Verification ({agreement?.verificationIdentifier})
+                            </p>
+                            <p className="text-xs">
+                                Timestamp: {agreement ? formatDate(agreement.signedAt) : "N/A"}
+                            </p>
+                            {agreement?.signedByAdmin && (
+                                <p className="text-xs">
+                                    Supervised By: {agreement.signedByAdmin.name} (
+                                    {agreement.signedByAdmin.email})
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsAgreementModalOpen(false)}
+                        >
+                            Close
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="primary"
+                            onClick={() => {
+                                if (agreement && store) {
+                                    generateAndDownloadAgreementPdf({
+                                        name: agreement.signerName || vendor.fullName,
+                                        phone: agreement.signerPhone || vendor.primaryPhone,
+                                        storeId: store.id,
+                                        date: formatDate(agreement.signedAt),
+                                        verificationMethod: agreement.verificationMethod,
+                                        verificationIdentifier: agreement.verificationIdentifier,
+                                    })
+                                }
+                            }}
+                        >
+                            Download PDF
+                        </Button>
+                    </div>
+                </div>
             </Modal>
         </div>
     )

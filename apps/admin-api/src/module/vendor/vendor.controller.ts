@@ -197,7 +197,15 @@ export async function getMarketVendor({ input }: { input: TGetVendorSchema }) {
         const vendor = await db.query.marketVendor.findFirst({
             where: eq(marketVendor.id, input.vendorId),
             with: {
-                marketStores: true,
+                marketStores: {
+                    with: {
+                        agreement: {
+                            with: {
+                                signedByAdmin: true,
+                            },
+                        },
+                    },
+                },
                 kycDocs: true,
             },
         })
@@ -225,7 +233,15 @@ export async function getMandiVendor({ input }: { input: TGetVendorSchema }) {
         const vendor = await db.query.mandiVendor.findFirst({
             where: eq(mandiVendor.id, input.vendorId),
             with: {
-                mandiStores: true,
+                mandiStores: {
+                    with: {
+                        agreement: {
+                            with: {
+                                signedByAdmin: true,
+                            },
+                        },
+                    },
+                },
                 kycDocs: true,
             },
         })
@@ -246,7 +262,15 @@ export async function getVendor({ input }: { input: TGetVendorSchema }) {
         const marketVendorData = await db.query.marketVendor.findFirst({
             where: eq(marketVendor.id, input.vendorId),
             with: {
-                marketStores: true,
+                marketStores: {
+                    with: {
+                        agreement: {
+                            with: {
+                                signedByAdmin: true,
+                            },
+                        },
+                    },
+                },
                 kycDocs: true,
             },
         })
@@ -268,7 +292,15 @@ export async function getVendor({ input }: { input: TGetVendorSchema }) {
         const mandiVendorData = await db.query.mandiVendor.findFirst({
             where: eq(mandiVendor.id, input.vendorId),
             with: {
-                mandiStores: true,
+                mandiStores: {
+                    with: {
+                        agreement: {
+                            with: {
+                                signedByAdmin: true,
+                            },
+                        },
+                    },
+                },
                 kycDocs: true,
             },
         })

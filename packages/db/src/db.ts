@@ -25,6 +25,8 @@ import * as marketKycDocSchema from "./schema/marketKycDoc"
 import * as mandiKycDocSchema from "./schema/mandiKycDoc"
 import * as marketSubscriptionChargesSchema from "./schema/marketSubscriptionCharges"
 import * as mandiSubscriptionChargesSchema from "./schema/mandiSubscriptionCharges"
+import * as marketStoreAgreementSchema from "./schema/marketStoreAgreement"
+import * as mandiStoreAgreementSchema from "./schema/mandiStoreAgreement"
 import * as enumsSchema from "./schema/enums"
 import { sql } from "drizzle-orm"
 
@@ -56,6 +58,8 @@ export const db = drizzle(client, {
         ...mandiKycDocSchema,
         ...marketSubscriptionChargesSchema,
         ...mandiSubscriptionChargesSchema,
+        ...marketStoreAgreementSchema,
+        ...mandiStoreAgreementSchema,
         ...enumsSchema,
     },
     casing: "snake_case",

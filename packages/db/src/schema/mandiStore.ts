@@ -5,6 +5,7 @@ import { mandiVendor } from "./mandiVendor"
 import { mandi } from "./mandi"
 import { veg } from "./veg"
 import { mandiPrice } from "./mandiPrice"
+import { mandiStoreAgreement } from "./mandiStoreAgreement"
 
 export const mandiStore = pgTable("mandi_store", {
     id: uuid("id").primaryKey().defaultRandom(),
@@ -62,6 +63,8 @@ export const mandiStoresRelations = relations(mandiStore, ({ one, many }) => ({
 
     // price history for this store
     mandiPrices: many(mandiPrice),
+
+    agreement: one(mandiStoreAgreement),
 }))
 
 // Inferred types

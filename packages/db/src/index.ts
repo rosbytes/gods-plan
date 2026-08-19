@@ -22,6 +22,8 @@ export { marketKycDoc } from "./schema/marketKycDoc"
 export { mandiKycDoc } from "./schema/mandiKycDoc"
 export { marketSubcriptionCharges } from "./schema/marketSubscriptionCharges"
 export { mandiSubcriptionCharges } from "./schema/mandiSubscriptionCharges"
+export { marketStoreAgreement, marketStoreAgreementRelations } from "./schema/marketStoreAgreement"
+export { mandiStoreAgreement, mandiStoreAgreementRelations } from "./schema/mandiStoreAgreement"
 
 // Payment tables
 export { marketMandiPayment } from "./schema/marketMandiPayment"
@@ -90,6 +92,14 @@ export type {
     MarketMandiPaymentSplitInsert,
     MarketMandiPaymentSplitSelect,
 } from "./schema/marketMandiPaymentSplit"
+export type {
+    MarketStoreAgreementInsert,
+    MarketStoreAgreementSelect,
+} from "./schema/marketStoreAgreement"
+export type {
+    MandiStoreAgreementInsert,
+    MandiStoreAgreementSelect,
+} from "./schema/mandiStoreAgreement"
 export type { VegInsert, VegSelect } from "./schema/veg"
 
 // DB Utils from drizzle-orm package

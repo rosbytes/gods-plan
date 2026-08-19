@@ -1,9 +1,14 @@
 import { useState, useEffect, useRef } from "react"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { trpc } from "../lib/trpc"
-import { jsPDF } from "jspdf"
 import { parseVendorType } from "../constants/vendor"
 import { toast } from "sonner"
+import {
+    AGREEMENT_TITLE,
+    AGREEMENT_VERSION,
+    getAgreementTextLines,
+    generateAndDownloadAgreementPdf,
+} from "../lib/agreementPdf"
 
 declare global {
     interface Window {
@@ -82,12 +87,51 @@ export default function VendorAgreement() {
     const msg91Phone = formatPhoneForMsg91(rawPhone)
     const displayPhone = formatPhoneForDisplay(rawPhone)
 
+    const signAgreementMutation = trpc.agreement.sign.useMutation()
+
+    const onVerificationComplete = async (verificationIdentifier?: string) => {
+        try {
+            if (vendorId && storeId) {
+                const dateStr = new Date().toLocaleString("en-IN")
+                const vendorName = vendorData?.vendor?.fullName || "Vendor"
+                const lines = getAgreementTextLines({
+                    date: dateStr,
+                    name: vendorName,
+                    storeId,
+                    phone: displayPhone,
+                })
+
+                await signAgreementMutation.mutateAsync({
+                    vendorId,
+                    storeId,
+                    type: vendorType === "mandi_vendor" ? "mandi" : "market",
+                    signerName: vendorName,
+                    signerPhone: rawPhone,
+                    verificationMethod: "otp",
+                    verificationIdentifier: verificationIdentifier || msg91Phone || rawPhone,
+                    title: AGREEMENT_TITLE,
+                    version: AGREEMENT_VERSION,
+                    termsSnapshot: lines.join("\n"),
+                })
+            }
+        } catch (e) {
+            console.error("Error signing agreement:", e)
+        }
+
+        generateAndDownloadAgreementPdf({
+            name: vendorData?.vendor?.fullName || "[Vendor Name]",
+            phone: displayPhone,
+            storeId: storeId || "",
+        })
+
+        toast.success("Agreement signed & OTP verified successfully")
+        navigate(`/registered/${vendorId}/${storeId}${typeParam}`)
+    }
+
     // ── tRPC OTP mutation (verify access token with MSG91 backend) ───────────
     const verifyAccessTokenMutation = trpc.otp.verifyAccessToken.useMutation({
         onSuccess: () => {
-            toast.success("OTP verified successfully")
-            generateAgreementPdf()
-            navigate(`/registered/${vendorId}/${storeId}${typeParam}`)
+            onVerificationComplete()
         },
         onError: (err) => {
             setError(err.message || "Access token verification failed")
@@ -251,97 +295,6 @@ export default function VendorAgreement() {
         }
     }
 
-    const generateAgreementPdf = () => {
-        const doc = new jsPDF()
-        const date = new Date().toLocaleDateString("en-IN")
-        const name = vendorData?.vendor?.fullName || "[Vendor Name]"
-        const phone = displayPhone
-
-        const margin = 15
-        const pageW = doc.internal.pageSize.getWidth()
-        let cursorY = 20
-
-        doc.setFontSize(14)
-        doc.setFont("helvetica", "bold")
-        doc.text("NON-DISCLOSURE & PRE-COLLABORATION INTENT AGREEMENT", pageW / 2, cursorY, {
-            align: "center",
-        })
-
-        cursorY += 15
-        doc.setFontSize(10)
-        doc.setFont("helvetica", "normal")
-
-        const lines = [
-            `This Agreement is entered into on ${date}, by and between:`,
-            "",
-            "Oneprovisiongrowth Pvt Ltd",
-            "(Operating under the brand name Republic of Sabjiwala)",
-            "PAN: AAECO7051N",
-            "CIN: U46301RJ2025PTC102143",
-            '(Hereinafter referred to as the "Company")',
-            "",
-            "AND",
-            "",
-            `${name}`,
-            `Business Name: Store_${storeId?.substring(0, 8)}`,
-            '(Hereinafter referred to as the "Vendor")',
-            "",
-            'Collectively referred to as the "Parties".',
-            "",
-            "1. Purpose",
-            "The Company has shared its business model, operational plan, and collaboration structure with the Vendor.",
-            "This Agreement is intended to:",
-            "• Protect the confidentiality of the shared information",
-            "• Record the Vendor's interest and intent to collaborate with the Company",
-            "",
-            "2. Confidentiality",
-            "The Vendor agrees that all information shared by the Company, including business model, pricing, vendor structure, and operational strategy, shall be treated as strictly confidential and shall not be disclosed or used for any unauthorized purpose.",
-            "",
-            "3. Acknowledgment of Discussion",
-            "The Vendor confirms that:",
-            "• The Company has explained its business model and collaboration structure",
-            "• The Vendor has understood the concept and opportunity",
-            "",
-            "4. Expression of Intent",
-            "The Vendor expresses a clear willingness and interest to collaborate with the Company.",
-            "The Vendor agrees that:",
-            "• They are open to entering into a formal legal agreement with the Company",
-            "• They will not engage in any competing or conflicting activity using the shared information during this interim period",
-            "",
-            "5. Interim Understanding",
-            "Until a formal agreement is executed:",
-            "• Both Parties agree to proceed in good faith",
-            "• This document acts as a temporary understanding and commitment of intent, not a final commercial agreement",
-            "",
-            "8. Digital Acceptance",
-            "This Agreement shall be considered valid upon Digital Confirmation / OTP Verification.",
-            "Such acceptance shall be legally valid under applicable Indian laws, including the Information Technology Act, 2000.",
-            "",
-            "10. Acceptance",
-            "Vendor",
-            `Name: ${name}`,
-            `Contact Number: ${phone}`,
-            "Acceptance Statement:",
-            '"I confirm that I have understood the discussion and agree to the above terms."',
-            "",
-            `Digital Confirmation: verified via OTP (${phone})`,
-            `Date: ${date}`,
-        ]
-
-        doc.setFontSize(10)
-        lines.forEach((line) => {
-            if (cursorY > doc.internal.pageSize.getHeight() - 20) {
-                doc.addPage()
-                cursorY = 20
-            }
-            const splitLines = doc.splitTextToSize(line, pageW - margin * 2)
-            doc.text(splitLines, margin, cursorY)
-            cursorY += splitLines.length * 5
-        })
-
-        doc.save(`Vendor_Agreement_${name.replace(/\s+/g, "_")}.pdf`)
-    }
-
     const handleVerify = () => {
         const code = otp.join("")
         if (code.length !== 4 || verifying) return
@@ -375,8 +328,7 @@ export default function VendorAgreement() {
                 handleVerifyAccessToken(token)
             } else {
                 finishVerify()
-                generateAgreementPdf()
-                navigate(`/registered/${vendorId}/${storeId}${typeParam}`)
+                onVerificationComplete(data?.reqId || msg91Phone)
             }
         }
 
