@@ -2,7 +2,7 @@
 
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ContactSchema } from "src/Schemas/ContactSchema";
+import { ContactSchema } from "@/Schemas/ContactSchema";
 import { z } from "zod";
 import { socialLinks } from "@/constant";
 
