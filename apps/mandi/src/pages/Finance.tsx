@@ -35,7 +35,7 @@ export default function Finance() {
     })
 
     // Group slot payments by slot number
-    const slotGroups: Record<number, typeof finance.slotPayments> = {}
+    const slotGroups: Record<number, NonNullable<typeof finance>["slotPayments"]> = {}
     if (finance) {
         for (const p of finance.slotPayments) {
             if (!slotGroups[p.slot]) slotGroups[p.slot] = []

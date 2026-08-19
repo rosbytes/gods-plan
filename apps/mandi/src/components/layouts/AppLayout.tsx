@@ -148,7 +148,7 @@ export default function AppLayout({ children, showNav = true, className = "" }: 
                     {profile && (
                         <div className="flex items-center gap-3">
                             <img
-                                src={profile.storeImage}
+                                src={profile.storeImage ?? undefined}
                                 alt={profile.fullName}
                                 className="h-11 w-11 rounded-full border border-white/20 object-cover shadow-sm"
                             />

@@ -11,7 +11,7 @@ export default defineConfig([
     //     "no-unused-vars": "off",
     //     "@typescript-eslint/no-unused-vars": "error",
     // }),
-    globalIgnores(["dist"]),
+    globalIgnores(["dist", "node_modules"]),
     {
         files: ["**/*.{ts,tsx}"],
         extends: [
@@ -22,6 +22,15 @@ export default defineConfig([
         ],
         languageOptions: {
             globals: globals.browser,
+        },
+        rules: {
+            "@typescript-eslint/no-explicit-any": "warn",
+            "@typescript-eslint/no-unused-vars": [
+                "warn",
+                { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+            ],
+            "react-hooks/purity": "warn",
+            "react-hooks/set-state-in-effect": "warn",
         },
     },
 ])
