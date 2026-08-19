@@ -5,6 +5,7 @@
         "build": "turbo build",
         "dev": "turbo dev",
         "lint": "turbo lint",
+        "typecheck": "turbo typecheck",
         "prepare": "husky || true",
         "format": "prettier --write .",
         "format:check": "prettier --check ."
@@ -15,9 +16,9 @@
     "devDependencies": {
         "husky": "^9.1.7",
         "lint-staged": "^16.4.0",
-        "prettier": "^3.8.1",
-        "prettier-plugin-tailwindcss": "^0.7.2",
-        "turbo": "^2.10.5"
+        "prettier": "^3.8.3",
+        "prettier-plugin-tailwindcss": "^0.8.0",
+        "turbo": "^2.10.9"
     },
     "packageManager": "pnpm@11.19.0+sha512.7881f3ed590d472c4a955e2b88b2121791116066dcc88cbca3849ec9b60f1bbaa6d2ccb221fa91da4e1c65bef2bcbe379365aea7ac539c7bf86dedc3a1b22dce",
     "engines": {

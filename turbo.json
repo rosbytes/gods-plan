@@ -10,10 +10,14 @@
             "outputs": [".next/**", "!.next/cache/**", "dist/**", "bundle.cjs*", "index.js"]
         },
         "prod:build": {
+            "dependsOn": ["^build"],
             "outputs": [".next/**", "!.next/cache/**", "dist/**", "bundle.cjs*", "index.js"]
         },
         "lint": {
-            "dependsOn": ["^lint"]
+            "dependsOn": []
+        },
+        "typecheck": {
+            "dependsOn": ["^build"]
         },
         "dev": {
             "cache": false,
