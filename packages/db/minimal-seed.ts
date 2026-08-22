@@ -170,7 +170,6 @@ async function main() {
                     alternatePhone: null,
                     pin: hashedPin,
                     createdBy: adminRecord.id,
-                    isActive: true,
                     isApproved: true,
                 })
                 .returning()
@@ -267,7 +266,6 @@ async function main() {
                     alternatePhone: null,
                     pin: hashedPin,
                     createdBy: adminRecord.id,
-                    isActive: true,
                     isApproved: true,
                 })
                 .returning()

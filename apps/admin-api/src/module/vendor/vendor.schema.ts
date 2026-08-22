@@ -43,7 +43,7 @@ export type TUpdateVendorSchema = z.infer<typeof ZUpdateVendorSchema>
 export const ZToggleVendorStatusSchema = z.object({
     vendorId: z.uuid("Invalid vendor ID"),
     type: z.enum(["market", "mandi"]),
-    field: z.enum(["isActive", "isApproved"]),
+    field: z.enum(["isApproved"]),
     value: z.boolean(),
 })
 export type TToggleVendorStatusSchema = z.infer<typeof ZToggleVendorStatusSchema>

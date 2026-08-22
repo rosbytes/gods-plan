@@ -22,8 +22,6 @@ export const mandiVendor = pgTable("mandi_vendor", {
         .notNull()
         .references(() => admin.id, { onDelete: "restrict" }),
 
-    isActive: boolean("is_active").default(false).notNull(),
-
     // approved by admin (by default not approved)
     isApproved: boolean("is_approved").default(false).notNull(),
 

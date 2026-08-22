@@ -276,7 +276,6 @@ async function main() {
                     alternatePhone: "+919999999911",
                     pin: hashedPin,
                     createdBy: superAdminRecord.id,
-                    isActive: true,
                     isApproved: true,
                 })
                 .returning()
@@ -290,7 +289,6 @@ async function main() {
                     alternatePhone: null,
                     pin: hashedPin,
                     createdBy: superAdminRecord.id,
-                    isActive: true,
                     isApproved: true,
                 })
                 .returning()
@@ -520,7 +518,6 @@ async function main() {
                         alternatePhone: cfg.alternatePhone,
                         pin: hashedPin,
                         createdBy: superAdminRecord.id,
-                        isActive: true,
                         isApproved: true,
                     })
                     .returning()

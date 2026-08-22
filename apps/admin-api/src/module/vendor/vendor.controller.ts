@@ -443,8 +443,7 @@ export async function toggleVendorStatus({
     try {
         const { vendorId, type, field, value } = input
 
-        const updateData: { isActive?: boolean; isApproved?: boolean } = {}
-        if (field === "isActive") updateData.isActive = value
+        const updateData: { isApproved?: boolean } = {}
         if (field === "isApproved") updateData.isApproved = value
 
         if (type === "market") {
