@@ -5,8 +5,34 @@
     "start_url": "/",
     "scope": "/",
     "display": "standalone",
-    "background_color": "#000000",
-    "theme_color": "#000000",
+    "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+    "orientation": "any",
+    "categories": ["business", "productivity", "management"],
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "shortcuts": [
+        {
+            "name": "Dashboard",
+            "short_name": "Dashboard",
+            "description": "View Admin Dashboard and stats",
+            "url": "/dashboard",
+            "icons": [{ "src": "/icons/maskable_icon_x96.png", "sizes": "96x96" }]
+        },
+        {
+            "name": "New Vendor",
+            "short_name": "New Vendor",
+            "description": "Onboard a new vendor",
+            "url": "/create-vendor",
+            "icons": [{ "src": "/icons/maskable_icon_x96.png", "sizes": "96x96" }]
+        },
+        {
+            "name": "Manage Mandis",
+            "short_name": "Mandis",
+            "description": "Manage Mandi locations",
+            "url": "/manage/mandis",
+            "icons": [{ "src": "/icons/maskable_icon_x96.png", "sizes": "96x96" }]
+        }
+    ],
     "icons": [
         {
             "purpose": "any",

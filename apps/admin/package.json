@@ -24,6 +24,7 @@
         "react-router-dom": "^7.14.0",
         "sonner": "^2.0.8",
         "tailwindcss": "^4.3.3",
+        "workbox-window": "^7.4.1",
         "zod": "^4.4.3"
     },
     "devDependencies": {
@@ -41,6 +42,7 @@
         "globals": "^17.4.0",
         "typescript": "~6.0.3",
         "typescript-eslint": "^8.66.0",
-        "vite": "^8.2.1"
+        "vite": "^8.2.1",
+        "vite-plugin-pwa": "^1.3.0"
     }
 }

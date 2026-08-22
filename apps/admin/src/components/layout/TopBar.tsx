@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom"
-import { MenuIcon, PlusIcon } from "../common/Icons"
+import { MenuIcon, PlusIcon, DownloadIcon } from "../common/Icons"
 import { Button } from "../ui"
+import { usePwaInstall } from "../../hooks/usePwaInstall"
 
 export interface TopBarProps {
     onOpenMobile: () => void
@@ -10,6 +11,7 @@ export interface TopBarProps {
 
 export function TopBar({ onOpenMobile, title = "Dashboard", subtitle }: TopBarProps) {
     const navigate = useNavigate()
+    const { canInstall, install } = usePwaInstall()
 
     return (
         <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-gray-200/80 bg-white/90 px-4 backdrop-blur-md sm:px-6">
@@ -37,6 +39,18 @@ export function TopBar({ onOpenMobile, title = "Dashboard", subtitle }: TopBarPr
 
             {/* Right Section: System Status & Action Button */}
             <div className="flex items-center gap-3">
+                {canInstall && (
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        icon={<DownloadIcon size={16} />}
+                        onClick={install}
+                        className="animate-fade-in"
+                    >
+                        Install App
+                    </Button>
+                )}
+
                 <div className="hidden items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50/80 px-3 py-1 text-xs font-semibold text-[#135B47] sm:flex">
                     <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
                     <span>System Active</span>

@@ -68,7 +68,7 @@ export interface RazorpayOptions {
         contact?: string
         method?: "card" | "netbanking" | "wallet" | "emi" | "upi"
     }
-    notes?: {}
+    notes?: Record<string, unknown>
     theme?: {
         hide_topbar?: boolean
         color?: string
