@@ -1,0 +1,30 @@
+{
+    "name": "@ros/assets",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "main": "./dist/index.mjs",
+    "types": "./dist/index.d.mts",
+    "scripts": {
+        "build": "pnpm typecheck && tsdown",
+        "typecheck": "tsc --noEmit",
+        "lint": "echo 'No lint needed for assets'"
+    },
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.mts",
+            "import": "./dist/index.mjs",
+            "default": "./dist/index.mjs"
+        },
+        "./favicons/*": "./favicons/*",
+        "./icons/*": "./icons/*",
+        "./brand/*": "./brand/*"
+    },
+    "dependencies": {
+        "tsdown": "^0.22.14"
+    },
+    "devDependencies": {
+        "@types/node": "^26.2.0",
+        "typescript": "^6.0.3"
+    }
+}

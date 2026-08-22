@@ -19,6 +19,7 @@ Welcome to the **ROS Monorepo (**`gods-plan`**)**. This is the **root entry poin
 | `packages/db`      | `@ros/db`         | PostgreSQL schemas & migrations      | [packages/db/AGENTS.md](packages/db/AGENTS.md)           |
 | `packages/commons` | `@ros/commons`    | Shared pure utilities                | [packages/commons/AGENTS.md](packages/commons/AGENTS.md) |
 | `packages/ui`      | `@ros/ui`         | Shared UI component library          | [packages/ui/AGENTS.md](packages/ui/AGENTS.md)           |
+| `packages/assets`  | `@ros/assets`     | Shared brand logos, favicons & icons | [packages/assets/AGENTS.md](packages/assets/AGENTS.md)   |
 
 **Design system reference:** [DESIGN.md](DESIGN.md)
 

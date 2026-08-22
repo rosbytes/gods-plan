@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { trpc } from "../lib/trpc"
-import ROSLogo from "../assets/logo/ros-black.svg"
+import ROSLogo from "@ros/assets/brand/ros-black.svg"
 import { SpinnerIcon } from "../components/common/Icons"
 import { PhoneInput } from "@ros/ui"
 import { ForgotPinModal } from "../components/auth/ForgotPinModal"
