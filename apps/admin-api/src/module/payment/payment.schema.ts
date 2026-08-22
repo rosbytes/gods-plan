@@ -1,9 +1,14 @@
 import { z } from "zod"
 
+export const ZGetRegistrationFeeSchema = z.object({
+    vendorType: z.enum(["market_vendor", "mandi_vendor"]),
+})
+
 export const ZCreateOrderSchema = z.object({
     storeId: z.uuid(),
     vendorId: z.uuid(),
     vendorType: z.enum(["market_vendor", "mandi_vendor"]),
+    idempotencyKey: z.string().min(1).optional(),
 })
 
 export const ZGetPaymentStatusSchema = z.object({

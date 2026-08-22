@@ -1,13 +1,21 @@
 import { router, adminProcedure } from "../../trpc"
 import {
+    ZGetRegistrationFeeSchema,
     ZCreateOrderSchema,
     ZGetPaymentStatusSchema,
     ZVerifyPaymentSchema,
     ZSkipPaymentSchema,
 } from "./payment.schema"
-import { createOrder, getPaymentStatus, verifyPayment, skipPayment } from "./payment.controller"
+import {
+    getRegistrationFee,
+    createOrder,
+    getPaymentStatus,
+    verifyPayment,
+    skipPayment,
+} from "./payment.controller"
 
 export const paymentRouter = router({
+    getRegistrationFee: adminProcedure.input(ZGetRegistrationFeeSchema).query(getRegistrationFee),
     createOrder: adminProcedure.input(ZCreateOrderSchema).mutation(createOrder),
     getPaymentStatus: adminProcedure.input(ZGetPaymentStatusSchema).query(getPaymentStatus),
     verifyPayment: adminProcedure.input(ZVerifyPaymentSchema).mutation(verifyPayment),

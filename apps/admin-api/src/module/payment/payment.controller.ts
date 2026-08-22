@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server"
-import { razorpay } from "../../configs"
+import { env, razorpay } from "../../configs"
 import {
     db,
     marketSubcriptionCharges,
@@ -13,15 +13,39 @@ import {
 import crypto from "crypto"
 import type { AdminContext } from "../../middlewares"
 
-const MANDI_REGISTRATION_AMOUNT_PAISE = 10000 * 100 // ₹10,000 in paise (1,000,000)
-const MARKET_REGISTRATION_AMOUNT_PAISE = 5000 * 100 // ₹5,000 in paise (500,000)
+const MANDI_REGISTRATION_AMOUNT_PAISE = env.NODE_ENV === "development" ? 1 * 100 : 10000 * 100 // ₹10,000 in paise (1,000,000)
+const MARKET_REGISTRATION_AMOUNT_PAISE = env.NODE_ENV === "development" ? 1 * 100 : 5000 * 100 // ₹5,000 in paise (500,000)
+
+// ─── Get Registration Fee ─────────────────────────────────────────────────────
+export const getRegistrationFee = async ({
+    input,
+}: {
+    input: { vendorType: "market_vendor" | "mandi_vendor" }
+    ctx: AdminContext
+}) => {
+    const amountPaise =
+        input.vendorType === "mandi_vendor"
+            ? MANDI_REGISTRATION_AMOUNT_PAISE
+            : MARKET_REGISTRATION_AMOUNT_PAISE
+
+    return {
+        amountPaise,
+        amountRupees: amountPaise / 100,
+        currency: "INR",
+    }
+}
 
 // ─── Create Razorpay Order ────────────────────────────────────────────────────
 export const createOrder = async ({
     input,
     ctx,
 }: {
-    input: { storeId: string; vendorId: string; vendorType: "market_vendor" | "mandi_vendor" }
+    input: {
+        storeId: string
+        vendorId: string
+        vendorType: "market_vendor" | "mandi_vendor"
+        idempotencyKey?: string
+    }
     ctx: AdminContext
 }) => {
     try {
@@ -50,7 +74,52 @@ export const createOrder = async ({
             vendorData = market
         }
 
-        // 2. Create Razorpay order (Razorpay requires amount in paise)
+        // 2. Check for existing pending record with a valid Razorpay order (idempotency)
+        let existingOrderId: string | null = null
+        if (isMandi) {
+            const [existing] = await db
+                .select()
+                .from(mandiSubcriptionCharges)
+                .where(
+                    and(
+                        eq(mandiSubcriptionCharges.vendorId, input.vendorId),
+                        eq(mandiSubcriptionCharges.paymentStatus, "pending"),
+                    ),
+                )
+                .limit(1)
+            if (existing?.gatewayOrderId && !existing.gatewayOrderId.startsWith("skipped_")) {
+                existingOrderId = existing.gatewayOrderId
+            }
+        } else {
+            const [existing] = await db
+                .select()
+                .from(marketSubcriptionCharges)
+                .where(
+                    and(
+                        eq(marketSubcriptionCharges.vendorId, input.vendorId),
+                        eq(marketSubcriptionCharges.paymentStatus, "pending"),
+                    ),
+                )
+                .limit(1)
+            if (existing?.gatewayOrderId && !existing.gatewayOrderId.startsWith("skipped_")) {
+                existingOrderId = existing.gatewayOrderId
+            }
+        }
+
+        // If an existing Razorpay order exists, reuse it
+        if (existingOrderId) {
+            console.log("[createOrder] Reusing existing Razorpay order:", existingOrderId)
+            return {
+                orderId: existingOrderId,
+                amount: amountPaise,
+                currency: "INR",
+                keyId: env.RAZORPAY_KEY_ID,
+                vendorContact: vendorData?.primaryPhone || "",
+                vendorName: vendorData?.fullName || "",
+            }
+        }
+
+        // 3. Create new Razorpay order
         console.log("[createOrder] Creating razorpay order...")
         const order = await razorpay.orders.create({
             amount: amountPaise,
@@ -140,7 +209,7 @@ export const createOrder = async ({
             orderId: order.id,
             amount: amountPaise, // sent to frontend in PAISE
             currency: "INR",
-            keyId: process.env["RAZORPAY_KEY_ID"]!,
+            keyId: env.RAZORPAY_KEY_ID,
             vendorContact: vendorData?.primaryPhone || "",
             vendorName: vendorData?.fullName || "",
         }
@@ -277,7 +346,7 @@ export const verifyPayment = async ({
     }
     ctx: AdminContext
 }) => {
-    const secret = process.env["RAZORPAY_KEY_SECRET"]!
+    const secret = env.RAZORPAY_KEY_SECRET
     const body = `${input.razorpayOrderId}|${input.razorpayPaymentId}`
     const expectedSignature = crypto.createHmac("sha256", secret).update(body).digest("hex")
 

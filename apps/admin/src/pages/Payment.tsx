@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { trpc } from "../lib/trpc"
 import { parseVendorType } from "../constants/vendor"
 import { toast } from "sonner"
+import { useRazorpayScript } from "../hooks/useRazorpayScript"
+import { generatePaymentOptions } from "../utils/paymentOptions"
 
 // Declare window interface for Razorpay
 declare global {
@@ -13,17 +15,9 @@ declare global {
 
 type PaymentMode = "online" | "cash" | "skip"
 
-const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-        const script = document.createElement("script")
-        script.src = "https://checkout.razorpay.com/v1/checkout.js"
-        script.onload = () => resolve(true)
-        script.onerror = () => resolve(false)
-        document.body.appendChild(script)
-    })
-}
-
 export default function Payment() {
+    const razorpayScriptStatus = useRazorpayScript()
+
     const navigate = useNavigate()
     const { vendorId, storeId } = useParams<{ vendorId: string; storeId: string }>()
     const [searchParams] = useSearchParams()
@@ -33,45 +27,26 @@ export default function Payment() {
     const [mode, setMode] = useState<PaymentMode>("online")
     const [skipNote, setSkipNote] = useState("")
 
-    const [orderData, setOrderData] = useState<{
-        orderId: string
-        keyId: string
-        amount: number // received from backend in PAISE
-        vendorName?: string
-        vendorContact?: string
-    } | null>(null)
-    const [creating, setCreating] = useState(false)
+    // Fetch registration fee from backend
+    const feeQuery = trpc.payment.getRegistrationFee.useQuery(
+        { vendorType: vendorType ?? "market_vendor" },
+        { enabled: !!vendorType },
+    )
 
-    // ── tRPC mutations & queries ──────────────────────────────────────────────
-    const createOrderMutation = trpc.payment.createOrder.useMutation({
-        onSuccess: (data) => {
-            setOrderData({
-                orderId: data.orderId,
-                keyId: data.keyId,
-                amount: data.amount, // amount in PAISE from backend
-                vendorContact: data.vendorContact,
-                vendorName: data.vendorName,
-            })
-            setCreating(false)
-        },
-        onError: (err) => {
-            toast.error("Failed to create payment order: " + err.message)
-            setCreating(false)
-        },
-    })
+    const amountInRupees = feeQuery.data?.amountRupees ?? 0
+
+    // ── tRPC mutations ────────────────────────────────────────────────────────
+    const createOrderMutation = trpc.payment.createOrder.useMutation()
 
     const verifyMutation = trpc.payment.verifyPayment.useMutation({
         onSuccess: (data) => {
             toast.success("Payment verified successfully")
             navigate(
-                `/payment-status/${vendorId}/${storeId}?status=success&orderId=${orderData?.orderId}&paymentId=${data.paymentId}${typeParam}`,
+                `/payment-status/${vendorId}/${storeId}?status=success&orderId=${data.paymentId}&paymentId=${data.paymentId}${typeParam}`,
             )
         },
         onError: (err) => {
             toast.error("Payment verification failed: " + err.message)
-            navigate(
-                `/payment-status/${vendorId}/${storeId}?status=failed&orderId=${orderData?.orderId}${typeParam}`,
-            )
         },
     })
 
@@ -87,71 +62,59 @@ export default function Payment() {
         },
     })
 
-    // ── Create order on mount ─────────────────────────────────────────────────
-    useEffect(() => {
-        if (!storeId || !vendorId) return
-        setCreating(true)
-        createOrderMutation.mutate({
-            storeId,
-            vendorId,
-            vendorType: vendorType ?? "market_vendor",
-        })
-    }, [storeId, vendorId, vendorType])
-
-    // Convert amount in PAISE (from backend) to RUPEES for visual display
-    const amountInRupees = orderData ? orderData.amount / 100 : 0
-
-    // ── Handle Razorpay Payment ───────────────────────────────────────────────
+    // ── Handle Razorpay Payment (creates order on click, then opens checkout) ─
     const handleRazorpayPayment = async () => {
-        if (!orderData || !vendorId || !storeId) return
+        if (!vendorId || !storeId) return
 
-        const res = await loadRazorpayScript()
-        if (!res) {
+        // const res = await loadRazorpayScript()
+        if (!razorpayScriptStatus) {
             toast.error("Razorpay SDK failed to load. Are you online?")
             return
         }
 
-        const options = {
-            key: orderData.keyId,
-            amount: orderData.amount, // amount in PAISE from backend
-            currency: "INR",
-            name: "ROS Registration",
-            description: "Store Registration Fee",
-            order_id: orderData.orderId,
-            handler: function (response: any) {
-                // Verify payment signature securely on backend
-                verifyMutation.mutate({
-                    razorpayOrderId: response.razorpay_order_id,
-                    razorpayPaymentId: response.razorpay_payment_id,
-                    razorpaySignature: response.razorpay_signature,
-                    storeId,
-                    vendorId,
-                })
-            },
-            prefill: {
-                name: orderData.vendorName || "Store Vendor",
-                contact: orderData.vendorContact || "",
-            },
-            theme: {
-                color: "#135B47",
-            },
-        }
+        try {
+            // Create order on user action (not on mount)
+            const orderData = await createOrderMutation.mutateAsync({
+                storeId,
+                vendorId,
+                vendorType: vendorType ?? "market_vendor",
+            })
 
-        const paymentObject = new window.Razorpay(options)
-        paymentObject.on("payment.failed", function (response: any) {
-            toast.error("Payment Failed: " + response.error.description)
-            navigate(
-                `/payment-status/${vendorId}/${storeId}?status=failed&orderId=${orderData.orderId}${typeParam}`,
-            )
-        })
-        paymentObject.open()
+            const options = generatePaymentOptions({
+                orderData,
+                verifyMutation,
+                storeId,
+                vendorId,
+            })
+
+            const paymentObject = new window.Razorpay(options)
+            paymentObject.on("payment.failed", function (response: any) {
+                toast.error("Payment Failed: " + response.error.description)
+                navigate(
+                    `/payment-status/${vendorId}/${storeId}?status=failed&orderId=${orderData.orderId}${typeParam}`,
+                )
+            })
+            paymentObject.open()
+        } catch (err: any) {
+            toast.error("Failed to create payment order: " + err.message)
+        }
     }
 
-    const handleCashConfirm = () => {
-        toast.success("Cash payment recorded")
-        navigate(
-            `/payment-status/${vendorId}/${storeId}?status=success&method=cash&orderId=${orderData?.orderId || ""}${typeParam}`,
-        )
+    const handleCashConfirm = async () => {
+        if (!vendorId || !storeId) return
+        try {
+            const orderData = await createOrderMutation.mutateAsync({
+                storeId,
+                vendorId,
+                vendorType: vendorType ?? "market_vendor",
+            })
+            toast.success("Cash payment recorded")
+            navigate(
+                `/payment-status/${vendorId}/${storeId}?status=success&method=cash&orderId=${orderData.orderId}${typeParam}`,
+            )
+        } catch (err: any) {
+            toast.error("Failed to create payment record: " + err.message)
+        }
     }
 
     const handleSkipConfirm = () => {
@@ -198,126 +161,127 @@ export default function Payment() {
 
                 {/* Content Card */}
                 <div className="mx-5 mt-2 flex flex-col items-center gap-4 rounded-[20px] bg-white p-6 shadow-sm md:mx-8">
-                    {creating && !orderData ? (
-                        <div className="py-10 text-sm text-gray-400">Creating payment order…</div>
-                    ) : (
-                        <>
-                            <div className="flex flex-col items-center">
-                                <p className="text-sm font-medium text-gray-400">Total Amount</p>
-                                <p className="text-[32px] font-bold tracking-tight text-gray-900">
-                                    ₹ {amountInRupees.toLocaleString("en-IN")}
-                                </p>
-                            </div>
+                    <>
+                        <div className="flex flex-col items-center">
+                            <p className="text-sm font-medium text-gray-400">Total Amount</p>
+                            <p className="text-[32px] font-bold tracking-tight text-gray-900">
+                                ₹ {amountInRupees.toLocaleString("en-IN")}
+                            </p>
+                        </div>
 
-                            {mode === "online" ? (
-                                <div className="flex w-full flex-col items-center gap-4 py-6">
-                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#E8F3F0]">
-                                        <svg
-                                            width="32"
-                                            height="32"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="#135B47"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        >
-                                            <rect
-                                                x="3"
-                                                y="11"
-                                                width="18"
-                                                height="11"
-                                                rx="2"
-                                                ry="2"
-                                            ></rect>
-                                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                                        </svg>
-                                    </div>
-                                    <p className="text-center text-sm text-gray-500">
-                                        Proceed to pay ₹{amountInRupees.toLocaleString("en-IN")}{" "}
-                                        securely via Razorpay
-                                    </p>
-                                    <button
-                                        onClick={handleRazorpayPayment}
-                                        disabled={!orderData || verifyMutation.isPending}
-                                        className="w-full rounded-[14px] bg-[#135B47] py-4 text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-[#0f4d3c] disabled:opacity-50"
+                        {mode === "online" ? (
+                            <div className="flex w-full flex-col items-center gap-4 py-6">
+                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#E8F3F0]">
+                                    <svg
+                                        width="32"
+                                        height="32"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="#135B47"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
                                     >
-                                        {verifyMutation.isPending
-                                            ? "Verifying..."
-                                            : "Pay via Razorpay"}
-                                    </button>
+                                        <rect
+                                            x="3"
+                                            y="11"
+                                            width="18"
+                                            height="11"
+                                            rx="2"
+                                            ry="2"
+                                        ></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
                                 </div>
-                            ) : mode === "cash" ? (
-                                <div className="flex w-full flex-col items-center gap-4 py-6">
-                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#E8F3F0]">
-                                        <svg
-                                            width="32"
-                                            height="32"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="#135B47"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        >
-                                            <rect x="2" y="6" width="20" height="12" rx="2" />
-                                            <circle cx="12" cy="12" r="2" />
-                                        </svg>
-                                    </div>
-                                    <p className="text-center text-sm text-gray-500">
-                                        Collect ₹{amountInRupees.toLocaleString("en-IN")} in cash
-                                        <br />
-                                        and confirm below
-                                    </p>
-                                    <button
-                                        onClick={handleCashConfirm}
-                                        disabled={!orderData}
-                                        className="w-full rounded-[14px] bg-[black] py-4 text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-gray-800 disabled:opacity-50"
+                                <p className="text-center text-sm text-gray-500">
+                                    Proceed to pay ₹{amountInRupees.toLocaleString("en-IN")}{" "}
+                                    securely via Razorpay
+                                </p>
+                                <button
+                                    onClick={handleRazorpayPayment}
+                                    disabled={
+                                        createOrderMutation.isPending || verifyMutation.isPending
+                                    }
+                                    className="w-full rounded-[14px] bg-[#135B47] py-4 text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-[#0f4d3c] disabled:opacity-50"
+                                >
+                                    {createOrderMutation.isPending
+                                        ? "Creating Order..."
+                                        : verifyMutation.isPending
+                                          ? "Verifying..."
+                                          : "Pay via Razorpay"}
+                                </button>
+                            </div>
+                        ) : mode === "cash" ? (
+                            <div className="flex w-full flex-col items-center gap-4 py-6">
+                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#E8F3F0]">
+                                    <svg
+                                        width="32"
+                                        height="32"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="#135B47"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
                                     >
-                                        Confirm Cash Received
-                                    </button>
+                                        <rect x="2" y="6" width="20" height="12" rx="2" />
+                                        <circle cx="12" cy="12" r="2" />
+                                    </svg>
                                 </div>
-                            ) : (
-                                <div className="flex w-full flex-col items-center gap-4 py-4">
-                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FEF3C7]">
-                                        <svg
-                                            width="32"
-                                            height="32"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="#D97706"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        >
-                                            <circle cx="12" cy="12" r="10" />
-                                            <polyline points="12 6 12 12 16 14" />
-                                        </svg>
-                                    </div>
-                                    <p className="text-center text-sm text-gray-500">
-                                        Mark subscription charge as pending and state the reason
-                                        below
-                                    </p>
-                                    <textarea
-                                        rows={3}
-                                        placeholder="Reason for skipping payment (e.g. Approved by Super Admin, Deferred payment)"
-                                        value={skipNote}
-                                        onChange={(e) => setSkipNote(e.target.value)}
-                                        className="w-full rounded-[14px] border border-gray-200 p-3 text-sm text-gray-800 focus:border-[#135B47] focus:outline-none"
-                                    />
-                                    <button
-                                        onClick={handleSkipConfirm}
-                                        disabled={skipMutation.isPending || !skipNote.trim()}
-                                        className="w-full rounded-[14px] bg-[#D97706] py-4 text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-[#b46305] disabled:opacity-50"
+                                <p className="text-center text-sm text-gray-500">
+                                    Collect ₹{amountInRupees.toLocaleString("en-IN")} in cash
+                                    <br />
+                                    and confirm below
+                                </p>
+                                <button
+                                    onClick={handleCashConfirm}
+                                    disabled={createOrderMutation.isPending}
+                                    className="w-full rounded-[14px] bg-[black] py-4 text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-gray-800 disabled:opacity-50"
+                                >
+                                    {createOrderMutation.isPending
+                                        ? "Processing..."
+                                        : "Confirm Cash Received"}
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex w-full flex-col items-center gap-4 py-4">
+                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FEF3C7]">
+                                    <svg
+                                        width="32"
+                                        height="32"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="#D97706"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
                                     >
-                                        {skipMutation.isPending
-                                            ? "Saving..."
-                                            : "Confirm Skip Payment (Mark Pending)"}
-                                    </button>
+                                        <circle cx="12" cy="12" r="10" />
+                                        <polyline points="12 6 12 12 16 14" />
+                                    </svg>
                                 </div>
-                            )}
-                        </>
-                    )}
+                                <p className="text-center text-sm text-gray-500">
+                                    Mark subscription charge as pending and state the reason below
+                                </p>
+                                <textarea
+                                    rows={3}
+                                    placeholder="Reason for skipping payment (e.g. Approved by Super Admin, Deferred payment)"
+                                    value={skipNote}
+                                    onChange={(e) => setSkipNote(e.target.value)}
+                                    className="w-full rounded-[14px] border border-gray-200 p-3 text-sm text-gray-800 focus:border-[#135B47] focus:outline-none"
+                                />
+                                <button
+                                    onClick={handleSkipConfirm}
+                                    disabled={skipMutation.isPending || !skipNote.trim()}
+                                    className="w-full rounded-[14px] bg-[#D97706] py-4 text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-[#b46305] disabled:opacity-50"
+                                >
+                                    {skipMutation.isPending
+                                        ? "Saving..."
+                                        : "Confirm Skip Payment (Mark Pending)"}
+                                </button>
+                            </div>
+                        )}
+                    </>
                 </div>
 
                 {/* Payment Mode Selector */}
