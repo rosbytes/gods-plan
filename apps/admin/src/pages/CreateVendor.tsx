@@ -5,6 +5,7 @@ import { toast } from "sonner"
 import { VendorType } from "../constants/vendor"
 import { AdminLayout } from "../components/layout"
 import { Input, Button, PageHeader, BackIcon } from "../components/ui"
+import { PhoneInput } from "@ros/ui"
 
 export default function CreateVendor() {
     const navigate = useNavigate()
@@ -124,19 +125,19 @@ export default function CreateVendor() {
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
                             />
-                            <Input
+                            <PhoneInput
                                 label="Mobile Number *"
-                                type="tel"
-                                placeholder="Enter 10-digit mobile number"
+                                placeholder="Enter mobile number"
                                 value={mobileNumber}
-                                onChange={(e) => setMobileNumber(e.target.value)}
+                                onChange={(val, meta) => setMobileNumber(meta.e164 || val)}
+                                defaultCountry="IN"
                             />
-                            <Input
+                            <PhoneInput
                                 label="Alternate Number (Optional)"
-                                type="tel"
                                 placeholder="Enter secondary contact number"
                                 value={alternateNumber}
-                                onChange={(e) => setAlternateNumber(e.target.value)}
+                                onChange={(val, meta) => setAlternateNumber(meta.e164 || val)}
+                                defaultCountry="IN"
                             />
                         </div>
                     </div>
@@ -252,19 +253,19 @@ export default function CreateVendor() {
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
                                 />
-                                <Input
+                                <PhoneInput
                                     label="Mobile Number *"
-                                    type="tel"
-                                    placeholder="Enter 10-digit primary phone"
+                                    placeholder="Enter primary phone"
                                     value={mobileNumber}
-                                    onChange={(e) => setMobileNumber(e.target.value)}
+                                    onChange={(val, meta) => setMobileNumber(meta.e164 || val)}
+                                    defaultCountry="IN"
                                 />
-                                <Input
+                                <PhoneInput
                                     label="Alternate Number (Optional)"
-                                    type="tel"
                                     placeholder="Enter secondary contact phone"
                                     value={alternateNumber}
-                                    onChange={(e) => setAlternateNumber(e.target.value)}
+                                    onChange={(val, meta) => setAlternateNumber(meta.e164 || val)}
+                                    defaultCountry="IN"
                                 />
 
                                 <div className="flex justify-end pt-4">

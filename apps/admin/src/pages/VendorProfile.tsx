@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom"
 import { trpc } from "../lib/trpc"
 import { toast } from "sonner"
 import { Button, Input, Modal } from "../components/ui"
+import { PhoneInput } from "@ros/ui"
 import { generateAndDownloadAgreementPdf } from "../lib/agreementPdf"
 
 type KycDoc = {
@@ -181,7 +182,6 @@ export default function VendorProfile() {
     const kyc: KycDoc | null = vendorAny.kycDocs?.[0] ?? null
     const agreement = store?.agreement ?? null
     const vendorIsApproved: boolean = vendorAny.isApproved ?? false
-    const vendorIsActive: boolean = vendorAny.isActive ?? false
 
     const handleOpenEdit = () => {
         setFormData({
@@ -222,7 +222,7 @@ export default function VendorProfile() {
     }
 
     // ──── Toggle helpers ────────────────────────────────────────────────────
-    const handleVendorToggle = (field: "isActive" | "isApproved", value: boolean) => {
+    const handleVendorToggle = (field: "isApproved", value: boolean) => {
         if (!vendorId) return
         toggleVendorMutation.mutate({ vendorId, type, field, value })
     }
@@ -334,18 +334,6 @@ export default function VendorProfile() {
                                 />
                                 {vendorIsApproved ? "Approved" : "Pending"}
                             </span>
-                            <span
-                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${
-                                    vendorIsActive
-                                        ? "bg-blue-50 text-blue-700"
-                                        : "bg-gray-100 text-gray-500"
-                                }`}
-                            >
-                                <span
-                                    className={`h-1.5 w-1.5 rounded-full ${vendorIsActive ? "bg-blue-500" : "bg-gray-400"}`}
-                                />
-                                {vendorIsActive ? "Active" : "Inactive"}
-                            </span>
                         </div>
                     </div>
 
@@ -406,12 +394,10 @@ export default function VendorProfile() {
                             </div>
                         </div>
 
-                        {/* ── Vendor Status & Approval ──────────────────────────── */}
+                        {/* ── Vendor Approval ──────────────────────────── */}
                         <div className="space-y-3">
-                            <h2 className="text-[15px] font-bold text-gray-600">
-                                Vendor Status & Approval
-                            </h2>
-                            <div className="divide-y divide-gray-100 rounded-2xl bg-white p-5 shadow-sm">
+                            <h2 className="text-[15px] font-bold text-gray-600">Vendor Approval</h2>
+                            <div className="rounded-2xl bg-white p-5 shadow-sm">
                                 <StatusRow
                                     id="vendor-approved-toggle"
                                     label="Approved"
@@ -419,14 +405,6 @@ export default function VendorProfile() {
                                     checked={vendorIsApproved}
                                     isLoading={isVendorToggling}
                                     onChange={(val) => handleVendorToggle("isApproved", val)}
-                                />
-                                <StatusRow
-                                    id="vendor-active-toggle"
-                                    label="Active"
-                                    description="Vendor can log in and use the platform"
-                                    checked={vendorIsActive}
-                                    isLoading={isVendorToggling}
-                                    onChange={(val) => handleVendorToggle("isActive", val)}
                                 />
                             </div>
                         </div>
@@ -843,18 +821,21 @@ export default function VendorProfile() {
                         onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                         required
                     />
-                    <Input
-                        label="Mobile Number (Primary)"
+                    <PhoneInput
+                        label="Mobile Number (Primary) *"
                         value={formData.primaryPhone}
-                        onChange={(e) => setFormData({ ...formData, primaryPhone: e.target.value })}
-                        required
+                        onChange={(val, meta) =>
+                            setFormData({ ...formData, primaryPhone: meta.e164 || val })
+                        }
+                        defaultCountry="IN"
                     />
-                    <Input
+                    <PhoneInput
                         label="Alternate Mobile Number"
                         value={formData.alternatePhone}
-                        onChange={(e) =>
-                            setFormData({ ...formData, alternatePhone: e.target.value })
+                        onChange={(val, meta) =>
+                            setFormData({ ...formData, alternatePhone: meta.e164 || val })
                         }
+                        defaultCountry="IN"
                         placeholder="Optional"
                     />
                     {store && (

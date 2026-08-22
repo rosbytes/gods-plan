@@ -17,6 +17,7 @@ import {
     SpinnerIcon,
     BackIcon,
 } from "../components/ui"
+import { PhoneInput } from "@ros/ui"
 
 type RoleFilter = "all" | "admin" | "super_admin" | "operator"
 
@@ -254,15 +255,12 @@ export default function ManageAdmins() {
                                     />
                                 </div>
                                 <div className="px-5 pt-4 pb-4">
-                                    <label className="mb-1.5 block text-xs font-medium text-gray-400">
-                                        Phone Number *
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        placeholder="10-digit mobile number"
+                                    <PhoneInput
+                                        label="Phone Number *"
+                                        placeholder="Enter mobile number"
                                         value={phone}
-                                        onChange={(e) => setPhone(e.target.value)}
-                                        className="w-full bg-transparent text-[16px] font-semibold text-gray-800 placeholder-gray-300 focus:outline-none"
+                                        onChange={(val, meta) => setPhone(meta.e164 || val)}
+                                        defaultCountry="IN"
                                     />
                                 </div>
                                 <div className="px-5 pt-4 pb-4">
@@ -413,12 +411,12 @@ export default function ManageAdmins() {
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                             />
-                            <Input
+                            <PhoneInput
                                 label="Phone Number *"
-                                type="tel"
-                                placeholder="10-digit mobile number"
+                                placeholder="Enter mobile number"
                                 value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
+                                onChange={(val, meta) => setPhone(meta.e164 || val)}
+                                defaultCountry="IN"
                             />
                             <Input
                                 label="Email Address (Optional)"
@@ -487,10 +485,11 @@ export default function ManageAdmins() {
                                 value={editName}
                                 onChange={(e) => setEditName(e.target.value)}
                             />
-                            <Input
+                            <PhoneInput
                                 label="Phone Number *"
                                 value={editPhone}
-                                onChange={(e) => setEditPhone(e.target.value)}
+                                onChange={(val, meta) => setEditPhone(meta.e164 || val)}
+                                defaultCountry="IN"
                             />
                             <Input
                                 label="Email Address"
