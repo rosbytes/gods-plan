@@ -27,3 +27,8 @@ export const updateAdminRefreshToken = async ({ id, token }: { id: string; token
         .returning()
     return updatedAdmin
 }
+
+export const updateAdminPin = async ({ id, pin }: { id: string; pin: string }) => {
+    const [updatedAdmin] = await db.update(admin).set({ pin }).where(eq(admin.id, id)).returning()
+    return updatedAdmin
+}

@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom"
 import { trpc } from "../lib/trpc"
 import ROSLogo from "../assets/logo/ros-black.svg"
 import { SpinnerIcon } from "../components/common/Icons"
+import { PhoneInput } from "@ros/ui"
+import { ForgotPinModal } from "../components/auth/ForgotPinModal"
 
 export default function Login() {
     const navigate = useNavigate()
@@ -10,6 +12,7 @@ export default function Login() {
     const [rosId, setRosId] = useState("")
     const [password, setPassword] = useState("")
     const [isError, setIsError] = useState(false)
+    const [isForgotPinOpen, setIsForgotPinOpen] = useState(false)
 
     // Check if user is already logged in
     const { data: currentUser } = trpc.auth.me.useQuery(undefined, {
@@ -89,12 +92,11 @@ export default function Login() {
                         {/* Login Form */}
                         <form className="flex w-full flex-col gap-4" onSubmit={handleLogin}>
                             <div>
-                                <input
-                                    type="text"
-                                    placeholder="ROS ID or mobile number"
+                                <PhoneInput
                                     value={rosId}
-                                    onChange={(e) => setRosId(e.target.value)}
-                                    className="w-full rounded-[14px] border border-gray-100 bg-gray-50/50 px-4 py-3.5 text-gray-800 placeholder-gray-400 shadow-xs transition-all focus:ring-2 focus:ring-[#135B47] focus:outline-none"
+                                    onChange={(val, meta) => setRosId(meta.e164 || val)}
+                                    defaultCountry="IN"
+                                    placeholder="Mobile number"
                                 />
                             </div>
 
@@ -130,6 +132,7 @@ export default function Login() {
                             <div className="mt-3 text-center">
                                 <button
                                     type="button"
+                                    onClick={() => setIsForgotPinOpen(true)}
                                     className="cursor-pointer text-[15px] font-medium text-gray-500 transition-colors hover:text-gray-800"
                                 >
                                     Forgot Password?
@@ -211,15 +214,12 @@ export default function Login() {
 
                         <form onSubmit={handleLogin} className="space-y-5">
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-600">
-                                    ROS Phone or ID
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="Enter your registered phone"
+                                <PhoneInput
+                                    label="Registered Phone Number"
                                     value={rosId}
-                                    onChange={(e) => setRosId(e.target.value)}
-                                    className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm font-semibold text-gray-800 transition-colors placeholder:text-gray-400 focus:border-[#135B47] focus:bg-white focus:outline-none"
+                                    onChange={(val, meta) => setRosId(meta.e164 || val)}
+                                    defaultCountry="IN"
+                                    placeholder="Enter your registered phone"
                                 />
                             </div>
 
@@ -230,6 +230,7 @@ export default function Login() {
                                     </label>
                                     <button
                                         type="button"
+                                        onClick={() => setIsForgotPinOpen(true)}
                                         className="cursor-pointer text-xs font-semibold text-[#135B47] hover:underline"
                                     >
                                         Forgot PIN?
@@ -271,6 +272,18 @@ export default function Login() {
                     </div>
                 </div>
             </div>
+
+            {/* Forgot PIN Modal */}
+            <ForgotPinModal
+                isOpen={isForgotPinOpen}
+                onClose={() => setIsForgotPinOpen(false)}
+                initialPhone={rosId}
+                onSuccess={(phone) => {
+                    setRosId(phone)
+                    setPassword("")
+                    setIsError(false)
+                }}
+            />
         </>
     )
 }

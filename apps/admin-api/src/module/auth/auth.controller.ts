@@ -2,20 +2,21 @@ import { TRPCError } from "@trpc/server"
 import { parseCookie } from "cookie"
 import { type Context } from "../../trpc"
 import { rateLimit } from "../../utils"
-import { type TLoginSchema } from "./auth.schema"
+import { type TLoginSchema, type TResetPinSchema } from "./auth.schema"
 import {
     findAdminById,
     findAdminByPhone,
     updateAdminLoginTime,
     updateAdminRefreshToken,
+    updateAdminPin,
 } from "./auth.service"
 import {
     generateAdminAccessToken,
     generateAdminRefreshToken,
     verifyAdminRefreshToken,
 } from "../../utils/tokens"
-import { env, logger } from "../../configs"
-import { compareAdminPassword } from "@ros/commons"
+import { env, logger, msg91VerifyAccessToken } from "../../configs"
+import { compareAdminPassword, hashAdminPassword } from "@ros/commons"
 import type { AdminContext } from "../../middlewares"
 
 export async function login({ input, ctx }: { input: TLoginSchema; ctx: Context }) {
@@ -181,5 +182,54 @@ export async function getMe(ctx: AdminContext) {
         fullName: adminRecord.name,
         phone: adminRecord.phone,
         email: adminRecord.email ?? null,
+    }
+}
+
+export async function resetPin({ input, ctx }: { input: TResetPinSchema; ctx: Context }) {
+    try {
+        await rateLimit(`rateLimit:resetPin:ip:${ctx.req.ip}`, 5, 60)
+        await rateLimit(`rateLimit:resetPin:phone:${input.phone}`, 3, 300)
+
+        // 1. Verify access token with MSG91
+        try {
+            await msg91VerifyAccessToken(input.accessToken)
+        } catch (err: any) {
+            console.error("[resetPin] OTP token verification failed:", err)
+            throw new TRPCError({
+                code: "UNAUTHORIZED",
+                message: err?.message || "Invalid or expired OTP token. Please request a new OTP.",
+            })
+        }
+
+        // 2. Find admin user by phone
+        const adminExists = await findAdminByPhone({ phone: input.phone })
+        if (!adminExists) {
+            throw new TRPCError({
+                code: "NOT_FOUND",
+                message: "No admin account found with this phone number",
+            })
+        }
+
+        if (!adminExists.isActive) {
+            throw new TRPCError({
+                code: "FORBIDDEN",
+                message: "Account is inactive. Please contact a Super Admin.",
+            })
+        }
+
+        // 3. Hash new PIN and update in database
+        const hashedPin = hashAdminPassword(input.newPin)
+        await updateAdminPin({ id: adminExists.id, pin: hashedPin })
+
+        return {
+            success: true,
+            message: "PIN reset successfully. Please sign in with your new PIN.",
+        }
+    } catch (error) {
+        if (error instanceof TRPCError) throw error
+        throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error instanceof Error ? error.message : "Failed to reset PIN",
+        })
     }
 }
