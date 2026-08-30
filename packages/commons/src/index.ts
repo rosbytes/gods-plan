@@ -1,4 +1,5 @@
 export {
+    hashTheMandiVendorPassword,
     compareMandiVendorPassword,
     hashAdminPassword,
     compareAdminPassword,
