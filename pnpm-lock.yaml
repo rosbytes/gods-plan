@@ -50,9 +50,6 @@ importers:
 
   apps/admin:
     dependencies:
-      '@iconify/react':
-        specifier: ^6.0.2
-        version: 6.0.2(react@19.2.8)
       '@ros/assets':
         specifier: workspace:*
         version: link:../../packages/assets
