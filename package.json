@@ -6,6 +6,9 @@
         "dev": "turbo dev",
         "lint": "turbo lint",
         "typecheck": "turbo typecheck",
+        "test": "turbo test",
+        "test:all": "vitest run",
+        "test:e2e": "playwright test",
         "prepare": "husky || true",
         "format": "prettier --write .",
         "format:check": "prettier --check ."
@@ -14,11 +17,18 @@
         "**/*": "prettier --write --ignore-unknown"
     },
     "devDependencies": {
+        "@playwright/test": "^1.62.1",
+        "@testing-library/jest-dom": "^7.0.1",
+        "@testing-library/react": "^16.3.2",
+        "@types/node": "^26.2.0",
         "husky": "^9.1.7",
+        "jsdom": "^30.0.1",
         "lint-staged": "^16.4.0",
+        "msw": "^2.15.0",
         "prettier": "^3.8.3",
         "prettier-plugin-tailwindcss": "^0.8.0",
-        "turbo": "^2.10.9"
+        "turbo": "^2.10.9",
+        "vitest": "^4.1.11"
     },
     "packageManager": "pnpm@11.19.0+sha512.7881f3ed590d472c4a955e2b88b2121791116066dcc88cbca3849ec9b60f1bbaa6d2ccb221fa91da4e1c65bef2bcbe379365aea7ac539c7bf86dedc3a1b22dce",
     "engines": {

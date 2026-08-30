@@ -19,6 +19,9 @@
         "typecheck": {
             "dependsOn": ["^build"]
         },
+        "test": {
+            "dependsOn": ["^build"]
+        },
         "dev": {
             "cache": false,
             "persistent": true
@@ -47,6 +50,7 @@
         "CLOUDINARY_API_SECRET",
         "RAZORPAY_KEY_ID",
         "RAZORPAY_KEY_SECRET",
+        "RAZORPAY_WEBHOOK_SECRET",
         "AWS_REGION",
         "AWS_ACCESS_KEY_ID",
         "AWS_SECRET_ACCESS_KEY",

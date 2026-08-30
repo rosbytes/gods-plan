@@ -6,6 +6,7 @@ allowBuilds:
     "@firebase/util": false
     core-js: false
     esbuild: false
+    msw: true
     protobufjs: false
     sharp: false
     unrs-resolver: false
