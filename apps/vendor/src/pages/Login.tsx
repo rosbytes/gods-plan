@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { toast } from "sonner"
-import { Button, Input } from "@ros/ui"
+import { Button, Input, PhoneInput } from "@ros/ui"
 import { trpc } from "../lib/trpc"
 import { useNavigate } from "react-router-dom"
 import { ForgotPinModal } from "../components/auth/ForgotPinModal"
@@ -38,7 +38,13 @@ export default function Login() {
             toast.error("Please enter both mobile number and pin")
             return
         }
-        login({ phone, pin })
+        const trimmedPhone = phone.trim()
+        const digits = trimmedPhone.replace(/\D/g, "")
+        const formattedPhone = trimmedPhone.startsWith("+")
+            ? trimmedPhone
+            : `+91${digits.slice(-10)}`
+
+        login({ phone: formattedPhone, pin })
     }
 
     const isFormValid = phone.trim().length > 0 && pin.trim().length > 0
@@ -67,19 +73,15 @@ export default function Login() {
 
             {/* Form */}
             <form onSubmit={handleLogin} className="mt-16 flex w-full flex-col gap-4">
-                <Input
-                    type="tel"
-                    placeholder={phoneError || "Mobile number"}
-                    value={phoneError ? "" : phone}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                <PhoneInput
+                    value={phone}
+                    onChange={(val, meta) => {
+                        setPhone(meta.e164 || val)
                         setPhoneError("")
-                        setPhone(e.target.value)
                     }}
-                    className={`h-14 rounded-xl px-4 text-base shadow-sm ring-0 focus-visible:ring-1 ${
-                        phoneError
-                            ? "!border-red-600 !text-red-600 !placeholder-red-600 focus-visible:!ring-red-600"
-                            : "focus-visible:ring-primary border-none bg-white"
-                    }`}
+                    error={phoneError}
+                    defaultCountry="IN"
+                    placeholder="Mobile number"
                     disabled={isPending}
                 />
 
@@ -93,7 +95,7 @@ export default function Login() {
                     }}
                     className={`h-14 rounded-xl px-4 text-base shadow-sm ring-0 focus-visible:ring-1 ${
                         pinError
-                            ? "!border-red-600 !text-red-600 !placeholder-red-600 focus-visible:!ring-red-600"
+                            ? "border-red-600! text-red-600! placeholder-red-600! focus-visible:ring-red-600!"
                             : "focus-visible:ring-primary border-none bg-white"
                     }`}
                     disabled={isPending}
@@ -103,7 +105,7 @@ export default function Login() {
                     type="submit"
                     disabled={!isFormValid || isPending}
                     isLoading={isPending}
-                    className="mt-2 h-14 w-full rounded-xl bg-[#0B4E3E] text-base font-semibold text-white hover:bg-[#07382d] disabled:bg-[#d9e5df] disabled:text-[#0B4E3E]/70 disabled:opacity-100"
+                    className="bg-primary hover:bg-primary-hover disabled:text-primary/70 mt-2 h-14 w-full rounded-xl text-base font-semibold text-white disabled:bg-[#d9e5df] disabled:opacity-100"
                 >
                     Log in
                 </Button>
@@ -113,7 +115,7 @@ export default function Login() {
                 <button
                     type="button"
                     onClick={() => setIsForgotOpen(true)}
-                    className="cursor-pointer text-sm font-medium text-gray-600 transition-colors hover:text-[#0B4E3E]"
+                    className="hover:text-primary cursor-pointer text-sm font-medium text-gray-600 transition-colors"
                 >
                     Forgot Password?
                 </button>

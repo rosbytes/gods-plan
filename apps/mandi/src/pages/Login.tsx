@@ -1,5 +1,6 @@
 import { useState, type ChangeEvent, type KeyboardEvent } from "react"
 import { useNavigate } from "react-router-dom"
+import { PhoneInput } from "@ros/ui"
 import { trpc } from "@/libs/trpc"
 import { useStore } from "@/store"
 import { Button, Input } from "@/components/ui"
@@ -40,11 +41,6 @@ export default function LoginPage() {
     const bothFilled = phone.trim().length > 0 && pin.trim().length > 0
     const isLoading = loginMutation.isPending
 
-    const onPhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setPhone(e.target.value)
-        setPhoneError("")
-    }
-
     const onPinChange = (e: ChangeEvent<HTMLInputElement>) => {
         setPin(e.target.value)
         setPinError("")
@@ -52,36 +48,19 @@ export default function LoginPage() {
 
     const handleLogin = () => {
         if (!bothFilled || isLoading) return
-        let valid = true
         const trimmedPhone = phone.trim()
-
-        // Basic client-side validation
-        const allDigits = /^\d+$/.test(trimmedPhone)
-        const isWithCountryCode =
-            trimmedPhone.startsWith("+91") &&
-            trimmedPhone.slice(3).length === 10 &&
-            /^\d+$/.test(trimmedPhone.slice(3))
-
-        if (!allDigits && !isWithCountryCode) {
-            setPhoneError("Invalid mobile number")
-            setPhone("")
-            valid = false
-        } else if (allDigits && trimmedPhone.length !== 10) {
-            setPhoneError("Invalid mobile number")
-            setPhone("")
-            valid = false
-        }
 
         if (pin.trim().length !== 4 || !/^\d{4}$/.test(pin.trim())) {
             setPinError("Incorrect Password")
             setPin("")
-            valid = false
+            return
         }
 
-        if (!valid) return
-
-        // Format phone for API: if raw digits, prepend +91
-        const formattedPhone = allDigits ? `+91${trimmedPhone}` : trimmedPhone
+        // Format phone for API (ensure + prefix or +91 format)
+        const digits = trimmedPhone.replace(/\D/g, "")
+        const formattedPhone = trimmedPhone.startsWith("+")
+            ? trimmedPhone
+            : `+91${digits.slice(-10)}`
 
         loginMutation.mutate({ phone: formattedPhone, pin: pin.trim() })
     }
@@ -141,16 +120,16 @@ export default function LoginPage() {
 
                     {/* Inputs and Submit Button */}
                     <div className="flex flex-col gap-3">
-                        <Input
-                            type="text"
-                            placeholder="ROS ID or mobile number"
+                        <PhoneInput
+                            placeholder="Mobile number"
                             error={phoneError}
                             value={phone}
-                            onChange={onPhoneChange}
+                            onChange={(val, meta) => {
+                                setPhone(meta.e164 || val)
+                                setPhoneError("")
+                            }}
                             onKeyDown={onKeyDown}
-                            autoComplete="username"
-                            autoCapitalize="none"
-                            spellCheck={false}
+                            defaultCountry="IN"
                             disabled={isLoading}
                         />
 
