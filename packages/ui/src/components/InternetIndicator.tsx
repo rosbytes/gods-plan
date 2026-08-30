@@ -126,7 +126,7 @@ export function InternetIndicator({
                     >
                         <Icon
                             icon="lucide:check"
-                            className="h-4 w-4 stroke-[3]"
+                            className="h-4 w-4 stroke-3"
                             style={{ color: "#ffffff" }}
                         />
                     </div>

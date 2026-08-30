@@ -792,7 +792,7 @@ function MyForm() {
                                         <p className="text-xs text-gray-500">
                                             Below is a live render of the offline banner:
                                         </p>
-                                        <div className="relative min-h-[140px] rounded-xl border border-dashed border-gray-300 bg-slate-100 p-4">
+                                        <div className="relative min-h-35 rounded-xl border border-dashed border-gray-300 bg-slate-100 p-4">
                                             <InternetIndicator
                                                 forceOffline
                                                 position="top"
