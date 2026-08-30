@@ -1,12 +1,12 @@
 import { TRPCError } from "@trpc/server"
 import { parseCookie } from "cookie"
 import { type Context } from "../../trpc"
-import { type TLoginSchema } from "./auth.schema"
-import { findMandiVendorByPhone } from "./auth.service"
+import { type TLoginSchema, type TResetPinSchema } from "./auth.schema"
+import { findMandiVendorByPhone, updateMandiVendorPin } from "./auth.service"
 import { getVendorById } from "../vendor/vendor.service"
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../../utils/tokens"
-import { env, logger } from "../../configs"
-import { compareMandiVendorPassword } from "@ros/commons"
+import { env, logger, msg91VerifyAccessToken } from "../../configs"
+import { compareMandiVendorPassword, hashTheMandiVendorPassword } from "@ros/commons"
 
 export async function login({ input, ctx }: { input: TLoginSchema; ctx: Context }) {
     try {
@@ -119,5 +119,52 @@ export async function logout({ ctx }: { ctx: Context }) {
 
     return {
         success: true,
+    }
+}
+
+export async function resetPin({ input }: { input: TResetPinSchema; ctx?: Context }) {
+    try {
+        // 1. Verify access token with MSG91
+        try {
+            await msg91VerifyAccessToken(input.accessToken)
+        } catch (err: any) {
+            logger.error("[mandi resetPin] OTP token verification failed:", err)
+            throw new TRPCError({
+                code: "UNAUTHORIZED",
+                message: err?.message || "Invalid or expired OTP token. Please request a new OTP.",
+            })
+        }
+
+        // 2. Find mandi vendor by phone
+        const vendorExists = await findMandiVendorByPhone({ phone: input.phone })
+        if (!vendorExists) {
+            throw new TRPCError({
+                code: "NOT_FOUND",
+                message: "No vendor account found with this phone number",
+            })
+        }
+
+        if (!vendorExists.isApproved) {
+            throw new TRPCError({
+                code: "FORBIDDEN",
+                message: "Account is pending admin approval or inactive. Please contact support.",
+            })
+        }
+
+        // 3. Hash new PIN and update in database
+        const hashedPin = hashTheMandiVendorPassword(input.newPin)
+        await updateMandiVendorPin({ id: vendorExists.id, pin: hashedPin })
+
+        return {
+            success: true,
+            message: "PIN reset successfully. Please sign in with your new PIN.",
+        }
+    } catch (error) {
+        logger.error(error)
+        if (error instanceof TRPCError) throw error
+        throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error instanceof Error ? error.message : "Failed to reset PIN",
+        })
     }
 }

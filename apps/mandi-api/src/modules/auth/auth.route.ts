@@ -1,12 +1,17 @@
 import { db } from "@ros/db"
 import { router, publicProcedure, vendorProcedure } from "../../trpc/globals"
-import { ZLoginSchema } from "./auth.schema"
+import { ZLoginSchema, ZResetPinSchema } from "./auth.schema"
 
 export const authRouter = router({
     // login
     login: publicProcedure.input(ZLoginSchema).mutation(async ({ input, ctx }) => {
         const { login } = await import("./auth.controller")
         return login({ input, ctx })
+    }),
+
+    resetPin: publicProcedure.input(ZResetPinSchema).mutation(async ({ input, ctx }) => {
+        const { resetPin } = await import("./auth.controller")
+        return resetPin({ input, ctx })
     }),
 
     refresh: publicProcedure.mutation(async ({ ctx }) => {

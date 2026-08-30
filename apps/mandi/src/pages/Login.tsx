@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { trpc } from "@/libs/trpc"
 import { useStore } from "@/store"
 import { Button, Input } from "@/components/ui"
+import { ForgotPinModal } from "@/components/auth/ForgotPinModal"
 import ROSLogo from "../assets/logos/ros-black.svg"
 
 export default function LoginPage() {
@@ -13,6 +14,7 @@ export default function LoginPage() {
     const [pin, setPin] = useState("")
     const [phoneError, setPhoneError] = useState("")
     const [pinError, setPinError] = useState("")
+    const [isForgotOpen, setIsForgotOpen] = useState(false)
 
     const loginMutation = trpc.auth.login.useMutation({
         onSuccess: (data) => {
@@ -176,7 +178,7 @@ export default function LoginPage() {
                         <button
                             type="button"
                             className="font-apercu mt-2 cursor-pointer self-center border-none bg-transparent text-[16px] font-medium text-[#6B7280] transition-colors duration-150 outline-none hover:text-[#0B4E3E]"
-                            onClick={() => {}}
+                            onClick={() => setIsForgotOpen(true)}
                         >
                             Forgot Password?
                         </button>
@@ -193,6 +195,19 @@ export default function LoginPage() {
                     </button>
                 </footer>
             </div>
+
+            {/* Forgot Password Modal */}
+            <ForgotPinModal
+                isOpen={isForgotOpen}
+                onClose={() => setIsForgotOpen(false)}
+                initialPhone={phone}
+                onSuccess={(updatedPhone) => {
+                    setPhone(updatedPhone)
+                    setPin("")
+                    setPhoneError("")
+                    setPinError("")
+                }}
+            />
         </div>
     )
 }

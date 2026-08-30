@@ -7,9 +7,12 @@ const envSchema = z.object({
     FRONTEND_URL: z.url(),
     DATABASE_URL: z.url(),
 
-    NODE_ENV: z.enum(["development", "production"]),
+    NODE_ENV: z.enum(["development", "production", "test"]),
 
-    VERCEL: z.enum(["true", "false"]).transform((value) => value === "true"),
+    VERCEL: z
+        .string()
+        .optional()
+        .transform((value) => value === "1" || value === "true"),
 
     // Tokens
     MARKET_JWT_ACCESS_TOKEN_SECRET: z.string().nonempty(),
@@ -26,6 +29,9 @@ const envSchema = z.object({
     // Razorpay Credentials
     RAZORPAY_KEY_ID: z.string().nonempty(),
     RAZORPAY_KEY_SECRET: z.string().nonempty(),
+
+    // MSG91
+    MSG91_AUTH_KEY: z.string().optional(),
 })
 
 const createEnv = (env: NodeJS.ProcessEnv) => {

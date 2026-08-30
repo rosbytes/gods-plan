@@ -1,11 +1,11 @@
 import { TRPCError } from "@trpc/server"
 import { parseCookie } from "cookie"
 import { type Context } from "../../trpc"
-import { type TLoginSchema } from "./auth.schema"
-import { findMarketVendorByPhone, getMarketVendorById } from "./auth.service"
+import { type TLoginSchema, type TResetPinSchema } from "./auth.schema"
+import { findMarketVendorByPhone, getMarketVendorById, updateMarketVendorPin } from "./auth.service"
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../../utils/tokens"
-import { env, logger } from "../../configs"
-import { compareMarketVendorPassword } from "@ros/commons"
+import { env, logger, msg91VerifyAccessToken } from "../../configs"
+import { compareMarketVendorPassword, hashMarketVendorPassword } from "@ros/commons"
 
 export async function login({ input, ctx }: { input: TLoginSchema; ctx: Context }) {
     try {
@@ -139,5 +139,52 @@ export async function getMe(ctx: { id: string }) {
         id: vendorRecord.id,
         fullName: vendorRecord.fullName,
         phone: vendorRecord.primaryPhone,
+    }
+}
+
+export async function resetPin({ input }: { input: TResetPinSchema; ctx?: Context }) {
+    try {
+        // 1. Verify access token with MSG91
+        try {
+            await msg91VerifyAccessToken(input.accessToken)
+        } catch (err: any) {
+            logger.error("[vendor resetPin] OTP token verification failed:", err)
+            throw new TRPCError({
+                code: "UNAUTHORIZED",
+                message: err?.message || "Invalid or expired OTP token. Please request a new OTP.",
+            })
+        }
+
+        // 2. Find market vendor by phone
+        const vendorExists = await findMarketVendorByPhone({ phone: input.phone })
+        if (!vendorExists) {
+            throw new TRPCError({
+                code: "NOT_FOUND",
+                message: "No vendor account found with this phone number",
+            })
+        }
+
+        if (!vendorExists.isApproved) {
+            throw new TRPCError({
+                code: "FORBIDDEN",
+                message: "Account is pending admin approval or inactive. Please contact support.",
+            })
+        }
+
+        // 3. Hash new PIN and update in database
+        const hashedPin = hashMarketVendorPassword(input.newPin)
+        await updateMarketVendorPin({ id: vendorExists.id, pin: hashedPin })
+
+        return {
+            success: true,
+            message: "PIN reset successfully. Please sign in with your new PIN.",
+        }
+    } catch (error) {
+        logger.error(error)
+        if (error instanceof TRPCError) throw error
+        throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error instanceof Error ? error.message : "Failed to reset PIN",
+        })
     }
 }
