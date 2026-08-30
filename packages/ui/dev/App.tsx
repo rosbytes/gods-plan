@@ -1,8 +1,24 @@
 import { useState } from "react"
 import { Icon } from "@iconify/react"
-import { Button, Input, PhoneInput, Spinner, toast, Toaster, type PhoneInputMeta } from "../src"
+import {
+    Button,
+    Input,
+    PhoneInput,
+    Spinner,
+    InternetIndicator,
+    toast,
+    Toaster,
+    type PhoneInputMeta,
+} from "../src"
 
-type NavSection = "getting-started" | "phone-input" | "button" | "input" | "spinner" | "toast"
+type NavSection =
+    | "getting-started"
+    | "phone-input"
+    | "button"
+    | "input"
+    | "spinner"
+    | "toast"
+    | "internet-indicator"
 
 export default function App() {
     const [activeSection, setActiveSection] = useState<NavSection>("phone-input")
@@ -50,6 +66,12 @@ export default function App() {
             items: [
                 { id: "spinner", label: "Spinner", icon: "lucide:loader-2" },
                 { id: "toast", label: "Sonner Toasts", icon: "lucide:bell" },
+                {
+                    id: "internet-indicator",
+                    label: "InternetIndicator",
+                    icon: "lucide:wifi",
+                    badge: "New",
+                },
             ],
         },
     ]
@@ -737,6 +759,66 @@ function MyForm() {
                                                 <Spinner size={32} />
                                                 <span className="text-xs text-gray-600">32px</span>
                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Section: InternetIndicator */}
+                        {activeSection === "internet-indicator" && (
+                            <div className="space-y-10">
+                                <div>
+                                    <div className="mb-2 flex items-center gap-3">
+                                        <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
+                                            InternetIndicator
+                                        </h1>
+                                        <span className="rounded-full border border-teal-200 bg-teal-100 px-2.5 py-0.5 text-xs font-bold text-teal-800">
+                                            Global Network Status
+                                        </span>
+                                    </div>
+                                    <p className="text-base text-gray-600">
+                                        Global connectivity status banner with live online/offline
+                                        detection, active ping probe retry, collapsible floating
+                                        corner badge, and connection restored alerts.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-8 overflow-hidden rounded-2xl border border-gray-200/90 bg-white p-8 shadow-2xs">
+                                    <div className="space-y-3">
+                                        <h3 className="text-xs font-bold tracking-wider text-gray-700 uppercase">
+                                            Component Preview (Forced Offline State)
+                                        </h3>
+                                        <p className="text-xs text-gray-500">
+                                            Below is a live render of the offline banner:
+                                        </p>
+                                        <div className="relative min-h-[140px] rounded-xl border border-dashed border-gray-300 bg-slate-100 p-4">
+                                            <InternetIndicator
+                                                forceOffline
+                                                position="top"
+                                                notify={false}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3 border-t border-gray-100 pt-6">
+                                        <h3 className="text-xs font-bold tracking-wider text-gray-700 uppercase">
+                                            Usage Example
+                                        </h3>
+                                        <div className="rounded-xl bg-gray-900 p-4 font-mono text-xs text-gray-100">
+                                            <pre>
+                                                <code>{`import { InternetIndicator } from "@ros/ui"
+
+// Mount globally in App.tsx or Root Layout
+export function App() {
+  return (
+    <Router>
+      <InternetIndicator />
+      <Routes>...</Routes>
+    </Router>
+  )
+}`}</code>
+                                            </pre>
                                         </div>
                                     </div>
                                 </div>

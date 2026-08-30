@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../../../packages/ui/src";
 
 /* ─── Custom Font Utility ────────────────────────────────────────── */
 /* Replaces 50+ inline style={{ fontFamily: "'Apercu Pro', sans-serif" }} */

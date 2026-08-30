@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react"
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
 import { ProtectedRoute } from "./components/auth/ProtectedRoute"
+import { InternetIndicator } from "@ros/ui"
 
 const Login = lazy(() => import("./pages/Login"))
 const Dashboard = lazy(() => import("./pages/Dashboard"))
@@ -29,6 +30,7 @@ const PageLoader = () => (
 function App() {
     return (
         <Router>
+            <InternetIndicator />
             <Suspense fallback={<PageLoader />}>
                 <Routes>
                     <Route path="/" element={<Navigate to="/login" replace />} />
